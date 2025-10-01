@@ -2257,6 +2257,20 @@ typedef enum {
 
     // #### `result`
     // ```c
+    // CVarGetInteger(CVAR_ENHANCEMENT("3DSceneRender"), 0)
+    // ```
+    // #### `args`
+    // - None
+    VB_DRAW_2D_BACKGROUND,
+
+    // #### `result`
+    // ```c
+    // CVarGetInteger(CVAR_ENHANCEMENT("3DSceneRender"), 0)
+    // ```
+    // #### `args`
+    // - None
+    VB_LOAD_SKYBOX,
+
     // true
     // ```
     // #### `args`
@@ -2270,6 +2284,7 @@ typedef enum {
     // #### `args`
     // - `*Player`
     VB_SET_STATIC_FLOOR_TYPE,
+
 } GIVanillaBehavior;
 
 #endif
