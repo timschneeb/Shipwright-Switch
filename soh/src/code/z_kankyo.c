@@ -894,7 +894,7 @@ void Environment_Update(PlayState* play, EnvironmentContext* envCtx, LightContex
     s32 adjustment;
 
     if ((((void)0, gSaveContext.gameMode) != 0) && (((void)0, gSaveContext.gameMode) != 3)) {
-        func_800AA16C(play);
+        Rumble_ClearRequests();
     }
 
     if (pauseCtx->state == 0) {
