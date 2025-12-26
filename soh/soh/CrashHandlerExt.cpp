@@ -19,10 +19,10 @@ static std::array<const char*, ACTORCAT_MAX> sCatToStrArray{
     "SWITCH", "BG", "PLAYER", "EXPLOSIVE", "NPC", "ENEMY", "PROP", "ITEMACTION", "MISC", "BOSS", "DOOR", "CHEST",
 };
 
-#define DEFINE_SCENE(_1, _2, enumName, _4, _5, _6) #enumName
+#define DEFINE_SCENE(_1, _2, enumName, _4, _5, _6) #enumName,
 
 static std::array<const char*, SCENE_ID_MAX> sSceneIdToStrArray{
-    #include "tables/scene_table.h"
+#include "tables/scene_table.h"
 };
 
 #undef DEFINE_SCENE
@@ -46,7 +46,7 @@ static void CrashHandler_WriteActorData(char* buffer, size_t* pos) {
         ActorListEntry* entry = &gPlayState->actorCtx.actorLists[i];
         Actor* cur;
 
-        if(entry->length == 0) {
+        if (entry->length == 0) {
             continue;
         }
         WRITE_VAR_LINE(buffer, pos, "Actor Cat: ", sCatToStrArray[i]);
@@ -69,12 +69,14 @@ extern "C" void CrashHandler_PrintSohData(char* buffer, size_t* pos) {
     char intCharBuffer[16];
     append_line(buffer, pos, "Build Information:");
     WRITE_VAR_LINE(buffer, pos, "Game Version: ", (const char*)gBuildVersion);
+    WRITE_VAR_LINE(buffer, pos, "Git Branch: ", (const char*)gGitBranch);
+    WRITE_VAR_LINE(buffer, pos, "Git Commit: ", (const char*)gGitCommitHash);
     WRITE_VAR_LINE(buffer, pos, "Build Date: ", (const char*)gBuildDate);
 
     if (gPlayState != nullptr) {
         append_line(buffer, pos, "Actors:");
         CrashHandler_WriteActorData(buffer, pos);
-        
+
         WRITE_VAR_LINE(buffer, pos, "Scene: ", sSceneIdToStrArray[gPlayState->sceneNum]);
 
         snprintf(intCharBuffer, sizeof(intCharBuffer), "%i", gPlayState->roomCtx.curRoom.num);

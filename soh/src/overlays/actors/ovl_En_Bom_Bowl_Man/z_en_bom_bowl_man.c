@@ -3,8 +3,14 @@
 #include "overlays/actors/ovl_En_Syateki_Niw/z_en_syateki_niw.h"
 #include "overlays/actors/ovl_En_Ex_Item/z_en_ex_item.h"
 #include "objects/object_bg/object_bg.h"
+#include "soh/OTRGlobals.h"
+#include "soh/ResourceManagerHelpers.h"
+#include "soh/Enhancements/game-interactor/GameInteractor.h"
+#include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 
-#define FLAGS (ACTOR_FLAG_TARGETABLE | ACTOR_FLAG_FRIENDLY | ACTOR_FLAG_UPDATE_WHILE_CULLED | ACTOR_FLAG_DRAW_WHILE_CULLED | ACTOR_FLAG_NO_LOCKON)
+#define FLAGS                                                                                  \
+    (ACTOR_FLAG_ATTENTION_ENABLED | ACTOR_FLAG_FRIENDLY | ACTOR_FLAG_UPDATE_CULLING_DISABLED | \
+     ACTOR_FLAG_DRAW_CULLING_DISABLED | ACTOR_FLAG_LOCK_ON_DISABLED)
 
 typedef enum {
     /* 0 */ CHU_GIRL_EYES_ASLEEP,
@@ -69,7 +75,10 @@ void EnBomBowlMan_Init(Actor* thisx, PlayState* play2) {
     Actor_SetScale(&this->actor, 0.013f);
 
     for (i = 0; i < 2; i++) {
-        if(CVarGetInteger(CVAR_ENHANCEMENT("CustomizeBombchuBowling"), 0) && CVarGetInteger(i == 0 ? CVAR_ENHANCEMENT("BombchuBowlingNoSmallCucco") : CVAR_ENHANCEMENT("BombchuBowlingNoBigCucco"), 0)) {
+        if (CVarGetInteger(CVAR_ENHANCEMENT("CustomizeBombchuBowling"), 0) &&
+            CVarGetInteger(i == 0 ? CVAR_ENHANCEMENT("BombchuBowlingNoSmallCucco")
+                                  : CVAR_ENHANCEMENT("BombchuBowlingNoBigCucco"),
+                           0)) {
             continue;
         }
 
@@ -141,25 +150,11 @@ void EnBomBowMan_BlinkAwake(EnBomBowlMan* this, PlayState* play) {
     if (frameCount == 30.0f) {
         this->dialogState = TEXT_STATE_EVENT;
 
-        // Check for beaten Dodongo's Cavern if Rando is disabled
-        if (!IS_RANDO) {
-            if ((Flags_GetEventChkInf(EVENTCHKINF_USED_DODONGOS_CAVERN_BLUE_WARP)) || BREG(2)) {
-                this->actor.textId = 0xBF;
-            } else {
-                this->actor.textId = 0x7058;
-            }
-        }
-
-        // In randomizer, only check for bomb bag when bombchus aren't in logic
-        // and only check for bombchus when bombchus are in logic
-        if (IS_RANDO) {
-            u8 bombchusInLogic = Randomizer_GetSettingValue(RSK_BOMBCHUS_IN_LOGIC);
-            if ((!bombchusInLogic && INV_CONTENT(ITEM_BOMB) == ITEM_NONE) ||
-                (bombchusInLogic && INV_CONTENT(ITEM_BOMBCHU) == ITEM_NONE)) {
-                this->actor.textId = 0x7058;
-            } else {
-                this->actor.textId = 0xBF;
-            }
+        if (GameInteractor_Should(VB_BE_ABLE_TO_PLAY_BOMBCHU_BOWLING,
+                                  (Flags_GetEventChkInf(EVENTCHKINF_USED_DODONGOS_CAVERN_BLUE_WARP)) || BREG(2))) {
+            this->actor.textId = 0xBF;
+        } else {
+            this->actor.textId = 0x7058;
         }
     }
     Message_ContinueTextbox(play, this->actor.textId);
@@ -190,7 +185,7 @@ void EnBomBowMan_CheckBeatenDC(EnBomBowlMan* this, PlayState* play) {
         if (IS_RANDO) {
             // when rando'd, check if we have bombchus if chus are in logic
             // and check if we have a bomb bag if chus aren't in logic
-            u8 explosive = Randomizer_GetSettingValue(RSK_BOMBCHUS_IN_LOGIC) ? ITEM_BOMBCHU : ITEM_BOMB;
+            u8 explosive = Randomizer_GetSettingValue(RSK_BOMBCHU_BAG) ? ITEM_BOMBCHU : ITEM_BOMB;
             bombchuBowlingClosed = (INV_CONTENT(explosive) == ITEM_NONE);
         } else {
             // if not rando'd, check if we have beaten Dodongo's Cavern
@@ -271,9 +266,8 @@ void EnBomBowMan_RunGame(EnBomBowlMan* this, PlayState* play) {
             osSyncPrintf(VT_FGCOL(PURPLE) "☆☆☆☆☆ 中央ＨＩＴ！！！！ ☆☆☆☆☆ \n" VT_RST);
         }
 
-        if ((play->bombchuBowlingStatus == -1) &&
-            (play->actorCtx.actorLists[ACTORCAT_EXPLOSIVE].length == 0) && (this->bowlPit->status == 0) &&
-            (this->wallStatus[0] != 1) && (this->wallStatus[1] != 1)) {
+        if ((play->bombchuBowlingStatus == -1) && (play->actorCtx.actorLists[ACTORCAT_EXPLOSIVE].length == 0) &&
+            (this->bowlPit->status == 0) && (this->wallStatus[0] != 1) && (this->wallStatus[1] != 1)) {
             this->gameResult = 2; // Lost
             // "Bombchu lost"
             osSyncPrintf(VT_FGCOL(PURPLE) "☆☆☆☆☆ ボムチュウ消化 ☆☆☆☆☆ \n" VT_RST);
@@ -295,7 +289,7 @@ void EnBomBowMan_RunGame(EnBomBowlMan* this, PlayState* play) {
         Message_StartTextbox(play, this->actor.textId, NULL);
 
         if (this->gameResult == 2) {
-            func_8002DF54(play, NULL, 8);
+            Player_SetCsActionWithHaltedActors(play, NULL, 8);
         }
         this->actionFunc = EnBomBowlMan_HandlePlayChoice;
     } else {
@@ -327,10 +321,9 @@ void EnBomBowlMan_HandlePlayChoice(EnBomBowlMan* this, PlayState* play) {
                     Rupees_ChangeBy(-30);
                     this->minigamePlayStatus = 1;
                     this->wallStatus[0] = this->wallStatus[1] = 0;
-                    if(CVarGetInteger(CVAR_ENHANCEMENT("CustomizeBombchuBowling"), 0)) {
+                    if (CVarGetInteger(CVAR_ENHANCEMENT("CustomizeBombchuBowling"), 0)) {
                         play->bombchuBowlingStatus = CVarGetInteger(CVAR_ENHANCEMENT("BombchuBowlingAmmo"), 10);
-                    }
-                    else {
+                    } else {
                         play->bombchuBowlingStatus = 10;
                     }
                     Flags_SetSwitch(play, 0x38);
@@ -345,7 +338,7 @@ void EnBomBowlMan_HandlePlayChoice(EnBomBowlMan* this, PlayState* play) {
                         Message_ContinueTextbox(play, this->actor.textId);
                         this->dialogState = TEXT_STATE_EVENT;
                         OnePointCutscene_Init(play, 8010, -99, NULL, MAIN_CAM);
-                        func_8002DF54(play, NULL, 8);
+                        Player_SetCsActionWithHaltedActors(play, NULL, 8);
                         this->actionFunc = EnBomBowMan_SetupChooseShowPrize;
                     }
                 } else {
@@ -381,11 +374,11 @@ void func_809C41FC(EnBomBowlMan* this, PlayState* play) {
             Message_ContinueTextbox(play, this->actor.textId);
             this->dialogState = TEXT_STATE_EVENT;
             OnePointCutscene_Init(play, 8010, -99, NULL, MAIN_CAM);
-            func_8002DF54(play, NULL, 8);
+            Player_SetCsActionWithHaltedActors(play, NULL, 8);
             this->actionFunc = EnBomBowMan_SetupChooseShowPrize;
         } else {
             if (this->gameResult == 2) {
-                func_8002DF54(play, NULL, 7);
+                Player_SetCsActionWithHaltedActors(play, NULL, 7);
             }
             this->actionFunc = EnBomBowMan_SetupRunGame;
         }
@@ -464,11 +457,10 @@ void EnBomBowMan_ChooseShowPrize(EnBomBowlMan* this, PlayState* play) {
             this->prizeIndex = BREG(7) - 1;
         }
 
-        this->exItem = (EnExItem*)Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_EN_EX_ITEM,
-                                                     sPrizePosOffset[this->prizeIndex].x + 148.0f,
-                                                     sPrizePosOffset[this->prizeIndex].y + 40.0f,
-                                                     sPrizePosOffset[this->prizeIndex].z + 300.0f, 0,
-                                                     sPrizeRot[this->prizeIndex], 0, this->prizeIndex + EXITEM_COUNTER);
+        this->exItem = (EnExItem*)Actor_SpawnAsChild(
+            &play->actorCtx, &this->actor, play, ACTOR_EN_EX_ITEM, sPrizePosOffset[this->prizeIndex].x + 148.0f,
+            sPrizePosOffset[this->prizeIndex].y + 40.0f, sPrizePosOffset[this->prizeIndex].z + 300.0f, 0,
+            sPrizeRot[this->prizeIndex], 0, this->prizeIndex + EXITEM_COUNTER);
 
         if (!this->startedPlaying) {
             this->bowlPit = (EnBomBowlPit*)Actor_SpawnAsChild(&play->actorCtx, &this->actor, play,
@@ -509,7 +501,7 @@ void EnBomBowlMan_BeginPlayGame(EnBomBowlMan* this, PlayState* play) {
 
         // "Wow"
         osSyncPrintf(VT_FGCOL(YELLOW) "☆ わー ☆ %d\n" VT_RST, play->bombchuBowlingStatus);
-        func_8002DF54(play, NULL, 7);
+        Player_SetCsActionWithHaltedActors(play, NULL, 7);
         this->actionFunc = EnBomBowMan_SetupRunGame;
     }
 }
@@ -557,8 +549,7 @@ void EnBomBowlMan_Update(Actor* thisx, PlayState* play) {
     this->actionFunc(this, play);
 }
 
-s32 EnBomBowlMan_OverrideLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* pos, Vec3s* rot,
-                                  void* thisx) {
+s32 EnBomBowlMan_OverrideLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* pos, Vec3s* rot, void* thisx) {
     EnBomBowlMan* this = (EnBomBowlMan*)thisx;
 
     if (limbIndex == 4) { // head

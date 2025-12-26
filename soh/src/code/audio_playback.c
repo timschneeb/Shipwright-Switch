@@ -1,4 +1,5 @@
 #include "global.h"
+#include "soh/ResourceManagerHelpers.h"
 #include <libultraship/bridge.h>
 
 extern bool gUseLegacySD;
@@ -94,7 +95,7 @@ void Audio_InitNoteSub(Note* note, NoteSubEu* sub, NoteSubAttributes* attrs) {
     vel = 0.0f > vel ? 0.0f : vel;
     vel = 1.0f < vel ? 1.0f : vel;
 
-    float master_vol = CVarGetFloat("gGameMasterVolume", 1.0f);
+    float master_vol = (float)CVarGetInteger(CVAR_SETTING("Volume.Master"), 40) / 100.0f;
     sub->targetVolLeft = (s32)((vel * volLeft) * (0x1000 - 0.001f)) * master_vol;
     sub->targetVolRight = (s32)((vel * volRight) * (0x1000 - 0.001f)) * master_vol;
 
@@ -120,7 +121,7 @@ void Audio_NoteSetResamplingRate(NoteSubEu* noteSubEu, f32 resamplingRateInput) 
     } else {
         noteSubEu->bitField1.hasTwoParts = true;
         if (3.99996f < resamplingRateInput) {
-            if (CVarGetInteger("gExperimentalOctaveDrop", 0)) {
+            if (CVarGetInteger(CVAR_AUDIO("ExperimentalOctaveDrop"), 0) || noteSubEu->bitField1.isSyntheticWave) {
                 resamplingRate = resamplingRateInput * 0.25;
             } else {
                 resamplingRate = 1.99998f;
@@ -146,6 +147,7 @@ void Audio_NoteInit(Note* note) {
     note->noteSubEu = gDefaultNoteSub;
 }
 
+extern void aOPUSFree(struct OggOpusFile* opusFile);
 void Audio_NoteDisable(Note* note) {
     if (note->noteSubEu.bitField0.needsInit == true) {
         note->noteSubEu.bitField0.needsInit = false;
@@ -158,6 +160,10 @@ void Audio_NoteDisable(Note* note) {
     note->playbackState.prevParentLayer = NO_LAYER;
     note->playbackState.adsr.action.s.state = ADSR_STATE_DISABLED;
     note->playbackState.adsr.current = 0;
+    if (note->synthesisState.opusFile != NULL) {
+        aOPUSFree(note->synthesisState.opusFile);
+        note->synthesisState.opusFile = NULL;
+    }
 }
 
 void Audio_ProcessNotes(void) {
@@ -292,15 +298,7 @@ void Audio_ProcessNotes(void) {
 
             f32 resampRate = gAudioContext.audioBufferParameters.resampleRate;
 
-            // CUSTOM SAMPLE CHECK
-            if (!noteSubEu2->bitField1.isSyntheticWave && noteSubEu2->sound.soundFontSound != NULL &&
-                noteSubEu2->sound.soundFontSound->sample != NULL &&
-                noteSubEu2->sound.soundFontSound->sample->sampleRateMagicValue == 'RIFF') {
-                resampRate = CALC_RESAMPLE_FREQ(noteSubEu2->sound.soundFontSound->sample->sampleRate);
-            }
-
             subAttrs.frequency *= resampRate;
-
 
             subAttrs.velocity *= scale;
             Audio_InitNoteSub(note, noteSubEu2, &subAttrs);
@@ -335,7 +333,7 @@ Instrument* Audio_GetInstrumentInner(s32 fontId, s32 instId) {
     }
 
     int instCnt = 0;
-    SoundFont* sf = ResourceMgr_LoadAudioSoundFont(fontMap[fontId]);
+    SoundFont* sf = ResourceMgr_LoadAudioSoundFontByName(fontMap[fontId]);
 
     if (instId >= sf->numInstruments)
         return NULL;
@@ -362,12 +360,11 @@ Drum* Audio_GetDrum(s32 fontId, s32 drumId) {
         return NULL;
     }
 
-    
-    SoundFont* sf = ResourceMgr_LoadAudioSoundFont(fontMap[fontId]);
+    SoundFont* sf = ResourceMgr_LoadAudioSoundFontByName(fontMap[fontId]);
     if (drumId < sf->numDrums) {
         drum = sf->drums[drumId];
     }
-    
+
     if (drum == NULL) {
         gAudioContext.audioErrorFlags = ((fontId << 8) + drumId) + 0x5000000;
     }
@@ -387,7 +384,7 @@ SoundFontSound* Audio_GetSfx(s32 fontId, s32 sfxId) {
         return NULL;
     }
 
-    SoundFont* sf = ResourceMgr_LoadAudioSoundFont(fontMap[fontId]);
+    SoundFont* sf = ResourceMgr_LoadAudioSoundFontByName(fontMap[fontId]);
     if (sfxId < sf->numSfx) {
         sfx = &sf->soundEffects[sfxId];
     }

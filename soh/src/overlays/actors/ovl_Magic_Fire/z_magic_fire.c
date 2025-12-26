@@ -5,8 +5,9 @@
  */
 
 #include "z_magic_fire.h"
+#include "soh/ResourceManagerHelpers.h"
 
-#define FLAGS (ACTOR_FLAG_UPDATE_WHILE_CULLED | ACTOR_FLAG_NO_FREEZE_OCARINA)
+#define FLAGS (ACTOR_FLAG_UPDATE_CULLING_DISABLED | ACTOR_FLAG_UPDATE_DURING_OCARINA)
 
 void MagicFire_Init(Actor* thisx, PlayState* play);
 void MagicFire_Destroy(Actor* thisx, PlayState* play);
@@ -100,8 +101,7 @@ void MagicFire_UpdateBeforeCast(Actor* thisx, PlayState* play) {
     MagicFire* this = (MagicFire*)thisx;
     Player* player = GET_PLAYER(play);
 
-    if ((play->msgCtx.msgMode == MSGMODE_OCARINA_CORRECT_PLAYBACK) ||
-        (play->msgCtx.msgMode == MSGMODE_SONG_PLAYED)) {
+    if ((play->msgCtx.msgMode == MSGMODE_OCARINA_CORRECT_PLAYBACK) || (play->msgCtx.msgMode == MSGMODE_SONG_PLAYED)) {
         Actor_Kill(&this->actor);
         return;
     }
@@ -120,8 +120,7 @@ void MagicFire_Update(Actor* thisx, PlayState* play) {
     s32 pad;
 
     this->actor.world.pos = player->actor.world.pos;
-    if ((play->msgCtx.msgMode == MSGMODE_OCARINA_CORRECT_PLAYBACK) ||
-        (play->msgCtx.msgMode == MSGMODE_SONG_PLAYED)) {
+    if ((play->msgCtx.msgMode == MSGMODE_OCARINA_CORRECT_PLAYBACK) || (play->msgCtx.msgMode == MSGMODE_SONG_PLAYED)) {
         Actor_Kill(&this->actor);
         return;
     }
@@ -216,10 +215,14 @@ void MagicFire_Draw(Actor* thisx, PlayState* play) {
     s32 pad2;
     s32 i;
     u8 alpha;
-    Color_RGB8 Spell_env_ori = {255, 0, 0};
-    Color_RGB8 Spell_col_ori = {255, 200, 0};
-    Color_RGB8 Spell_env = CVarGetColor24("gDF_Env", Spell_env_ori);
-    Color_RGB8 Spell_col = CVarGetColor24("gDF_Col", Spell_col_ori);
+    Color_RGB8 Spell_env = { 255, 0, 0 };
+    Color_RGB8 Spell_col = { 255, 200, 0 };
+    if (CVarGetInteger(CVAR_COSMETIC("Magic.DinsSecondary.Changed"), 0)) {
+        Spell_env = CVarGetColor24(CVAR_COSMETIC("Magic.DinsSecondary.Value"), Spell_env);
+    }
+    if (CVarGetInteger(CVAR_COSMETIC("Magic.DinsPrimaryary.Changed"), 0)) {
+        Spell_col = CVarGetColor24(CVAR_COSMETIC("Magic.DinsPrimary.Value"), Spell_col);
+    }
 
     if (this->action > 0) {
         OPEN_DISPS(play->state.gfxCtx);
@@ -231,16 +234,11 @@ void MagicFire_Draw(Actor* thisx, PlayState* play) {
         gDPSetColorDither(POLY_XLU_DISP++, G_CD_DISABLE);
         gDPFillRectangle(POLY_XLU_DISP++, 0, 0, 319, 239);
         Gfx_SetupDL_25Xlu(play->state.gfxCtx);
-        if (CVarGetInteger("gUseSpellsCol",0)) {
-            gDPSetPrimColor(POLY_XLU_DISP++, 0, 0x80, Spell_col.r, Spell_col.g, Spell_col.b, (u8)(this->alphaMultiplier * 255));
-            gDPSetEnvColor(POLY_XLU_DISP++, Spell_env.r, Spell_env.g, Spell_env.b, (u8)(this->alphaMultiplier * 255));
-        } else {
-            gDPSetPrimColor(POLY_XLU_DISP++, 0, 0x80, Spell_col_ori.r, Spell_col_ori.g, Spell_col_ori.b, (u8)(this->alphaMultiplier * 255));
-            gDPSetEnvColor(POLY_XLU_DISP++, Spell_env_ori.r, Spell_env_ori.g, Spell_env_ori.b, (u8)(this->alphaMultiplier * 255));
-        }
+        gDPSetPrimColor(POLY_XLU_DISP++, 0, 0x80, Spell_col.r, Spell_col.g, Spell_col.b,
+                        (u8)(this->alphaMultiplier * 255));
+        gDPSetEnvColor(POLY_XLU_DISP++, Spell_env.r, Spell_env.g, Spell_env.b, (u8)(this->alphaMultiplier * 255));
         Matrix_Scale(0.15f, 0.15f, 0.15f, MTXMODE_APPLY);
-        gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(play->state.gfxCtx),
-                  G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+        gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(play->state.gfxCtx), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
         gDPPipeSync(POLY_XLU_DISP++);
         gSPTexture(POLY_XLU_DISP++, 0xFFFF, 0xFFFF, 0, G_TX_RENDERTILE, G_ON);
         gDPSetTextureLUT(POLY_XLU_DISP++, G_TT_NONE);

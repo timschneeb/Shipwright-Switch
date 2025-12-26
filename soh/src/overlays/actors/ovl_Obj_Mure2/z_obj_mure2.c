@@ -5,6 +5,7 @@
  */
 
 #include "z_obj_mure2.h"
+#include "soh/OTRGlobals.h"
 
 #define FLAGS 0
 
@@ -113,8 +114,7 @@ void ObjMure2_SpawnActors(ObjMure2* this, PlayState* play) {
     for (i = 0; i < D_80B9A818[actorNum]; i++) {
         if (this->actorSpawnPtrList[i] != NULL) {
             // "Warning : I already have a child (%s %d)(arg_data 0x%04x)"
-            osSyncPrintf("Warning : 既に子供がいる(%s %d)(arg_data 0x%04x)\n", __FILE__, __LINE__,
-                         this->actor.params);
+            osSyncPrintf("Warning : 既に子供がいる(%s %d)(arg_data 0x%04x)\n", __FILE__, __LINE__, this->actor.params);
             continue;
         }
 
@@ -190,9 +190,8 @@ void func_80B9A658(ObjMure2* this) {
 
 void func_80B9A668(ObjMure2* this, PlayState* play) {
     if (Math3D_Dist1DSq(this->actor.projectedPos.x, this->actor.projectedPos.z) <
-            (sDistSquared1[this->actor.params & 3] * this->unk_184) ||
-        CVarGetInteger(CVAR_ENHANCEMENT("DisableDrawDistance"), 0) != 0) {
-        this->actor.flags |= ACTOR_FLAG_UPDATE_WHILE_CULLED;
+        (sDistSquared1[this->actor.params & 3] * this->unk_184)) {
+        this->actor.flags |= ACTOR_FLAG_UPDATE_CULLING_DISABLED;
         ObjMure2_SpawnActors(this, play);
         func_80B9A6E8(this);
     }
@@ -205,13 +204,9 @@ void func_80B9A6E8(ObjMure2* this) {
 void func_80B9A6F8(ObjMure2* this, PlayState* play) {
     func_80B9A534(this);
 
-    if (CVarGetInteger(CVAR_ENHANCEMENT("DisableDrawDistance"), 0) != 0) {
-        return;
-    }
-
     if ((sDistSquared2[this->actor.params & 3] * this->unk_184) <=
-            Math3D_Dist1DSq(this->actor.projectedPos.x, this->actor.projectedPos.z)) {
-        this->actor.flags &= ~ACTOR_FLAG_UPDATE_WHILE_CULLED;
+        Math3D_Dist1DSq(this->actor.projectedPos.x, this->actor.projectedPos.z)) {
+        this->actor.flags &= ~ACTOR_FLAG_UPDATE_CULLING_DISABLED;
         ObjMure2_CleanupAndDie(this, play);
         func_80B9A658(this);
     }
@@ -225,5 +220,20 @@ void ObjMure2_Update(Actor* thisx, PlayState* play) {
     } else {
         this->unk_184 = 4.0f;
     }
+
+    // SOH [Enhancements] Extended draw distance
+    s32 distanceMultiplier = CVarGetInteger(CVAR_ENHANCEMENT("DisableDrawDistance"), 1);
+    if (CVarGetInteger(CVAR_ENHANCEMENT("WidescreenActorCulling"), 0) || distanceMultiplier > 1) {
+        f32 originalAspectRatio = 4.0f / 3.0f;
+        f32 currentAspectRatio = OTRGetAspectRatio();
+        // Adjust ratio difference based on field of view testing
+        f32 ratioAdjusted = 1.0f + (MAX(currentAspectRatio / originalAspectRatio, 1.0f) / 1.5f);
+        // Distance multiplier is squared due to the checks above for squared distances
+        distanceMultiplier = SQ(MAX(distanceMultiplier, 1));
+
+        // Prefer the largest of the three values
+        this->unk_184 = MAX(MAX((f32)distanceMultiplier, ratioAdjusted), this->unk_184);
+    }
+
     this->actionFunc(this, play);
 }

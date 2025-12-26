@@ -37,7 +37,7 @@
 #include "objects/object_bba/object_bba.h"
 #include "objects/object_ane/object_ane.h"
 
-#define FLAGS ACTOR_FLAG_UPDATE_WHILE_CULLED
+#define FLAGS ACTOR_FLAG_UPDATE_CULLING_DISABLED
 
 void DemoEc_Init(Actor* thisx, PlayState* play);
 void DemoEc_Destroy(Actor* thisx, PlayState* play);
@@ -175,19 +175,19 @@ void DemoEc_UpdateBgFlags(DemoEc* this, PlayState* play) {
 }
 
 void func_8096D594(DemoEc* this, PlayState* play) {
-    this->skelAnime.moveFlags |= 3;
+    this->skelAnime.movementFlags |= 3;
     AnimationContext_SetMoveActor(play, &this->actor, &this->skelAnime, 1.0f);
 }
 
 void func_8096D5D4(DemoEc* this, PlayState* play) {
     this->skelAnime.baseTransl = this->skelAnime.jointTable[0];
     this->skelAnime.prevTransl = this->skelAnime.jointTable[0];
-    this->skelAnime.moveFlags |= 3;
+    this->skelAnime.movementFlags |= 3;
     AnimationContext_SetMoveActor(play, &this->actor, &this->skelAnime, 1.0f);
 }
 
 void func_8096D64C(DemoEc* this, PlayState* play) {
-    this->skelAnime.moveFlags |= 3;
+    this->skelAnime.movementFlags |= 3;
     AnimationContext_SetMoveActor(play, &this->actor, &this->skelAnime, 1.0f);
 }
 
@@ -248,8 +248,8 @@ Gfx* DemoEc_AllocColorDList(GraphicsContext* gfxCtx, u8* color) {
     return dList;
 }
 
-void DemoEc_DrawSkeleton(DemoEc* this, PlayState* play, void* eyeTexture, void* arg3,
-                         OverrideLimbDraw overrideLimbDraw, PostLimbDraw postLimbDraw) {
+void DemoEc_DrawSkeleton(DemoEc* this, PlayState* play, void* eyeTexture, void* arg3, OverrideLimbDraw overrideLimbDraw,
+                         PostLimbDraw postLimbDraw) {
     GraphicsContext* gfxCtx = play->state.gfxCtx;
     SkelAnime* skelAnime = &this->skelAnime;
     s32 pad;
@@ -274,8 +274,8 @@ void DemoEc_DrawSkeleton(DemoEc* this, PlayState* play, void* eyeTexture, void* 
     CLOSE_DISPS(gfxCtx);
 }
 
-void DemoEc_DrawSkeletonCustomColor(DemoEc* this, PlayState* play, Gfx* arg2, Gfx* arg3, u8* color1,
-                                    u8* color2, OverrideLimbDraw overrideLimbDraw, PostLimbDraw postLimbDraw) {
+void DemoEc_DrawSkeletonCustomColor(DemoEc* this, PlayState* play, Gfx* arg2, Gfx* arg3, u8* color1, u8* color2,
+                                    OverrideLimbDraw overrideLimbDraw, PostLimbDraw postLimbDraw) {
     s32 pad;
     GraphicsContext* gfxCtx = play->state.gfxCtx;
     SkelAnime* skelAnime = &this->skelAnime;
@@ -331,7 +331,7 @@ void DemoEc_UseAnimationObject(DemoEc* this, PlayState* play) {
     gSegments[6] = PHYSICAL_TO_VIRTUAL(play->objectCtx.status[animObjBankIndex].segment);
 }
 
-CsCmdActorAction* DemoEc_GetNpcAction(PlayState* play, s32 actionIndex) {
+CsCmdActorCue* DemoEc_GetNpcAction(PlayState* play, s32 actionIndex) {
     if (play->csCtx.state != CS_STATE_IDLE) {
         return play->csCtx.npcActions[actionIndex];
     } else {
@@ -340,7 +340,7 @@ CsCmdActorAction* DemoEc_GetNpcAction(PlayState* play, s32 actionIndex) {
 }
 
 void DemoEc_SetNpcActionPosRot(DemoEc* this, PlayState* play, s32 actionIndex) {
-    CsCmdActorAction* npcAction = DemoEc_GetNpcAction(play, actionIndex);
+    CsCmdActorCue* npcAction = DemoEc_GetNpcAction(play, actionIndex);
 
     if (npcAction != NULL) {
         this->actor.world.pos.x = npcAction->startPos.x;
@@ -648,8 +648,8 @@ void DemoEc_UpdateCarpenter(DemoEc* this, PlayState* play) {
     DemoEc_UpdateBgFlags(this, play);
 }
 
-s32 DemoEc_CarpenterOverrideLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* pos, Vec3s* rot,
-                                     void* thisx, Gfx** gfx) {
+s32 DemoEc_CarpenterOverrideLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* pos, Vec3s* rot, void* thisx,
+                                     Gfx** gfx) {
     DemoEc* this = (DemoEc*)thisx;
 
     if (limbIndex == 1) {
@@ -689,8 +689,7 @@ Gfx* DemoEc_GetCarpenterPostLimbDList(DemoEc* this) {
     }
 }
 
-void DemoEc_CarpenterPostLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx,
-                                  Gfx** gfx) {
+void DemoEc_CarpenterPostLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx, Gfx** gfx) {
     DemoEc* this = (DemoEc*)thisx;
     Gfx* postLimbDList;
 
@@ -736,8 +735,7 @@ Gfx* DemoEc_GetGerudoPostLimbDList(DemoEc* this) {
     }
 }
 
-void DemoEc_GerudoPostLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx,
-                               Gfx** gfx) {
+void DemoEc_GerudoPostLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx, Gfx** gfx) {
     DemoEc* this = (DemoEc*)thisx;
     Gfx* postLimbDList;
 
@@ -821,7 +819,7 @@ void func_8096F26C(DemoEc* this, s32 arg1) {
 }
 
 void func_8096F2B0(DemoEc* this, PlayState* play, s32 arg2) {
-    CsCmdActorAction* npcAction;
+    CsCmdActorCue* npcAction;
     s32 sp18;
 
     npcAction = DemoEc_GetNpcAction(play, arg2);
@@ -895,7 +893,7 @@ void func_8096F544(DemoEc* this, s32 changeAnim) {
 }
 
 void func_8096F578(DemoEc* this, PlayState* play, s32 arg2) {
-    CsCmdActorAction* npcAction;
+    CsCmdActorCue* npcAction;
     s32 sp18;
 
     npcAction = DemoEc_GetNpcAction(play, arg2);
@@ -1072,8 +1070,7 @@ void DemoEc_UpdateFishingOwner(DemoEc* this, PlayState* play) {
     DemoEc_UpdateBgFlags(this, play);
 }
 
-void DemoEc_FishingOwnerPostLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx,
-                                     Gfx** gfx) {
+void DemoEc_FishingOwnerPostLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3s* rot, void* thisx, Gfx** gfx) {
     DemoEc* this = (DemoEc*)thisx;
 
     if ((limbIndex == 8) && !(HIGH_SCORE(HS_FISHING) & 0x1000)) {
@@ -1270,8 +1267,7 @@ void DemoEc_InitCommon(DemoEc* this, PlayState* play) {
         return;
     }
 
-    if (Object_IsLoaded(&play->objectCtx, primaryBankIndex) &&
-        Object_IsLoaded(&play->objectCtx, secondaryBankIndex)) {
+    if (Object_IsLoaded(&play->objectCtx, primaryBankIndex) && Object_IsLoaded(&play->objectCtx, secondaryBankIndex)) {
 
         this->drawObjBankIndex = primaryBankIndex;
         this->animObjBankIndex = secondaryBankIndex;

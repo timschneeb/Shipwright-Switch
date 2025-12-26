@@ -7,6 +7,7 @@
 #include "z_bg_gate_shutter.h"
 #include "objects/object_spot01_matoyab/object_spot01_matoyab.h"
 #include "vt.h"
+#include "soh/OTRGlobals.h"
 
 #define FLAGS 0
 
@@ -130,8 +131,7 @@ void BgGateShutter_Draw(Actor* thisx, PlayState* play) {
 
     Gfx_SetupDL_25Opa(play->state.gfxCtx);
 
-    gSPMatrix(POLY_OPA_DISP++, MATRIX_NEWMTX(play->state.gfxCtx),
-              G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPMatrix(POLY_OPA_DISP++, MATRIX_NEWMTX(play->state.gfxCtx), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     gSPDisplayList(POLY_OPA_DISP++, gKakarikoGuardGateDL);
 
     CLOSE_DISPS(play->state.gfxCtx);

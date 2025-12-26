@@ -5,6 +5,7 @@
 #include "objects/gameplay_keep/gameplay_keep.h"
 
 #include "soh/frame_interpolation.h"
+#include "soh/OTRGlobals.h"
 
 #define LIGHTS_BUFFER_SIZE 32
 //#define LIGHTS_BUFFER_SIZE 1024 // Kill me
@@ -162,11 +163,7 @@ void Lights_BindAll(Lights* lights, LightNode* listHead, Vec3f* vec) {
 
     while (listHead != NULL) {
         info = listHead->info;
-        // OTRTODO: we do not know the root cause of the info->type value being invalid
-        // but this prevents it from crashing the game on the game over screen
-        if (info->type < 3) {
-            bindFuncs[info->type](lights, &info->params, vec);
-        }
+        bindFuncs[info->type](lights, &info->params, vec);
         listHead = listHead->next;
     }
 }
@@ -400,7 +397,7 @@ void Lights_GlowCheck(PlayState* play) {
             if ((multDest.z > 1.0f) && y >= shrink && y <= SCREEN_HEIGHT - shrink) {
                 wZ = (s32)((multDest.z * wDest) * 16352.0f) + 16352;
                 zBuf = OTRGetPixelDepth(x, y) * 4;
-        
+
                 if (wZ < (zBuf >> 3)) {
                     params->drawGlow = true;
                 }
@@ -439,8 +436,7 @@ void Lights_DrawGlow(PlayState* play) {
             gDPSetPrimColor(POLY_XLU_DISP++, 0, 0, params->color[0], params->color[1], params->color[2], 50);
             Matrix_Translate(params->x, params->y, params->z, MTXMODE_NEW);
             Matrix_Scale(scale, scale, scale, MTXMODE_APPLY);
-            gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(play->state.gfxCtx),
-                      G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+            gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(play->state.gfxCtx), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
             gSPDisplayList(POLY_XLU_DISP++, gGlowCircleDL);
             FrameInterpolation_RecordCloseChild();
         }

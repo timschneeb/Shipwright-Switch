@@ -4,7 +4,7 @@
 #include "vt.h"
 #include "overlays/effects/ovl_Effect_Ss_Kakera/z_eff_ss_kakera.h"
 
-#define FLAGS (ACTOR_FLAG_UPDATE_WHILE_CULLED | ACTOR_FLAG_DRAW_WHILE_CULLED)
+#define FLAGS (ACTOR_FLAG_UPDATE_CULLING_DISABLED | ACTOR_FLAG_DRAW_CULLING_DISABLED)
 
 void DemoGt_Init(Actor* thisx, PlayState* play);
 void DemoGt_Destroy(Actor* thisx, PlayState* play);
@@ -20,7 +20,7 @@ void DemoGt_Destroy(Actor* thisx, PlayState* play) {
 }
 
 void DemoGt_PlayEarthquakeSfx() {
-    func_800788CC(NA_SE_EV_EARTHQUAKE - SFX_FLAG);
+    Sfx_PlaySfxCentered2(NA_SE_EV_EARTHQUAKE - SFX_FLAG);
 }
 
 void DemoGt_PlayExplosion1Sfx(PlayState* play, Vec3f* pos) {
@@ -35,8 +35,7 @@ void DemoGt_Rumble(PlayState* play) {
     func_800AA000(0.0f, 0x32, 0xA, 5);
 }
 
-void DemoGt_SpawnDust(PlayState* play, Vec3f* pos, Vec3f* velocity, Vec3f* accel, f32 scale, s16 scaleStep,
-                      s16 life) {
+void DemoGt_SpawnDust(PlayState* play, Vec3f* pos, Vec3f* velocity, Vec3f* accel, f32 scale, s16 scaleStep, s16 life) {
     static Color_RGBA8 brownPrim = { 100, 80, 100, 0 };
     static Color_RGBA8 redEnv = { 255, 110, 96, 0 };
 
@@ -73,8 +72,7 @@ void func_8097D7D8(PlayState* play, Vec3f* pos, Vec3f* velOffset, f32 scale, s32
 }
 
 Actor* DemoGt_SpawnCloudRing(PlayState* play, Vec3f* pos, s16 params) {
-    return Actor_Spawn(&play->actorCtx, play, ACTOR_BG_SPOT16_DOUGHNUT, pos->x, pos->y, pos->z, 0, 0, 0,
-                       params, true);
+    return Actor_Spawn(&play->actorCtx, play, ACTOR_BG_SPOT16_DOUGHNUT, pos->x, pos->y, pos->z, 0, 0, 0, params, true);
 }
 
 void DemoGt_SpawnExplosionWithSound(PlayState* play, Vec3f* pos, f32 scale) {
@@ -207,9 +205,9 @@ void func_8097DF70(DemoGt* this, PlayState* play, Vec3f* spawnerPos) {
             phi_s0 = 33;
         }
 
-        EffectSsKakera_Spawn(play, &pos, &velocity, spawnerPos, -200, phi_s0, 10, 10, 0,
-                             Rand_ZeroOne() * 30.0f + 30.0f, 2, 300, (s32)(Rand_ZeroOne() * 30.0f) + 30,
-                             KAKERA_COLOR_NONE, OBJECT_GEFF, gGanonRubbleDL);
+        EffectSsKakera_Spawn(play, &pos, &velocity, spawnerPos, -200, phi_s0, 10, 10, 0, Rand_ZeroOne() * 30.0f + 30.0f,
+                             2, 300, (s32)(Rand_ZeroOne() * 30.0f) + 30, KAKERA_COLOR_NONE, OBJECT_GEFF,
+                             gGanonRubbleDL);
         angle += 0x1555;
     }
 }
@@ -256,8 +254,8 @@ void func_8097E1D4(PlayState* play, Vec3f* arg1, s16 arg2) {
     }
 }
 
-void func_8097E454(PlayState* play, Vec3f* spawnerPos, Vec3f* velocity, Vec3f* accel, f32 arg4, f32 scale,
-                   s32 arg6, s32 arg7, s16 life) {
+void func_8097E454(PlayState* play, Vec3f* spawnerPos, Vec3f* velocity, Vec3f* accel, f32 arg4, f32 scale, s32 arg6,
+                   s32 arg7, s16 life) {
     s32 pad2[3];
     s16 increment;
     s32 frames;
@@ -297,9 +295,9 @@ u8 func_8097E69C(PlayState* play) {
     }
 }
 
-CsCmdActorAction* DemoGt_GetNpcAction(PlayState* play, u32 actionIdx) {
+CsCmdActorCue* DemoGt_GetNpcAction(PlayState* play, u32 actionIdx) {
     s32 pad[2];
-    CsCmdActorAction* ret = NULL;
+    CsCmdActorCue* ret = NULL;
 
     if (!func_8097E69C(play)) {
         ret = play->csCtx.npcActions[actionIdx];
@@ -309,7 +307,7 @@ CsCmdActorAction* DemoGt_GetNpcAction(PlayState* play, u32 actionIdx) {
 }
 
 u8 func_8097E704(PlayState* play, u16 arg1, s32 arg2) {
-    CsCmdActorAction* action = DemoGt_GetNpcAction(play, arg2);
+    CsCmdActorCue* action = DemoGt_GetNpcAction(play, arg2);
 
     if ((action != NULL) && (action->action == arg1)) {
         return true;
@@ -319,7 +317,7 @@ u8 func_8097E704(PlayState* play, u16 arg1, s32 arg2) {
 }
 
 void func_8097E744(DemoGt* this, PlayState* play, u32 actionIdx) {
-    CsCmdActorAction* npcAction = DemoGt_GetNpcAction(play, actionIdx);
+    CsCmdActorCue* npcAction = DemoGt_GetNpcAction(play, actionIdx);
     Vec3f* pos = &this->dyna.actor.world.pos;
     f32 startX;
     f32 startY;
@@ -859,8 +857,7 @@ void DemoGt_Draw2(DemoGt* this, PlayState* play) {
     gSPSegment(POLY_OPA_DISP++, 0x08,
                Gfx_TwoTexScrollEnvColor(gfxCtx, 0, 0, unk198[0], 0x20, 0x40, 1, 0, unk198[1], 0x20, 0x40, unk178[0],
                                         unk178[1], unk178[2], 128));
-    gSPMatrix(POLY_OPA_DISP++, MATRIX_NEWMTX(gfxCtx),
-              G_MTX_PUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPMatrix(POLY_OPA_DISP++, MATRIX_NEWMTX(gfxCtx), G_MTX_PUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     gSPDisplayList(POLY_OPA_DISP++, gTowerCollapseCsCollapsedStructureInnerDL);
     gSPPopMatrix(POLY_OPA_DISP++, G_MTX_MODELVIEW);
 
@@ -1169,8 +1166,7 @@ void DemoGt_Draw3(DemoGt* this, PlayState* play) {
     OPEN_DISPS(gfxCtx);
 
     Gfx_SetupDL_25Opa(gfxCtx);
-    gSPMatrix(POLY_OPA_DISP++, MATRIX_NEWMTX(gfxCtx),
-              G_MTX_PUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPMatrix(POLY_OPA_DISP++, MATRIX_NEWMTX(gfxCtx), G_MTX_PUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     gSPDisplayList(POLY_OPA_DISP++, gTowerCollapseCsCollapsedStructureOuterDL);
     gSPPopMatrix(POLY_OPA_DISP++, G_MTX_MODELVIEW);
 
@@ -1189,7 +1185,7 @@ void func_80980F58(DemoGt* this, PlayState* play) {
     u16 frames = play->csCtx.frames;
 
     if (frames == 244) {
-        func_80078914(&this->dyna.actor.projectedPos, NA_SE_EV_TOWER_PARTS_BROKEN - SFX_FLAG);
+        Sfx_PlaySfxAtPos(&this->dyna.actor.projectedPos, NA_SE_EV_TOWER_PARTS_BROKEN - SFX_FLAG);
     }
 }
 
@@ -1312,7 +1308,7 @@ void func_80981424(DemoGt* this, PlayState* play) {
     u16 frames = play->csCtx.frames;
 
     if (frames == 789) {
-        func_80078914(&this->dyna.actor.projectedPos, NA_SE_EV_TOWER_PARTS_BROKEN - SFX_FLAG);
+        Sfx_PlaySfxAtPos(&this->dyna.actor.projectedPos, NA_SE_EV_TOWER_PARTS_BROKEN - SFX_FLAG);
     }
 }
 
@@ -1430,7 +1426,7 @@ void func_809818FC(DemoGt* this, PlayState* play) {
     u16 frames = play->csCtx.frames;
 
     if (frames == 845) {
-        func_80078914(&this->dyna.actor.projectedPos, NA_SE_EV_TOWER_PARTS_BROKEN - SFX_FLAG);
+        Sfx_PlaySfxAtPos(&this->dyna.actor.projectedPos, NA_SE_EV_TOWER_PARTS_BROKEN - SFX_FLAG);
     }
 }
 void func_80981930(DemoGt* this, PlayState* play) {
@@ -1521,7 +1517,7 @@ void func_80981CEC(DemoGt* this, PlayState* play) {
     u16 frames = play->csCtx.frames;
 
     if (frames == 183) {
-        func_80078914(&this->dyna.actor.projectedPos, NA_SE_EV_TOWER_PARTS_BROKEN - SFX_FLAG);
+        Sfx_PlaySfxAtPos(&this->dyna.actor.projectedPos, NA_SE_EV_TOWER_PARTS_BROKEN - SFX_FLAG);
     }
 }
 
@@ -1612,7 +1608,7 @@ void func_809820AC(DemoGt* this, PlayState* play) {
     u16 frames = play->csCtx.frames;
 
     if (frames == 154) {
-        func_80078914(&this->dyna.actor.projectedPos, NA_SE_EV_TOWER_PARTS_BROKEN - SFX_FLAG);
+        Sfx_PlaySfxAtPos(&this->dyna.actor.projectedPos, NA_SE_EV_TOWER_PARTS_BROKEN - SFX_FLAG);
     }
 }
 

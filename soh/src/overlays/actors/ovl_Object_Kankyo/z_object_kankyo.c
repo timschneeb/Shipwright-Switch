@@ -12,7 +12,7 @@
 #include "soh/frame_interpolation.h"
 #include <assert.h>
 
-#define FLAGS (ACTOR_FLAG_UPDATE_WHILE_CULLED | ACTOR_FLAG_DRAW_WHILE_CULLED | ACTOR_FLAG_NO_FREEZE_OCARINA)
+#define FLAGS (ACTOR_FLAG_UPDATE_CULLING_DISABLED | ACTOR_FLAG_DRAW_CULLING_DISABLED | ACTOR_FLAG_UPDATE_DURING_OCARINA)
 
 void ObjectKankyo_Init(Actor* thisx, PlayState* play);
 void ObjectKankyo_Destroy(Actor* thisx, PlayState* play);
@@ -136,27 +136,6 @@ void ObjectKankyo_Init(Actor* thisx, PlayState* play) {
                 this->effects[5].size = 0.0f;
             }
 
-            if (IS_RANDO) {
-                if (Flags_GetRandomizerInf(RAND_INF_TRIALS_DONE_FOREST_TRIAL)) {
-                    this->effects[0].size = 0.0f;
-                }
-                if (Flags_GetRandomizerInf(RAND_INF_TRIALS_DONE_WATER_TRIAL)) {
-                    this->effects[1].size = 0.0f;
-                }
-                if (Flags_GetRandomizerInf(RAND_INF_TRIALS_DONE_SHADOW_TRIAL)) {
-                    this->effects[2].size = 0.0f;
-                }
-                if (Flags_GetRandomizerInf(RAND_INF_TRIALS_DONE_FIRE_TRIAL)) {
-                    this->effects[3].size = 0.0f;
-                }
-                if (Flags_GetRandomizerInf(RAND_INF_TRIALS_DONE_LIGHT_TRIAL)) {
-                    this->effects[4].size = 0.0f;
-                }
-                if (Flags_GetRandomizerInf(RAND_INF_TRIALS_DONE_SPIRIT_TRIAL)) {
-                    this->effects[5].size = 0.0f;
-                }
-            }
-
             if (gSaveContext.cutsceneTrigger != 0) {
                 if (gSaveContext.entranceIndex == ENTR_INSIDE_GANONS_CASTLE_2) {
                     this->effects[0].size = 0.1f;
@@ -229,25 +208,25 @@ void ObjectKankyo_Fairies(ObjectKankyo* this, PlayState* play) {
         func_800F436C(&sSoundPos, NA_SE_EV_NAVY_FLY - SFX_FLAG, (0.4f * dist) + 0.6f);
         switch (play->csCtx.frames) {
             case 473:
-                func_800788CC(NA_SE_VO_NA_HELLO_3);
+                Sfx_PlaySfxCentered2(NA_SE_VO_NA_HELLO_3);
                 break;
 
             case 583:
-                func_800F4524(&D_801333D4, NA_SE_VO_NA_HELLO_2, 32);
+                func_800F4524(&gSfxDefaultPos, NA_SE_VO_NA_HELLO_2, 32);
                 break;
 
             case 763:
-                func_80078884(NA_SE_EV_NAVY_CRASH - SFX_FLAG);
+                Sfx_PlaySfxCentered(NA_SE_EV_NAVY_CRASH - SFX_FLAG);
                 break;
 
             case 771:
-                func_80078884(NA_SE_VO_RT_THROW);
+                Sfx_PlaySfxCentered(NA_SE_VO_RT_THROW);
                 break;
         }
     }
 
-    if (play->envCtx.unk_EE[3] < 64 &&
-        (gSaveContext.entranceIndex != ENTR_KOKIRI_FOREST_0 || gSaveContext.sceneSetupIndex != 4 || play->envCtx.unk_EE[3])) {
+    if (play->envCtx.unk_EE[3] < 64 && (gSaveContext.entranceIndex != ENTR_KOKIRI_FOREST_0 ||
+                                        gSaveContext.sceneSetupIndex != 4 || play->envCtx.unk_EE[3])) {
         play->envCtx.unk_EE[3] += 16;
     }
 
@@ -719,8 +698,7 @@ void ObjectKankyo_DrawSnow(ObjectKankyo* this2, PlayState* play2) {
             gDPSetPrimColor(POLY_XLU_DISP++, 0, 0, 200, 200, 200, 180);
             gDPSetEnvColor(POLY_XLU_DISP++, 200, 200, 200, 180);
 
-            gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(play->state.gfxCtx),
-                      G_MTX_LOAD);
+            gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(play->state.gfxCtx), G_MTX_LOAD);
 
             gSPSegment(POLY_XLU_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(gDust5Tex));
 
@@ -833,8 +811,7 @@ void ObjectKankyo_DrawSunGraveSpark(ObjectKankyo* this2, PlayState* play2) {
 
     OPEN_DISPS(play->state.gfxCtx);
     if (play->csCtx.state != 0) {
-        if (play->csCtx.npcActions[1] != NULL && play->csCtx.npcActions[1]->action == 2 &&
-            this->requiredObjectLoaded) {
+        if (play->csCtx.npcActions[1] != NULL && play->csCtx.npcActions[1]->action == 2 && this->requiredObjectLoaded) {
             // apparently, light waves with larger amplitudes look brighter, so the name 'amplitude' kind of works here
             if (this->effects[0].state == 0) {
                 this->effects[0].amplitude += 1.0f / 7.0f;
@@ -862,8 +839,8 @@ void ObjectKankyo_DrawSunGraveSpark(ObjectKankyo* this2, PlayState* play2) {
             end.y = play->csCtx.npcActions[1]->endPos.y;
             end.z = play->csCtx.npcActions[1]->endPos.z;
 
-            weight = Environment_LerpWeight(play->csCtx.npcActions[1]->endFrame,
-                                            play->csCtx.npcActions[1]->startFrame, play->csCtx.frames);
+            weight = Environment_LerpWeight(play->csCtx.npcActions[1]->endFrame, play->csCtx.npcActions[1]->startFrame,
+                                            play->csCtx.frames);
             Matrix_Translate((end.x - start.x) * weight + start.x, (end.y - start.y) * weight + start.y,
                              (end.z - start.z) * weight + start.z, MTXMODE_NEW);
             Matrix_Scale(this->effects[0].size, this->effects[0].size, this->effects[0].size, MTXMODE_APPLY);
@@ -876,8 +853,7 @@ void ObjectKankyo_DrawSunGraveSpark(ObjectKankyo* this2, PlayState* play2) {
                            this->effects[0].alpha);
 
             Matrix_Mult(&play->billboardMtxF, MTXMODE_APPLY);
-            gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(play->state.gfxCtx),
-                      G_MTX_LOAD);
+            gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(play->state.gfxCtx), G_MTX_LOAD);
 
             gSPSegment(POLY_XLU_DISP++, 0x08, SEGMENTED_TO_VIRTUAL(D_80BA5900[this->effects[0].timer]));
             gDPPipeSync(POLY_XLU_DISP++);
@@ -956,12 +932,10 @@ void ObjectKankyo_DrawBeams(ObjectKankyo* this2, PlayState* play2) {
                 gDPSetPrimColor(POLY_XLU_DISP++, 0, 128, sBeamPrimColors[i].r, sBeamPrimColors[i].g,
                                 sBeamPrimColors[i].b, 128);
                 gDPSetEnvColor(POLY_XLU_DISP++, sBeamEnvColors[i].r, sBeamEnvColors[i].g, sBeamEnvColors[i].b, 128);
-                gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(play->state.gfxCtx),
-                          G_MTX_LOAD);
+                gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(play->state.gfxCtx), G_MTX_LOAD);
                 gSPSegment(POLY_XLU_DISP++, 0x08,
-                           Gfx_TwoTexScroll(play->state.gfxCtx, 0, play->state.frames * 5,
-                                            play->state.frames * 10, 32, 64, 1, play->state.frames * 5,
-                                            play->state.frames * 10, 32, 64));
+                           Gfx_TwoTexScroll(play->state.gfxCtx, 0, play->state.frames * 5, play->state.frames * 10, 32,
+                                            64, 1, play->state.frames * 5, play->state.frames * 10, 32, 64));
                 gSPDisplayList(POLY_XLU_DISP++, gDemoKekkaiDL_005FF0);
                 FrameInterpolation_RecordCloseChild();
             }

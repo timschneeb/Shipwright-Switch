@@ -7,8 +7,10 @@
 #include "z_demo_kekkai.h"
 #include "objects/object_demo_kekkai/object_demo_kekkai.h"
 #include "scenes/dungeons/ganontika/ganontika_scene.h"
+#include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
+#include "soh/ResourceManagerHelpers.h"
 
-#define FLAGS (ACTOR_FLAG_UPDATE_WHILE_CULLED | ACTOR_FLAG_DRAW_WHILE_CULLED)
+#define FLAGS (ACTOR_FLAG_UPDATE_CULLING_DISABLED | ACTOR_FLAG_DRAW_CULLING_DISABLED)
 
 void DemoKekkai_Init(Actor* thisx, PlayState* play);
 void DemoKekkai_Destroy(Actor* thisx, PlayState* play);
@@ -64,64 +66,18 @@ static u8 sEnergyColors[] = {
     /* Forest  prim */ 255, 255, 170, /* env */ 0,   200, 0,
 };
 
-// Translates from the barrier's actor params to their corresponding randInf flags.
-RandomizerInf trialParamToRandInf(u16 params) {
-    switch (params) {
-        case KEKKAI_LIGHT:
-            return RAND_INF_TRIALS_DONE_LIGHT_TRIAL;
-        case KEKKAI_FOREST:
-            return RAND_INF_TRIALS_DONE_FOREST_TRIAL;
-        case KEKKAI_FIRE:
-            return RAND_INF_TRIALS_DONE_FIRE_TRIAL;
-        case KEKKAI_WATER:
-            return RAND_INF_TRIALS_DONE_WATER_TRIAL;
-        case KEKKAI_SPIRIT:
-            return RAND_INF_TRIALS_DONE_SPIRIT_TRIAL;
-        case KEKKAI_SHADOW:
-            return RAND_INF_TRIALS_DONE_SHADOW_TRIAL;
-    }
-}
-
 s32 DemoKekkai_CheckEventFlag(s32 params) {
-    static s32 eventFlags[] = { 0xC3, 0xBC, 0xBF, 0xBE, 0xBD, 0xAD, 0xBB };
+    static s32 eventFlags[] = {
+        EVENTCHKINF_DISPELLED_GANONS_TOWER_BARRIER, EVENTCHKINF_COMPLETED_WATER_TRIAL,
+        EVENTCHKINF_COMPLETED_LIGHT_TRIAL,          EVENTCHKINF_COMPLETED_FIRE_TRIAL,
+        EVENTCHKINF_COMPLETED_SHADOW_TRIAL,         EVENTCHKINF_COMPLETED_SPIRIT_TRIAL,
+        EVENTCHKINF_COMPLETED_FOREST_TRIAL,
+    };
 
     if ((params < KEKKAI_TOWER) || (params > KEKKAI_FOREST)) {
         return true;
     }
-    if (IS_RANDO && params > KEKKAI_TOWER) {
-        return Flags_GetRandomizerInf(trialParamToRandInf(params));
-    }
     return Flags_GetEventChkInf(eventFlags[params]);
-}
-
-u32 TrialsDoneCount() {
-    u8 trialCount = 0;
-
-    if (Flags_GetRandomizerInf(RAND_INF_TRIALS_DONE_LIGHT_TRIAL)) {
-        trialCount++;
-    }
-
-    if (Flags_GetRandomizerInf(RAND_INF_TRIALS_DONE_FOREST_TRIAL)) {
-        trialCount++;
-    }
-
-    if (Flags_GetRandomizerInf(RAND_INF_TRIALS_DONE_FIRE_TRIAL)) {
-        trialCount++;
-    }
-
-    if (Flags_GetRandomizerInf(RAND_INF_TRIALS_DONE_WATER_TRIAL)) {
-        trialCount++;
-    }
-
-    if (Flags_GetRandomizerInf(RAND_INF_TRIALS_DONE_SPIRIT_TRIAL)) {
-        trialCount++;
-    }
-
-    if (Flags_GetRandomizerInf(RAND_INF_TRIALS_DONE_SHADOW_TRIAL)) {
-        trialCount++;
-    }
-
-    return trialCount;
 }
 
 void DemoKekkai_Init(Actor* thisx, PlayState* play) {
@@ -147,13 +103,6 @@ void DemoKekkai_Init(Actor* thisx, PlayState* play) {
             this->collider2.dim.radius = thisx->scale.x * 6100.0f;
             this->collider2.dim.height = thisx->scale.y * 5000.0f;
             this->collider2.dim.yShift = 300;
-
-            if (IS_RANDO) {
-                if (TrialsDoneCount() == NUM_TRIALS) {
-                    Actor_Kill(thisx);
-                    return;
-                }
-            }
             break;
         case KEKKAI_WATER:
         case KEKKAI_LIGHT:
@@ -161,10 +110,6 @@ void DemoKekkai_Init(Actor* thisx, PlayState* play) {
         case KEKKAI_SHADOW:
         case KEKKAI_SPIRIT:
         case KEKKAI_FOREST:
-            if (IS_RANDO && Flags_GetRandomizerInf(trialParamToRandInf(thisx->params))) {
-                Actor_Kill(thisx);
-                return;
-            }
             this->energyAlpha = 1.0f;
             this->orbScale = 1.0f;
             Actor_SetScale(thisx, 0.1f);
@@ -265,17 +210,9 @@ void DemoKekkai_Update(Actor* thisx, PlayState* play2) {
 }
 
 void DemoKekkai_TrialBarrierDispel(Actor* thisx, PlayState* play) {
-    static s32 eventFlags[] = { 0xC3, 0xBC, 0xBF, 0xBE, 0xBD, 0xAD, 0xBB };
     static u16 csFrames[] = { 0, 280, 280, 280, 280, 280, 280 };
     s32 pad;
     DemoKekkai* this = (DemoKekkai*)thisx;
-
-    if (IS_RANDO) {
-        Flags_SetRandomizerInf(trialParamToRandInf(thisx->params));
-        // May or may not be needed. Not sure if needed for anything
-        // that randoInf isn't already covering. Leaving it for safety.
-        Flags_SetEventChkInf(eventFlags[thisx->params]); 
-    }
 
     if (play->csCtx.frames == csFrames[this->actor.params]) {
         func_800F3F3C(0xA);
@@ -321,13 +258,15 @@ void DemoKekkai_TrialBarrierIdle(Actor* thisx, PlayState* play) {
     CollisionCheck_SetAT(play, &play->colChkCtx, &this->collider1.base);
     CollisionCheck_SetOC(play, &play->colChkCtx, &this->collider1.base);
     if (this->collider2.base.acFlags & AC_HIT) {
-        func_80078884(NA_SE_SY_CORRECT_CHIME);
-        // "I got it"
-        LOG_STRING("当ったよ");
-        this->actor.update = DemoKekkai_TrialBarrierDispel;
-        this->timer = 0;
-        play->csCtx.segment = SEGMENTED_TO_VIRTUAL(sSageCutscenes[this->actor.params]);
-        gSaveContext.cutsceneTrigger = 1;
+        if (GameInteractor_Should(VB_PLAY_DISPEL_BARRIER_CS, true, this)) {
+            Sfx_PlaySfxCentered(NA_SE_SY_CORRECT_CHIME);
+            // "I got it"
+            LOG_STRING("当ったよ");
+            this->actor.update = DemoKekkai_TrialBarrierDispel;
+            this->timer = 0;
+            play->csCtx.segment = SEGMENTED_TO_VIRTUAL(sSageCutscenes[this->actor.params]);
+            gSaveContext.cutsceneTrigger = 1;
+        }
     }
     CollisionCheck_SetAC(play, &play->colChkCtx, &this->collider2.base);
     func_8002F974(&this->actor, NA_SE_EV_TOWER_ENERGY - SFX_FLAG);
@@ -361,15 +300,13 @@ void DemoKekkai_DrawTrialBarrier(Actor* thisx, PlayState* play2) {
         Matrix_Translate(0.0f, 1200.0f, 0.0f, MTXMODE_APPLY);
         Matrix_Scale(this->orbScale, this->orbScale, this->orbScale, MTXMODE_APPLY);
         Matrix_Translate(0.0f, -1200.0f, 0.0f, MTXMODE_APPLY);
-        gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(play->state.gfxCtx),
-                  G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+        gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(play->state.gfxCtx), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
         gSPSegment(POLY_XLU_DISP++, 0x09,
                    Gfx_TwoTexScroll(play->state.gfxCtx, 0, frames * 5, frames * -10, 0x20, 0x20, 1, frames * 5,
                                     frames * -10, 0x20, 0x20));
         gSPDisplayList(POLY_XLU_DISP++, gTrialBarrierOrbDL);
         Matrix_Pop();
-        gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(play->state.gfxCtx),
-                  G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+        gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(play->state.gfxCtx), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
         gDPPipeSync(POLY_XLU_DISP++);
         gDPSetPrimColor(POLY_XLU_DISP++, 0x00, 0x80, 50, 0, 100, 255);
         gSPSegment(POLY_XLU_DISP++, 0x0A,
@@ -396,12 +333,11 @@ void DemoKekkai_DrawTowerBarrier(Actor* thisx, PlayState* play) {
     scroll = (s32)this->barrierScroll & 0xFFFF;
     OPEN_DISPS(play->state.gfxCtx);
     Gfx_SetupDL_25Xlu(play->state.gfxCtx);
-    gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(play->state.gfxCtx),
-              G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(play->state.gfxCtx), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     gDPSetPrimColor(POLY_XLU_DISP++, 0x00, 0x80, 255, 170, 255, 255);
     gSPSegment(POLY_XLU_DISP++, 0x08,
-               Gfx_TwoTexScroll(play->state.gfxCtx, 0, scroll * 2, scroll * -4, 0x20, 0x40, 1, scroll * 2,
-                                scroll * -4, 0x20, 0x40));
+               Gfx_TwoTexScroll(play->state.gfxCtx, 0, scroll * 2, scroll * -4, 0x20, 0x40, 1, scroll * 2, scroll * -4,
+                                0x20, 0x40));
     gSPDisplayList(POLY_XLU_DISP++, gTowerBarrierDL);
     CLOSE_DISPS(play->state.gfxCtx);
 }

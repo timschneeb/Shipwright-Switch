@@ -7,8 +7,9 @@
 #include "z_en_weiyer.h"
 #include "objects/object_ei/object_ei.h"
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
+#include "soh/ResourceManagerHelpers.h"
 
-#define FLAGS (ACTOR_FLAG_TARGETABLE | ACTOR_FLAG_HOSTILE)
+#define FLAGS (ACTOR_FLAG_ATTENTION_ENABLED | ACTOR_FLAG_HOSTILE)
 
 void EnWeiyer_Init(Actor* thisx, PlayState* play);
 void EnWeiyer_Destroy(Actor* thisx, PlayState* play);
@@ -107,8 +108,7 @@ void EnWeiyer_Init(Actor* thisx, PlayState* play) {
 
     Actor_ProcessInitChain(thisx, sInitChain);
     ActorShape_Init(&this->actor.shape, 1000.0f, ActorShadow_DrawCircle, 65.0f);
-    SkelAnime_Init(play, &this->skelAnime, &gStingerSkel, &gStingerIdleAnim, this->jointTable, this->morphTable,
-                   19);
+    SkelAnime_Init(play, &this->skelAnime, &gStingerSkel, &gStingerIdleAnim, this->jointTable, this->morphTable, 19);
     Collider_InitCylinder(play, &this->collider);
     Collider_SetCylinder(play, &this->collider, &this->actor, &sCylinderInit);
     CollisionCheck_SetInfo(&this->actor.colChkInfo, &sDamageTable, &sColChkInfoInit);
@@ -221,8 +221,8 @@ void func_80B32804(EnWeiyer* this, PlayState* play) {
     s32 bgId;
 
     this->actor.world.pos.y += 0.5f;
-    this->actor.floorHeight = BgCheck_EntityRaycastFloor4(&play->colCtx, &this->actor.floorPoly, &bgId,
-                                                          &this->actor, &this->actor.world.pos);
+    this->actor.floorHeight =
+        BgCheck_EntityRaycastFloor4(&play->colCtx, &this->actor.floorPoly, &bgId, &this->actor, &this->actor.world.pos);
 
     if (!WaterBox_GetSurfaceImpl(play, &play->colCtx, this->actor.world.pos.x, this->actor.world.pos.z,
                                  &this->actor.home.pos.y, &waterBox) ||
@@ -575,7 +575,7 @@ void func_80B3368C(EnWeiyer* this, PlayState* play) {
             } else if (Actor_ApplyDamage(&this->actor) == 0) {
                 Enemy_StartFinishingBlow(play, &this->actor);
                 Audio_PlayActorSound2(&this->actor, NA_SE_EN_EIER_DEAD);
-                this->actor.flags &= ~ACTOR_FLAG_TARGETABLE;
+                this->actor.flags &= ~ACTOR_FLAG_ATTENTION_ENABLED;
                 func_80B32724(this);
                 GameInteractor_ExecuteOnEnemyDefeat(&this->actor);
             } else {
@@ -596,9 +596,9 @@ void EnWeiyer_Update(Actor* thisx, PlayState* play) {
     this->actor.world.rot.x = -this->actor.shape.rot.x;
 
     if ((this->actor.world.rot.x == 0) || (this->actionFunc == func_80B333B8)) {
-        Actor_MoveForward(&this->actor);
+        Actor_MoveXZGravity(&this->actor);
     } else {
-        func_8002D97C(&this->actor);
+        Actor_MoveXYZ(&this->actor);
     }
 
     Actor_UpdateBgCheckInfo(play, &this->actor, 10.0f, 30.0f, 45.0f, 7);
@@ -640,14 +640,14 @@ void EnWeiyer_Draw(Actor* thisx, PlayState* play) {
         Gfx_SetupDL_25Opa(play->state.gfxCtx);
         gSPSegment(POLY_OPA_DISP++, 0x08, &D_80116280[2]);
         gDPSetEnvColor(POLY_OPA_DISP++, 255, 255, 255, 255);
-        POLY_OPA_DISP = SkelAnime_Draw(play, this->skelAnime.skeleton, this->skelAnime.jointTable,
-                                       EnWeiyer_OverrideLimbDraw, NULL, &this->actor, POLY_OPA_DISP);
+        POLY_OPA_DISP = SkelAnime_DrawSkeleton2(play, &this->skelAnime, EnWeiyer_OverrideLimbDraw, NULL, &this->actor,
+                                                POLY_OPA_DISP);
     } else {
         Gfx_SetupDL_25Xlu(play->state.gfxCtx);
         gSPSegment(POLY_XLU_DISP++, 0x08, &D_80116280[0]);
         gDPSetEnvColor(POLY_XLU_DISP++, 255, 255, 255, this->actor.shape.shadowAlpha);
-        POLY_XLU_DISP = SkelAnime_Draw(play, this->skelAnime.skeleton, this->skelAnime.jointTable,
-                                       EnWeiyer_OverrideLimbDraw, NULL, &this->actor, POLY_XLU_DISP);
+        POLY_XLU_DISP = SkelAnime_DrawSkeleton2(play, &this->skelAnime, EnWeiyer_OverrideLimbDraw, NULL, &this->actor,
+                                                POLY_XLU_DISP);
     }
 
     CLOSE_DISPS(play->state.gfxCtx);

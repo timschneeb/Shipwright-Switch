@@ -7,6 +7,7 @@
 #include "z_en_heishi3.h"
 #include "objects/object_sd/object_sd.h"
 #include "vt.h"
+#include "soh/ResourceManagerHelpers.h"
 
 #define FLAGS 0
 
@@ -72,8 +73,7 @@ void EnHeishi3_Init(Actor* thisx, PlayState* play) {
     }
     Actor_SetScale(&this->actor, 0.01f);
     ActorShape_Init(&this->actor.shape, 0.0f, ActorShadow_DrawCircle, 30.0f);
-    SkelAnime_Init(play, &this->skelAnime, &gEnHeishiSkel, &gEnHeishiIdleAnim, this->jointTable, this->morphTable,
-                   17);
+    SkelAnime_Init(play, &this->skelAnime, &gEnHeishiSkel, &gEnHeishiIdleAnim, this->jointTable, this->morphTable, 17);
     this->actor.colChkInfo.mass = MASS_IMMOVABLE;
     this->actor.targetMode = 6;
     Collider_InitCylinder(play, &this->collider);
@@ -135,9 +135,9 @@ void EnHeishi3_StandSentinelInGrounds(EnHeishi3* this, PlayState* play) {
         (fabsf(player->actor.world.pos.y - this->actor.world.pos.y) < 100.0f) && (sPlayerCaught == 0)) {
         sPlayerCaught = 1;
         Message_StartTextbox(play, 0x702D, &this->actor);
-        func_80078884(NA_SE_SY_FOUND);
+        Sfx_PlaySfxCentered(NA_SE_SY_FOUND);
         osSyncPrintf(VT_FGCOL(GREEN) "☆☆☆☆☆ 発見！ ☆☆☆☆☆ \n" VT_RST); // "Discovered!"
-        func_8002DF54(play, &this->actor, 1);
+        Player_SetCsActionWithHaltedActors(play, &this->actor, 1);
         this->actionFunc = EnHeishi3_CatchStart;
     }
 }
@@ -163,9 +163,9 @@ void EnHeishi3_StandSentinelInCastle(EnHeishi3* this, PlayState* play) {
         }
         sPlayerCaught = 1;
         Message_StartTextbox(play, 0x702D, &this->actor);
-        func_80078884(NA_SE_SY_FOUND);
+        Sfx_PlaySfxCentered(NA_SE_SY_FOUND);
         osSyncPrintf(VT_FGCOL(GREEN) "☆☆☆☆☆ 発見！ ☆☆☆☆☆ \n" VT_RST); // "Discovered!"
-        func_8002DF54(play, &this->actor, 1);
+        Player_SetCsActionWithHaltedActors(play, &this->actor, 1);
         this->actionFunc = EnHeishi3_CatchStart;
     }
 }
@@ -225,14 +225,13 @@ void EnHeishi3_Update(Actor* thisx, PlayState* play) {
     }
     this->actionFunc(this, play);
     this->actor.shape.rot = this->actor.world.rot;
-    Actor_MoveForward(&this->actor);
+    Actor_MoveXZGravity(&this->actor);
     Actor_UpdateBgCheckInfo(play, &this->actor, 20.0f, 20.0f, 50.0f, 0x1C);
     Collider_UpdateCylinder(&this->actor, &this->collider);
     CollisionCheck_SetOC(play, &play->colChkCtx, &this->collider.base);
 }
 
-s32 EnHeishi3_OverrideLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* pos, Vec3s* rot,
-                               void* thisx) {
+s32 EnHeishi3_OverrideLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* pos, Vec3s* rot, void* thisx) {
     EnHeishi3* this = (EnHeishi3*)thisx;
 
     if (limbIndex == 9) {
@@ -251,7 +250,5 @@ void EnHeishi3_Draw(Actor* thisx, PlayState* play) {
     EnHeishi3* this = (EnHeishi3*)thisx;
 
     Gfx_SetupDL_25Opa(play->state.gfxCtx);
-    SkelAnime_DrawSkeletonOpa(play, &this->skelAnime, EnHeishi3_OverrideLimbDraw,
-                              NULL,
-                      this);
+    SkelAnime_DrawSkeletonOpa(play, &this->skelAnime, EnHeishi3_OverrideLimbDraw, NULL, this);
 }

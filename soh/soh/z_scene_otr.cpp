@@ -1,15 +1,16 @@
 #include "OTRGlobals.h"
+#include "ResourceManagerHelpers.h"
 #include <libultraship/libultraship.h>
 #include "soh/resource/type/Scene.h"
-#include <Utils/StringHelper.h>
+#include <ship/utils/StringHelper.h>
 #include "global.h"
 #include "vt.h"
 #include "soh/resource/type/CollisionHeader.h"
-#include <DisplayList.h>
+#include <fast/resource/type/DisplayList.h>
 #include "soh/resource/type/Cutscene.h"
 #include "soh/resource/type/Path.h"
 #include "soh/resource/type/Text.h"
-#include <Blob.h>
+#include <ship/resource/type/Blob.h>
 #include <memory>
 #include <cassert>
 #include "soh/resource/type/scenecommand/SetCameraSettings.h"
@@ -38,9 +39,6 @@ extern Ship::IResource* OTRPlay_LoadFile(PlayState* play, const char* fileName);
 extern "C" s32 Object_Spawn(ObjectContext* objectCtx, s16 objectId);
 extern "C" RomFile sNaviMsgFiles[];
 s32 OTRScene_ExecuteCommands(PlayState* play, SOH::Scene* scene);
-
-// Forward Declaration of function declared in OTRGlobals.cpp
-std::shared_ptr<Ship::IResource> GetResourceByNameHandlingMQ(const char* path);
 
 bool Scene_CommandSpawnList(PlayState* play, SOH::ISceneCommand* cmd) {
     // SOH::SetStartPositionList* cmdStartPos = std::static_pointer_cast<SOH::SetStartPositionList>(cmd);
@@ -108,8 +106,8 @@ bool Scene_CommandSpecialFiles(PlayState* play, SOH::ISceneCommand* cmd) {
     }
 
     if (specialCmd->specialObjects.elfMessage != 0) {
-        auto res = 
-            (LUS::Blob*)OTRPlay_LoadFile(play, sNaviMsgFiles[specialCmd->specialObjects.elfMessage - 1].fileName);
+        auto res =
+            (Ship::Blob*)OTRPlay_LoadFile(play, sNaviMsgFiles[specialCmd->specialObjects.elfMessage - 1].fileName);
         play->cUpElfMsgs = (ElfMessage*)res->Data.data();
     }
 
@@ -152,17 +150,13 @@ bool Scene_CommandObjectList(PlayState* play, SOH::ISceneCommand* cmd) {
     s32 i;
     s32 j;
     s32 k;
-    ObjectStatus* status;
     ObjectStatus* status2;
-    ObjectStatus* firstStatus;
     // s16* objectEntry = SEGMENTED_TO_VIRTUAL(cmd->objectList.segment);
     s16* objectEntry = (s16*)cmdObj->GetRawPointer();
     void* nextPtr;
 
     k = 0;
     i = play->objectCtx.unk_09;
-    firstStatus = &play->objectCtx.status[0];
-    status = &play->objectCtx.status[i];
 
     // Loop until a mismatch in the object lists
     // Then clear all object ids past that in the context object list and kill actors for those objects
@@ -273,7 +267,7 @@ bool Scene_CommandTimeSettings(PlayState* play, SOH::ISceneCommand* cmd) {
     play->envCtx.sunPos.z = (Math_CosS(((void)0, gSaveContext.dayTime) - 0x8000) * 20.0f) * 25.0f;
 
     if (((play->envCtx.timeIncrement == 0) && (gSaveContext.cutsceneIndex < 0xFFF0)) ||
-        (gSaveContext.entranceIndex == ENTR_LAKE_HYLIA_8)) {
+        (gSaveContext.entranceIndex == ENTR_LAKE_HYLIA_WARP_PAD)) {
         gSaveContext.skyboxTime = ((void)0, gSaveContext.dayTime);
         if ((gSaveContext.skyboxTime >= 0x2AAC) && (gSaveContext.skyboxTime < 0x4555)) {
             gSaveContext.skyboxTime = 0x3556;
@@ -403,7 +397,7 @@ bool Scene_CommandMiscSettings(PlayState* play, SOH::ISceneCommand* cmd) {
         if (gSaveContext.cutsceneIndex < 0xFFF0) {
             gSaveContext.worldMapAreaData |= gBitFlags[gSaveContext.worldMapArea];
             osSyncPrintf("０００  ａｒｅａ＿ａｒｒｉｖａｌ＝%x (%d)\n", gSaveContext.worldMapAreaData,
-                gSaveContext.worldMapArea);
+                         gSaveContext.worldMapArea);
         }
     }
     return false;
@@ -448,7 +442,8 @@ s32 OTRScene_ExecuteCommands(PlayState* play, SOH::Scene* scene) {
             continue;
 
         cmdCode = sceneCmd->cmdId;
-        // osSyncPrintf("*** Scene_Word = { code=%d, data1=%02x, data2=%04x } ***\n", cmdCode, sceneCmd->base.data1, sceneCmd->base.data2);
+        // osSyncPrintf("*** Scene_Word = { code=%d, data1=%02x, data2=%04x } ***\n", cmdCode, sceneCmd->base.data1,
+        // sceneCmd->base.data2);
 
         if ((int)cmdCode == 0x14) {
             break;
@@ -477,8 +472,11 @@ extern "C" s32 OTRfunc_800973FC(PlayState* play, RoomContext* roomCtx) {
             gSegments[3] = VIRTUAL_TO_PHYSICAL(roomCtx->unk_34);
 
             OTRScene_ExecuteCommands(play, (SOH::Scene*)roomCtx->roomToLoad);
+
             Player_SetBootData(play, GET_PLAYER(play));
             Actor_SpawnTransitionActors(play, &play->actorCtx);
+
+            GameInteractor_ExecuteAfterSceneCommands(play->sceneNum);
 
             return 1;
         }
@@ -509,10 +507,10 @@ extern "C" s32 OTRfunc_8009728C(PlayState* play, RoomContext* roomCtx, s32 roomN
 
         osCreateMesgQueue(&roomCtx->loadQueue, &roomCtx->loadMsg, 1);
         // DmaMgr_SendRequest2(&roomCtx->dmaRequest, roomCtx->unk_34, play->roomList[roomNum].vromStart, size, 0,
-                            //&roomCtx->loadQueue, NULL, __FILE__, __LINE__);
+        //&roomCtx->loadQueue, NULL, __FILE__, __LINE__);
 
-        auto roomData =
-            std::static_pointer_cast<SOH::Scene>(GetResourceByNameHandlingMQ(play->roomList[roomNum].fileName));
+        auto roomData = std::static_pointer_cast<SOH::Scene>(
+            ResourceMgr_GetResourceByNameHandlingMQ(play->roomList[roomNum].fileName));
         roomCtx->status = 1;
         roomCtx->roomToLoad = roomData.get();
 

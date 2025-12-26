@@ -5,10 +5,13 @@
 #include "z64math.h"
 #include "z64audio.h"
 #include "soh/Enhancements/randomizer/randomizerTypes.h"
-#include "soh/Enhancements/randomizer/randomizer_inf.h"
 #include "soh/Enhancements/gameplaystats.h"
 #include "soh/Enhancements/randomizer/randomizer_entrance.h"
-#include "soh/Enhancements/boss-rush/BossRushTypes.h"
+#include "soh/Enhancements/boss-rush/BossRush.h"
+
+#define FULL_HEART_HEALTH 0x10
+#define STARTING_HEALTH (3 * FULL_HEART_HEALTH)
+#define MAX_HEALTH (20 * FULL_HEART_HEALTH)
 
 typedef enum {
     /* 0x0 */ MAGIC_STATE_IDLE, // Regular gameplay
@@ -68,6 +71,7 @@ typedef enum { // Pre-existing IDs for save sections in base code
     SECTION_ID_STATS,
     SECTION_ID_ENTRANCES,
     SECTION_ID_SCENES,
+    SECTION_ID_TRACKER_DATA,
     SECTION_ID_MAX
 } SaveFuncIDs;
 
@@ -149,11 +153,6 @@ typedef struct {
 
 typedef struct {
     RandomizerCheck check;
-    RandomizerGetData get;
-} ItemLocationRando;
-
-typedef struct {
-    RandomizerCheck check;
     RandomizerCheck hintedCheck;
     RandomizerGet rGet;
     RandomizerCheckArea area;
@@ -161,10 +160,42 @@ typedef struct {
     char hintText[200];
 } HintLocationRando;
 
-typedef struct {
-    RandomizerSettingKey key;
-    u8 value;
-} RandoSetting;
+#pragma region SoH
+
+typedef struct ShipRandomizerSaveContextData {
+    u8 triforcePiecesCollected;
+    u8 bombchuUpgradeLevel;
+} ShipRandomizerSaveContextData;
+
+typedef struct ShipBossRushSaveContextData {
+    u32 isPaused;
+    u8 options[BR_OPTIONS_MAX];
+} ShipBossRushSaveContextData;
+
+typedef union ShipQuestSpecificSaveContextData {
+    ShipRandomizerSaveContextData randomizer;
+    ShipBossRushSaveContextData bossRush;
+} ShipQuestSpecificSaveContextData;
+
+typedef struct ShipQuestSaveContextData {
+    u8 id;
+    ShipQuestSpecificSaveContextData data;
+} ShipQuestSaveContextData;
+
+typedef struct ShipSaveContextData {
+    u16 pendingSale;
+    u16 pendingSaleMod;
+    u8 pendingIceTrapCount;
+    SohStats stats;
+    FaroresWindData backupFW;
+    ShipQuestSaveContextData quest;
+    u8 maskMemory;
+    u8 filenameLanguage;
+    //TODO: Move non-rando specific flags to a new sohInf and move the remaining randomizerInf to ShipRandomizerSaveContextData
+    u16 randomizerInf[(RAND_INF_MAX + 15) / 16];
+} ShipSaveContextData;
+
+#pragma endregion
 
 typedef struct {
     /* 0x0000 */ s32 entranceIndex; // start of `save` substruct, originally called "memory"
@@ -176,7 +207,7 @@ typedef struct {
     /* 0x0018 */ s32 bgsDayCount; // increments with totalDays, can be cleared with `Environment_ClearBgsDayCount`
     /* 0x001C */ char newf[6]; // string "ZELDAZ". start of `info` substruct, originally called "information"
     /* 0x0022 */ u16 deaths;
-    /* 0x0024 */ char playerName[8];
+    /* 0x0024 */ u8 playerName[8];
     /* 0x002C */ s16 n64ddFlag;
     /* 0x002E */ s16 healthCapacity; // "max_life"
     /* 0x0030 */ s16 health; // "now_life"
@@ -234,17 +265,17 @@ typedef struct {
     /* 0x13C8 */ s16 nayrusLoveTimer;
     /* 0x13CA */ char unk_13CA[0x0002];
     /* 0x13CC */ s16 rupeeAccumulator;
-    /* 0x13CE */ s16 timer1State;
-    /* 0x13D0 */ s16 timer1Value;
-    /* 0x13D2 */ s16 timer2State;
-    /* 0x13D4 */ s16 timer2Value;
+    /* 0x13CE */ s16 timerState;
+    /* 0x13D0 */ s16 timerSeconds;
+    /* 0x13D2 */ s16 subTimerState;
+    /* 0x13D4 */ s16 subTimerSeconds;
     /* 0x13D6 */ s16 timerX[2];
     /* 0x13DA */ s16 timerY[2];
     /* 0x13DE */ char unk_13DE[0x0002];
     /* 0x13E0 */ u8 seqId;
     /* 0x13E1 */ u8 natureAmbienceId;
     /* 0x13E2 */ u8 buttonStatus[9]; // SOH [Enhancements] Changed from 5 to 9 to support Dpad equips
-    /* 0x13E7 */ u8 unk_13E7; // alpha related
+    /* 0x13E7 */ u8 forceRisingButtonAlphas; // alpha related
     /* 0x13E8 */ u16 unk_13E8; // alpha type?
     /* 0x13EA */ u16 unk_13EA; // also alpha type?
     /* 0x13EC */ u16 unk_13EC; // alpha type counter?
@@ -279,52 +310,7 @@ typedef struct {
     /* 0x1420 */ s16 worldMapArea;
     /* 0x1422 */ s16 sunsSongState; // controls the effects of suns song
     /* 0x1424 */ s16 healthAccumulator;
-    // #region SOH [General]
-    // Upstream TODO: Move these to their own struct or name to more obviously specific to SoH
-    /*        */ u16 pendingSale;
-    /*        */ u16 pendingSaleMod;
-    /*        */ uint8_t questId;
-    /*        */ uint32_t isBossRushPaused;
-    /*        */ uint8_t bossRushOptions[BOSSRUSH_OPTIONS_AMOUNT];
-    /*        */ u8 pendingIceTrapCount;
-    /*        */ SohStats sohStats;
-    /*        */ FaroresWindData backupFW;
-    /*        */ RandomizerCheckTrackerData checkTrackerData[RC_MAX];
-    // #endregion
-    // #region SOH [Randomizer]
-    // Upstream TODO: Move these to their own struct or name to more obviously specific to Randomizer
-    /*        */ RandoSetting randoSettings[300];
-    /*        */ ItemLocationRando itemLocations[RC_MAX];
-    /*        */ HintLocationRando hintLocations[50];
-    /*        */ EntranceOverride entranceOverrides[ENTRANCE_OVERRIDES_MAX_COUNT];
-    /*        */ char childAltarText[250];
-    /*        */ char adultAltarText[750];
-    /*        */ RandomizerCheck rewardCheck[9];
-    /*        */ char ganonHintText[300];
-    /*        */ char gregHintText[250];
-    /*        */ char ganonText[250];
-    /*        */ char dampeText[150];
-    /*        */ char sheikText[200];
-    /*        */ char sariaText[150];
-    /*        */ char warpMinuetText[100];
-    /*        */ char warpBoleroText[100];
-    /*        */ char warpSerenadeText[100];
-    /*        */ char warpRequiemText[100];
-    /*        */ char warpNocturneText[100];
-    /*        */ char warpPreludeText[100];
-    /*        */ RandomizerCheck masterSwordHintCheck;
-    /*        */ RandomizerCheck lightArrowHintCheck;
-    /*        */ RandomizerCheck sariaCheck;
-    /*        */ RandomizerCheck gregCheck;
-    /*        */ RandomizerCheck dampeCheck;
-    /*        */ char inputSeed[1024];
-    /*        */ u32 finalSeed;
-    /*        */ u8 seedIcons[5];
-    /*        */ u16 randomizerInf[10];
-    /*        */ u8 mqDungeonCount;
-    /*        */ u16 adultTradeItems;
-    /*        */ u8 triforcePiecesCollected;
-    // #endregion
+    /*        */ ShipSaveContextData ship;
 } SaveContext; // size = 0x1428
 
 typedef enum {
@@ -334,10 +320,10 @@ typedef enum {
     /* 03 */ QUEST_BOSSRUSH,
 } Quest;
 
-#define IS_VANILLA (gSaveContext.questId == QUEST_NORMAL)
-#define IS_MASTER_QUEST (gSaveContext.questId == QUEST_MASTER)
-#define IS_RANDO (gSaveContext.questId == QUEST_RANDOMIZER)
-#define IS_BOSS_RUSH (gSaveContext.questId == QUEST_BOSSRUSH)
+#define IS_VANILLA (gSaveContext.ship.quest.id == QUEST_NORMAL)
+#define IS_MASTER_QUEST (gSaveContext.ship.quest.id == QUEST_MASTER)
+#define IS_RANDO (gSaveContext.ship.quest.id == QUEST_RANDOMIZER)
+#define IS_BOSS_RUSH (gSaveContext.ship.quest.id == QUEST_BOSSRUSH)
 
 typedef enum {
     /* 0x00 */ BTN_ENABLED,
@@ -363,6 +349,18 @@ typedef enum {
     /* 0x06 */ HS_DAMPE_RACE
 } HighScores;
 
+// the score value for the fishing minigame also stores many flags.
+#define HS_FISH_LENGTH_CHILD 0x7F       // mask for record length of catch as child.
+#define HS_FISH_LENGTH_ADULT 0x7F000000 // mask for record length of catch as adult.
+#define HS_FISH_PLAYED_CHILD 0x100      // set when first talking to owner as child
+#define HS_FISH_PLAYED_ADULT 0x200      // set when first talking to owner as adult
+#define HS_FISH_PRIZE_CHILD 0x400       // won the Piece of Heart
+#define HS_FISH_PRIZE_ADULT 0x800       // won the Golden Scale
+#define HS_FISH_STOLE_HAT 0x1000        // Pond owner is visibly bald as Adult Link.
+#define HS_FISH_CHEAT_CHILD 0x80        // used Sinking Lure as child to catch record fish
+#define HS_FISH_CHEAT_ADULT 0x80000000  // used Sinking Lure as adult to catch record fish
+#define HS_FISH_PLAYED 0x10000          // incremented for every play. controls weather.
+
 typedef enum {
     /* 0 */ SUNSSONG_INACTIVE,
     /* 1 */ SUNSSONG_START, // the suns ocarina effect signals that the song has finished playing
@@ -385,7 +383,7 @@ typedef enum {
     /* 4 */ SCENE_LAYER_CUTSCENE_FIRST
 } SceneLayer;
 
-#define IS_CUTSCENE_LAYER (gSaveContext.sceneLayer >= SCENE_LAYER_CUTSCENE_FIRST)
+#define IS_CUTSCENE_LAYER (gSaveContext.sceneSetupIndex >= SCENE_LAYER_CUTSCENE_FIRST)
 
 typedef enum {
     /* 0 */ LINK_AGE_ADULT,
@@ -614,7 +612,7 @@ typedef enum {
 #define ITEMGETINF_08 0x08
 #define ITEMGETINF_09 0x09
 #define ITEMGETINF_0A 0x0A
-#define ITEMGETINF_0B 0x0B
+#define ITEMGETINF_DEKU_SCRUB_HEART_PIECE 0x0B
 #define ITEMGETINF_0C 0x0C
 #define ITEMGETINF_0D 0x0D
 #define ITEMGETINF_0E 0x0E
@@ -759,14 +757,14 @@ typedef enum {
 #define INFTABLE_12A 0x12A
 #define INFTABLE_138 0x138
 #define INFTABLE_139 0x139
-#define INFTABLE_140 0x140
-#define INFTABLE_RUTO_IN_JJ_MEET_RUTO 0x141
-#define INFTABLE_RUTO_IN_JJ_TALK_FIRST_TIME 0x142
-#define INFTABLE_143 0x143
-#define INFTABLE_RUTO_IN_JJ_WANTS_TO_BE_TOSSED_TO_SAPPHIRE 0x144
-#define INFTABLE_145 0x145
-#define INFTABLE_146 0x146
-#define INFTABLE_147 0x147
+#define INFTABLE_140 0x140 // Left her on blue switch in fork room (causes her to spawn in fork room)
+#define INFTABLE_RUTO_IN_JJ_MEET_RUTO 0x141 // Jumped down hole from hole room
+#define INFTABLE_RUTO_IN_JJ_TALK_FIRST_TIME 0x142 // in the basement
+#define INFTABLE_143 0x143 // Sat down in basement (causes her to get upset if this is set when actor is spawned)
+#define INFTABLE_RUTO_IN_JJ_WANTS_TO_BE_TOSSED_TO_SAPPHIRE 0x144 // Entered the room with the sapphire
+#define INFTABLE_145 0x145 // Thrown to sapphire (not kidnapped yet)
+#define INFTABLE_146 0x146 // Kidnapped
+#define INFTABLE_147 0x147 // Brought ruto back up to holes room, causes her to spawn in holes room instead of basement
 #define INFTABLE_160 0x160
 #define INFTABLE_161 0x161
 #define INFTABLE_162 0x162
@@ -784,8 +782,8 @@ typedef enum {
 #define INFTABLE_17F 0x17F
 #define INFTABLE_190 0x190
 #define INFTABLE_191 0x191
-#define INFTABLE_192 0x192
-#define INFTABLE_193 0x193
+#define INFTABLE_BOUGHT_STICK_UPGRADE 0x192
+#define INFTABLE_BOUGHT_NUT_UPGRADE 0x193
 #define INFTABLE_SPOKE_TO_KAEPORA_IN_LAKE_HYLIA 0x195
 #define INFTABLE_196 0x196
 #define INFTABLE_197 0x197

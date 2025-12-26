@@ -6,6 +6,7 @@
 
 #include "z_bg_mori_kaitenkabe.h"
 #include "objects/object_mori_objects/object_mori_objects.h"
+#include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 
 #define FLAGS 0
 
@@ -94,9 +95,12 @@ void BgMoriKaitenkabe_Wait(BgMoriKaitenkabe* this, PlayState* play) {
 
     if (this->dyna.unk_150 > 0.001f) {
         this->timer++;
-        if ((this->timer > (28 - CVarGetInteger(CVAR_ENHANCEMENT("FasterBlockPush"), 0) * 4)) && !Player_InCsMode(play)) {
+        if ((this->timer > (28 - CVarGetInteger(CVAR_ENHANCEMENT("FasterBlockPush"), 0) * 4)) &&
+            !Player_InCsMode(play)) {
             BgMoriKaitenkabe_SetupRotate(this);
-            func_8002DF54(play, &this->dyna.actor, 8);
+            if (GameInteractor_Should(VB_FREEZE_LINK_FOR_FOREST_PILLARS, true)) {
+                Player_SetCsActionWithHaltedActors(play, &this->dyna.actor, 8);
+            }
             Math_Vec3f_Copy(&this->lockedPlayerPos, &player->actor.world.pos);
             push.x = Math_SinS(this->dyna.unk_158);
             push.y = 0.0f;
@@ -130,24 +134,28 @@ void BgMoriKaitenkabe_Rotate(BgMoriKaitenkabe* this, PlayState* play) {
     Math_StepToF(&this->rotSpeed, 0.6f, 0.02f);
     if (Math_StepToF(&this->rotYdeg, this->rotDirection * 45.0f, this->rotSpeed)) {
         BgMoriKaitenkabe_SetupWait(this);
-        func_8002DF54(play, thisx, 7);
+        if (GameInteractor_Should(VB_FREEZE_LINK_FOR_FOREST_PILLARS, true)) {
+            Player_SetCsActionWithHaltedActors(play, thisx, 7);
+        }
         if (this->rotDirection > 0.0f) {
             thisx->home.rot.y += 0x2000;
         } else {
             thisx->home.rot.y -= 0x2000;
         }
         thisx->world.rot.y = thisx->shape.rot.y = thisx->home.rot.y;
-        func_800788CC(NA_SE_EV_STONEDOOR_STOP);
+        Sfx_PlaySfxCentered2(NA_SE_EV_STONEDOOR_STOP);
     } else {
         rotY = this->rotYdeg * (0x10000 / 360.0f);
         thisx->world.rot.y = thisx->shape.rot.y = thisx->home.rot.y + rotY;
-        func_800788CC(NA_SE_EV_WALL_SLIDE - SFX_FLAG);
+        Sfx_PlaySfxCentered2(NA_SE_EV_WALL_SLIDE - SFX_FLAG);
     }
     if (fabsf(this->dyna.unk_150) > 0.001f) {
         this->dyna.unk_150 = 0.0f;
         player->stateFlags2 &= ~PLAYER_STATE2_MOVING_DYNAPOLY;
     }
-    Math_Vec3f_Copy(&player->actor.world.pos, &this->lockedPlayerPos);
+    if (GameInteractor_Should(VB_FREEZE_LINK_FOR_FOREST_PILLARS, true)) {
+        Math_Vec3f_Copy(&player->actor.world.pos, &this->lockedPlayerPos);
+    }
 }
 
 void BgMoriKaitenkabe_Update(Actor* thisx, PlayState* play) {
@@ -166,8 +174,7 @@ void BgMoriKaitenkabe_Draw(Actor* thisx, PlayState* play) {
 
     gSPSegment(POLY_OPA_DISP++, 0x08, play->objectCtx.status[this->moriTexObjIndex].segment);
 
-    gSPMatrix(POLY_OPA_DISP++, MATRIX_NEWMTX(play->state.gfxCtx),
-              G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPMatrix(POLY_OPA_DISP++, MATRIX_NEWMTX(play->state.gfxCtx), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
 
     gSPDisplayList(POLY_OPA_DISP++, gMoriKaitenkabeDL);
 

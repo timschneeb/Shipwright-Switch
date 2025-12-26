@@ -1,5 +1,6 @@
 #include "global.h"
 #include <assert.h>
+#include "soh/ResourceManagerHelpers.h"
 
 void SkelCurve_Clear(SkelAnimeCurve* skelCurve) {
     skelCurve->limbCount = 0;
@@ -58,10 +59,10 @@ s32 SkelCurve_Update(PlayState* play, SkelAnimeCurve* skelCurve) {
     s32 j;
 
     transformIndex = SEGMENTED_TO_VIRTUAL(skelCurve->transUpdIdx);
-    
+
     if (ResourceMgr_OTRSigCheck(transformIndex))
         transformIndex = ResourceMgr_LoadAnimByName(transformIndex);
-    
+
     transformRefIdx = SEGMENTED_TO_VIRTUAL(transformIndex->refIndex);
     transData = SEGMENTED_TO_VIRTUAL(transformIndex->transformData);
     transformCopyValues = SEGMENTED_TO_VIRTUAL(transformIndex->copyValues);
@@ -108,8 +109,7 @@ void SkelCurve_DrawLimb(PlayState* play, s32 limbIndex, SkelAnimeCurve* skelCurv
 
     Matrix_Push();
 
-    if (overrideLimbDraw == NULL ||
-        (overrideLimbDraw != NULL && overrideLimbDraw(play, skelCurve, limbIndex, data))) {
+    if (overrideLimbDraw == NULL || (overrideLimbDraw != NULL && overrideLimbDraw(play, skelCurve, limbIndex, data))) {
         Vec3f scale;
         Vec3s rot;
         Vec3f pos;
@@ -130,10 +130,6 @@ void SkelCurve_DrawLimb(PlayState* play, s32 limbIndex, SkelAnimeCurve* skelCurv
 
         Matrix_TranslateRotateZYX(&pos, &rot);
         Matrix_Scale(scale.x, scale.y, scale.z, MTXMODE_APPLY);
-
-        if (CVarGetInteger(CVAR_ENHANCEMENT("DisableLOD"), 0)) {
-            lod = 0;
-        }
 
         if (lod == 0) {
             s32 pad1;
@@ -182,8 +178,8 @@ void SkelCurve_DrawLimb(PlayState* play, s32 limbIndex, SkelAnimeCurve* skelCurv
     CLOSE_DISPS(play->state.gfxCtx);
 }
 
-void SkelCurve_Draw(Actor* actor, PlayState* play, SkelAnimeCurve* skelCurve,
-                    OverrideCurveLimbDraw overrideLimbDraw, PostCurveLimbDraw postLimbDraw, s32 lod, void* data) {
+void SkelCurve_Draw(Actor* actor, PlayState* play, SkelAnimeCurve* skelCurve, OverrideCurveLimbDraw overrideLimbDraw,
+                    PostCurveLimbDraw postLimbDraw, s32 lod, void* data) {
     if (skelCurve->transforms != NULL) {
         SkelCurve_DrawLimb(play, 0, skelCurve, overrideLimbDraw, postLimbDraw, lod, data);
     }

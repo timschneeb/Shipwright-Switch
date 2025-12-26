@@ -3,6 +3,7 @@
 
 #include <libultraship/libultra.h>
 #include "unk.h" // this used to get pulled in via ultra64.h
+#include "attributes.h"
 #include "z64save.h"
 #include "z64light.h"
 #include "z64bgcheck.h"
@@ -24,12 +25,14 @@
 #include "z64skin.h"
 #include "z64transition.h"
 #include "z64interface.h"
+#include "z64vis.h"
 #include "alignment.h"
 #include "sequence.h"
 #include "sfx.h"
 #include <libultraship/color.h>
 #include "ichain.h"
 #include "regs.h"
+#include "gfx.h"
 
 #if defined(__LP64__) 
 #define _SOH64
@@ -43,6 +46,8 @@ namespace LUS
 {
     class IResource;
     class Scene;
+};
+namespace Fast {
     class DisplayList;
 };
 #include <memory>
@@ -92,8 +97,6 @@ typedef struct {
     /* 0x00000 */ u16 headMagic; // GFXPOOL_HEAD_MAGIC
     /* 0x00008 */ Gfx polyOpaBuffer[0x2FC0];
     /* 0x0BF08 */ Gfx polyXluBuffer[0x1000];
-    /* 0xXXXXX */ Gfx worldOverlayBuffer[0x1000];
-    /* 0x0BF08 */ Gfx polyKalBuffer[0x1000];
     /* 0x0FF08 */ Gfx overlayBuffer[0x800];
     /* 0x11F08 */ Gfx workBuffer[0x100];
     /* 0x11308 */ Gfx unusedBuffer[0x40];
@@ -140,8 +143,6 @@ typedef struct OSScTask {
 typedef struct GraphicsContext {
     /* 0x0000 */ Gfx* polyOpaBuffer; // Pointer to "Zelda 0"
     /* 0x0004 */ Gfx* polyXluBuffer; // Pointer to "Zelda 1"
-    /* 0xXXX */  Gfx* worldOverlayBuffer; // Pointer to "Paris"
-    /* 0xXXX */  Gfx* polyKalBuffer; // Pointer to "Rome"
     /* 0x0008 */ char unk_008[0x08]; // Unused, could this be pointers to "Zelda 2" / "Zelda 3"
     /* 0x0010 */ Gfx* overlayBuffer; // Pointer to "Zelda 4"
     /* 0x0014 */ u32 unk_014;
@@ -160,8 +161,6 @@ typedef struct GraphicsContext {
     /* 0x02A8 */ TwoHeadGfxArena overlay; // "Zelda 4"
     /* 0x02B8 */ TwoHeadGfxArena polyOpa; // "Zelda 0"
     /* 0x02C8 */ TwoHeadGfxArena polyXlu; // "Zelda 1"
-    /* 0x0XXX */ TwoHeadGfxArena worldOverlay; // When in Paris...
-    /* 0x0XXX */ TwoHeadGfxArena polyKal; // When in Rome...
     /* 0x02D8 */ u32 gfxPoolIdx;
     /* 0x02DC */ u16* curFrameBuffer;
     /* 0x02E0 */ char unk_2E0[0x04];
@@ -385,8 +384,8 @@ typedef struct {
     /* 0x1B */ u8    unk_1B;
     /* 0x1C */ CutsceneCameraPoint* cameraFocus;
     /* 0x20 */ CutsceneCameraPoint* cameraPosition;
-    /* 0x24 */ CsCmdActorAction* linkAction;
-    /* 0x28 */ CsCmdActorAction* npcActions[10]; // "npcdemopnt"
+    /* 0x24 */ CsCmdActorCue* linkAction;
+    /* 0x28 */ CsCmdActorCue* npcActions[10]; // "npcdemopnt"
 } CutsceneContext; // size = 0x50
 
 typedef struct {
@@ -541,8 +540,11 @@ typedef enum {
     LANGUAGE_ENG,
     LANGUAGE_GER,
     LANGUAGE_FRA,
+    LANGUAGE_JPN,
     LANGUAGE_MAX
 } Language;
+
+#define TODO_TRANSLATE "TranslateThis" 
 
 // TODO get these properties from the textures themselves
 #define FONT_CHAR_TEX_WIDTH  16
@@ -663,7 +665,10 @@ typedef struct {
     /* 0xE300 */ s32    msgLength; // original name : "msg_data"
     /* 0xE304 */ u8     msgMode; // original name: "msg_mode"
     /* 0xE305 */ char   unk_E305[0x1];
-    /* 0xE306 */ u8     msgBufDecoded[200]; // decoded message buffer, may be smaller than this
+    /* 0xE306 */ union {
+                    u8  msgBufDecoded[200];
+                    u16 msgBufDecodedWide[100];
+                 }; // decoded message buffer, may be smaller than this
     /* 0xE3CE */ u16    msgBufPos; // original name : "rdp"
     /* 0xE3D0 */ u16    unk_E3D0; // unused, only ever set to 0
     /* 0xE3D2 */ u16    textDrawPos; // draw all decoded characters up to this buffer position
@@ -841,6 +846,9 @@ typedef enum {
 #define PAUSE_CURSOR_PAGE_LEFT 10
 #define PAUSE_CURSOR_PAGE_RIGHT 11
 
+#define PAUSE_EQUIP_PLAYER_WIDTH 64
+#define PAUSE_EQUIP_PLAYER_HEIGHT 112
+
 typedef enum {
     /* 0x00 */ PAUSE_ITEM,
     /* 0x01 */ PAUSE_MAP,
@@ -917,7 +925,10 @@ typedef struct {
     /* 0x0266 */ u8     worldMapPoints[20]; // 0 = hidden; 1 = displayed; 2 = highlighted
     /* 0x027A */ u8     tradeQuestLocation;
     /* 0x027C */ SkelAnime playerSkelAnime;
-} PauseContext; // size = 0x2C0
+    // #region SOH [Randomizer]
+    /* 0x02C0 */ u8     randoQuestMode; // 0 = Off (normal quest menu); 1 = On (Misc Collectibles menu)
+    // #endregion
+} PauseContext; // size = 0x2C1
 
 typedef enum {
     /* 00 */ GAMEOVER_INACTIVE,
@@ -1322,12 +1333,15 @@ typedef struct {
 } SceneSelectLoadingMessages;
 
 typedef struct {
+    /*      */ char* japaneseAge;
     /*      */ char* englishAge;
     /*      */ char* germanAge;
     /*      */ char* frenchAge;
 } BetterSceneSelectAgeLabels;
 
+
 typedef struct {
+  /*      */ char* japaneseName;
   /*      */ char* englishName;
   /*      */ char* germanName;
   /*      */ char* frenchName;
@@ -1336,6 +1350,7 @@ typedef struct {
 } BetterSceneSelectEntrancePair;
 
 typedef struct {
+    /*      */ char* japaneseName;
     /*      */ char* englishName;
     /*      */ char* germanName;
     /*      */ char* frenchName;
@@ -1481,6 +1496,8 @@ typedef struct PlayState {
     /* 0x1242B */ u8 unk_1242B;
     /* 0x1242C */ SceneTableEntry* loadedScene;
     /* 0x12430 */ char unk_12430[0xE8];
+    // SOH [Custom Models] MTX tracker for flex based skeletons
+    Mtx** flexLimbOverrideMTX;
 } PlayState; // size = 0x12518
 
 typedef struct {
@@ -1505,7 +1522,7 @@ typedef struct {
     /* 0x34 */ s32 isEnabled;
 } StickDirectionPrompt;
 
-typedef struct {
+typedef struct FileChooseContext {
     /* 0x00000 */ GameState state;
     /* 0x000A4 */ Vtx* windowVtx;
     /* 0x000A8 */ u8* staticSegment;
@@ -1587,6 +1604,9 @@ typedef struct {
     uint8_t bossRushOffset;
     int16_t bossRushUIAlpha;
     uint16_t bossRushArrowOffset;
+    uint8_t randomizerIndex;
+    int16_t randomizerUIAlpha;
+    uint16_t randomizerArrowOffset;
 } FileChooseContext; // size = 0x1CAE0
 
 // Macros for `EntranceInfo.field`
@@ -2030,13 +2050,13 @@ typedef struct ArenaNode {
     /* 0x04 */ size_t size;
     /* 0x08 */ struct ArenaNode* next;
     /* 0x0C */ struct ArenaNode* prev;
-    ///* 0x10 */ const char* filename;
-    ///* 0x14 */ s32 line;
-    ///* 0x18 */ OSId threadId;
-    ///* 0x1C */ Arena* arena;
-    ///* 0x20 */ OSTime time;
-    ///* 0x28 */ u8 unk_28[0x30-0x28]; // probably padding
-} ArenaNode; // size = 0x10
+    // /* 0x10 */ const char* filename;
+    // /* 0x14 */ s32 line;
+    // /* 0x18 */ OSId threadId;
+    // /* 0x1C */ Arena* arena;
+    // /* 0x20 */ OSTime time;
+    // /* 0x28 */ u8 unk_28[0x30-0x28]; // probably padding
+} ArenaNode; // size = 0x30
 
 typedef struct OverlayRelocationSection {
     /* 0x00 */ u32 textSize;
@@ -2218,31 +2238,6 @@ typedef struct {
     /* 0x0080 */ u32 viFeatures;
     /* 0x0084 */ u32 unk_84;
 } ViMode;
-
-// Vis...
-typedef struct {
-    /* 0x00 */ u32 type;
-    /* 0x04 */ u32 setScissor;
-    /* 0x08 */ Color_RGBA8_u32 color;
-    /* 0x0C */ Color_RGBA8_u32 envColor;
-} struct_801664F0; // size = 0x10
-
-typedef struct {
-    /* 0x00 */ u32 unk_00;
-    /* 0x04 */ u32 setScissor;
-    /* 0x08 */ Color_RGBA8_u32 primColor;
-    /* 0x0C */ Color_RGBA8_u32 envColor;
-    /* 0x10 */ u16* tlut;
-    /* 0x14 */ Gfx* monoDl;
-} VisMono; // size = 0x18
-
-// Vis...
-typedef struct {
-    /* 0x00 */ u32 useRgba;
-    /* 0x04 */ u32 setScissor;
-    /* 0x08 */ Color_RGBA8_u32 primColor;
-    /* 0x08 */ Color_RGBA8_u32 envColor;
-} struct_80166500; // size = 0x10
 
 typedef struct {
     /* 0x000 */ u8 rumbleEnable[4];

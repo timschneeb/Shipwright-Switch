@@ -11,8 +11,11 @@
 #include "scenes/indoors/yousei_izumi_yoko/yousei_izumi_yoko_scene.h"
 #include "scenes/indoors/daiyousei_izumi/daiyousei_izumi_scene.h"
 #include "soh/frame_interpolation.h"
+#include "soh/OTRGlobals.h"
+#include "soh/ResourceManagerHelpers.h"
+#include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 
-#define FLAGS (ACTOR_FLAG_UPDATE_WHILE_CULLED | ACTOR_FLAG_DRAW_WHILE_CULLED | ACTOR_FLAG_NO_FREEZE_OCARINA)
+#define FLAGS (ACTOR_FLAG_UPDATE_CULLING_DISABLED | ACTOR_FLAG_DRAW_CULLING_DISABLED | ACTOR_FLAG_UPDATE_DURING_OCARINA)
 
 typedef enum {
     /* 0 */ FAIRY_UPGRADE_MAGIC,
@@ -67,19 +70,6 @@ const ActorInit Bg_Dy_Yoseizo_InitVars = {
     NULL,
     NULL,
 };
-
-void GivePlayerRandoRewardGreatFairy(BgDyYoseizo* this, PlayState* play) {
-    Player* player = GET_PLAYER(play);
-    GetItemEntry getItemEntry = Randomizer_GetItemFromActor(this->actor.id, play->sceneNum, this->fountainType + 1, GI_NONE);
-
-    if (this->actor.parent == GET_PLAYER(play) && !Flags_GetTreasure(play, this->fountainType + 1) &&
-        !Player_InBlockingCsMode(play, GET_PLAYER(play))) {
-        Flags_SetTreasure(play, this->fountainType + 1);
-        Actor_Kill(&this->actor);
-    } else if (!Flags_GetTreasure(play, this->fountainType + 1)) {
-        GiveItemEntryFromActor(&this->actor, play, getItemEntry, 10000.0f, 100.0f);
-    }
-}
 
 void BgDyYoseizo_Init(Actor* thisx, PlayState* play2) {
     PlayState* play = play2;
@@ -196,32 +186,26 @@ void BgDyYoseizo_Bob(BgDyYoseizo* this, PlayState* play) {
 }
 
 void BgDyYoseizo_CheckMagicAcquired(BgDyYoseizo* this, PlayState* play) {
+    u8 isEligible = true;
     if (Flags_GetSwitch(play, 0x38)) {
         play->msgCtx.ocarinaMode = OCARINA_MODE_04;
 
-        if(IS_RANDO) {
-            gSaveContext.healthAccumulator = 0x140;
-            Magic_Fill(play);
-            if(Flags_GetTreasure(play, this->fountainType + 1)) {
-                Actor_Kill(&this->actor);
-            } else {
-                GivePlayerRandoRewardGreatFairy(this, play);
-            }
-            return;
-        } 
-
         if (play->sceneNum == SCENE_GREAT_FAIRYS_FOUNTAIN_MAGIC) {
             if (!gSaveContext.isMagicAcquired && (this->fountainType != FAIRY_UPGRADE_MAGIC)) {
-                Actor_Kill(&this->actor);
-                return;
+                isEligible = false;
             }
         } else {
             if (!gSaveContext.isMagicAcquired) {
-                Actor_Kill(&this->actor);
-                return;
+                isEligible = false;
             }
         }
-        func_8002DF54(play, &this->actor, 1);
+
+        if (!GameInteractor_Should(VB_BE_ELIGIBLE_FOR_GREAT_FAIRY_REWARD, isEligible, this)) {
+            Actor_Kill(&this->actor);
+            return;
+        }
+
+        Player_SetCsActionWithHaltedActors(play, &this->actor, 1);
         this->actionFunc = BgDyYoseizo_ChooseType;
     }
 }
@@ -229,7 +213,7 @@ void BgDyYoseizo_CheckMagicAcquired(BgDyYoseizo* this, PlayState* play) {
 void BgDyYoseizo_ChooseType(BgDyYoseizo* this, PlayState* play) {
     s32 givingReward;
 
-    func_8002DF54(play, &this->actor, 1);
+    Player_SetCsActionWithHaltedActors(play, &this->actor, 1);
     // "Mode"
     osSyncPrintf(VT_FGCOL(YELLOW) "☆☆☆☆☆ もうど ☆☆☆☆☆ %d\n" VT_RST, play->msgCtx.ocarinaMode);
     givingReward = false;
@@ -345,12 +329,12 @@ void BgDyYoseizo_SetupSpinGrow_NoReward(BgDyYoseizo* this, PlayState* play) {
     }
 
     Audio_PlayActorSound2(&this->actor, NA_SE_VO_FR_LAUGH_0);
-    func_8002DF54(play, &this->actor, 1);
+    Player_SetCsActionWithHaltedActors(play, &this->actor, 1);
     this->actionFunc = BgDyYoseizo_SpinGrow_NoReward;
 }
 
 void BgDyYoseizo_SpinGrow_NoReward(BgDyYoseizo* this, PlayState* play) {
-    func_8002DF54(play, &this->actor, 1);
+    Player_SetCsActionWithHaltedActors(play, &this->actor, 1);
     Math_ApproachF(&this->actor.world.pos.y, this->grownHeight, this->heightFraction, 100.0f);
     Math_ApproachF(&this->scale, 0.035f, this->scaleFraction, 0.005f);
     Math_ApproachF(&this->heightFraction, 0.8f, 0.1f, 0.02f);
@@ -376,7 +360,7 @@ void BgDyYoseizo_SpinGrow_NoReward(BgDyYoseizo* this, PlayState* play) {
 void BgDyYoseizo_CompleteSpinGrow_NoReward(BgDyYoseizo* this, PlayState* play) {
     f32 curFrame = this->skelAnime.curFrame;
 
-    func_8002DF54(play, &this->actor, 1);
+    Player_SetCsActionWithHaltedActors(play, &this->actor, 1);
 
     if ((this->frameCount * 1273.0f) <= this->bobTimer) {
         this->bobTimer = 0.0f;
@@ -390,7 +374,7 @@ void BgDyYoseizo_CompleteSpinGrow_NoReward(BgDyYoseizo* this, PlayState* play) {
 }
 
 void BgDyYoseizo_SetupGreetPlayer_NoReward(BgDyYoseizo* this, PlayState* play) {
-    func_8002DF54(play, &this->actor, 1);
+    Player_SetCsActionWithHaltedActors(play, &this->actor, 1);
 
     if (play->sceneNum == SCENE_GREAT_FAIRYS_FOUNTAIN_MAGIC) {
         this->frameCount = Animation_GetLastFrame(&gGreatFairySittingAnim);
@@ -410,7 +394,7 @@ void BgDyYoseizo_SetupGreetPlayer_NoReward(BgDyYoseizo* this, PlayState* play) {
 }
 
 void BgDyYoseizo_GreetPlayer_NoReward(BgDyYoseizo* this, PlayState* play) {
-    func_8002DF54(play, &this->actor, 1);
+    Player_SetCsActionWithHaltedActors(play, &this->actor, 1);
     this->bobTimer = this->skelAnime.curFrame * 1273.0f;
 
     if ((this->frameCount * 1273.0f) <= this->bobTimer) {
@@ -478,9 +462,8 @@ void BgDyYoseizo_HealPlayer_NoReward(BgDyYoseizo* this, PlayState* play) {
 
             beamParams = ((play->sceneNum == SCENE_GREAT_FAIRYS_FOUNTAIN_MAGIC) ? 0 : 1);
 
-            this->beam =
-                (EnDyExtra*)Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_EN_DY_EXTRA,
-                                               beamPos.x, beamPos.y, beamPos.z, 0, 0, 0, beamParams);
+            this->beam = (EnDyExtra*)Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_EN_DY_EXTRA,
+                                                        beamPos.x, beamPos.y, beamPos.z, 0, 0, 0, beamParams);
         }
     }
     if (this->refillTimer > 1) {
@@ -492,7 +475,7 @@ void BgDyYoseizo_HealPlayer_NoReward(BgDyYoseizo* this, PlayState* play) {
     }
 
     if (this->healingTimer == 110) {
-        gSaveContext.healthAccumulator = 0x140;
+        gSaveContext.healthAccumulator = MAX_HEALTH;
         Magic_Fill(play);
         this->refillTimer = 200;
     }
@@ -578,7 +561,7 @@ void BgDyYoseizo_Vanish(BgDyYoseizo* this, PlayState* play) {
     Actor* findOcarinaSpot;
 
     if (this->vanishTimer == 0) {
-        func_8002DF54(play, &this->actor, 7);
+        Player_SetCsActionWithHaltedActors(play, &this->actor, 7);
         play->envCtx.unk_BF = 0;
         findOcarinaSpot = play->actorCtx.actorLists[ACTORCAT_PROP].head;
 
@@ -600,7 +583,7 @@ void BgDyYoseizo_SetupSpinGrow_Reward(BgDyYoseizo* this, PlayState* play) {
     if (play->csCtx.state != CS_STATE_IDLE) {
         if ((play->csCtx.npcActions[0] != NULL) && (play->csCtx.npcActions[0]->action == 2)) {
             this->actor.draw = BgDyYoseizo_Draw;
-            func_8002DF54(play, &this->actor, 1);
+            Player_SetCsActionWithHaltedActors(play, &this->actor, 1);
             this->finishedSpinGrow = false;
 
             if (play->sceneNum == SCENE_GREAT_FAIRYS_FOUNTAIN_MAGIC) {
@@ -726,8 +709,8 @@ void BgDyYoseizo_Give_Reward(BgDyYoseizo* this, PlayState* play) {
 
         } else if (!this->lightBallSpawned) {
             demoEffectParams = ((s16)(sDemoEffectLightColors[actionIndex] << 0xC) | DEMO_EFFECT_LIGHT);
-            Actor_Spawn(&play->actorCtx, play, ACTOR_DEMO_EFFECT, this->actor.world.pos.x,
-                        this->actor.world.pos.y, this->actor.world.pos.z, 0, 0, 0, (s32)demoEffectParams, true);
+            Actor_Spawn(&play->actorCtx, play, ACTOR_DEMO_EFFECT, this->actor.world.pos.x, this->actor.world.pos.y,
+                        this->actor.world.pos.z, 0, 0, 0, (s32)demoEffectParams, true);
             this->lightBallSpawned = true;
         }
     } else {
@@ -760,7 +743,7 @@ void BgDyYoseizo_Give_Reward(BgDyYoseizo* this, PlayState* play) {
         }
 
         if (!this->healing) {
-            gSaveContext.healthAccumulator = 0x140;
+            gSaveContext.healthAccumulator = MAX_HEALTH;
             this->healing = true;
             if (actionIndex == 2) {
                 Magic_Fill(play);
@@ -777,9 +760,8 @@ void BgDyYoseizo_Give_Reward(BgDyYoseizo* this, PlayState* play) {
             itemPos.y = (LINK_IS_ADULT ? player->actor.world.pos.y + 73.0f : player->actor.world.pos.y + 53.0f);
             itemPos.z = player->actor.world.pos.z;
 
-            this->item =
-                (EnExItem*)Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_EN_EX_ITEM,
-                                              itemPos.x, itemPos.y, itemPos.z, 0, 0, 0, sExItemTypes[actionIndex]);
+            this->item = (EnExItem*)Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_EN_EX_ITEM, itemPos.x,
+                                                       itemPos.y, itemPos.z, 0, 0, 0, sExItemTypes[actionIndex]);
 
             if (this->item != NULL) {
                 if (gSaveContext.isMagicAcquired == 0) {
@@ -789,7 +771,7 @@ void BgDyYoseizo_Give_Reward(BgDyYoseizo* this, PlayState* play) {
                 }
 
                 this->itemSpawned = true;
-                gSaveContext.healthAccumulator = 0x140;
+                gSaveContext.healthAccumulator = MAX_HEALTH;
                 Interface_ChangeAlpha(9);
                 gSaveContext.itemGetInf[1] |= sItemGetFlags[actionIndex];
                 Item_Give(play, sItemIds[actionIndex]);
@@ -822,8 +804,8 @@ void BgDyYoseizo_Give_Reward(BgDyYoseizo* this, PlayState* play) {
     if ((play->csCtx.npcActions[0]->action >= 19) && (play->csCtx.npcActions[0]->action < 22) &&
         !this->warpEffectSpawned) {
         actionIndex = play->csCtx.npcActions[0]->action - 11;
-        Actor_Spawn(&play->actorCtx, play, ACTOR_DOOR_WARP1, player->actor.world.pos.x,
-                    player->actor.world.pos.y, player->actor.world.pos.z, 0, 0, 0, actionIndex, true);
+        Actor_Spawn(&play->actorCtx, play, ACTOR_DOOR_WARP1, player->actor.world.pos.x, player->actor.world.pos.y,
+                    player->actor.world.pos.z, 0, 0, 0, actionIndex, true);
         this->warpEffectSpawned = true;
     }
     BgDyYoseizo_Bob(this, play);
@@ -851,16 +833,16 @@ void BgDyYoseizo_Update(Actor* thisx, PlayState* play2) {
     if (play->csCtx.state != CS_STATE_IDLE) {
         phi_v1 = 0;
         if (play->sceneNum == SCENE_GREAT_FAIRYS_FOUNTAIN_MAGIC) {
-            if ((play->csCtx.frames == 32) || (play->csCtx.frames == 291) ||
-                (play->csCtx.frames == 426) || (play->csCtx.frames == 851)) {
+            if ((play->csCtx.frames == 32) || (play->csCtx.frames == 291) || (play->csCtx.frames == 426) ||
+                (play->csCtx.frames == 851)) {
                 phi_v1 = 1;
             }
             if (play->csCtx.frames == 101) {
                 phi_v1 = 2;
             }
         } else {
-            if ((play->csCtx.frames == 35) || (play->csCtx.frames == 181) ||
-                (play->csCtx.frames == 462) || (play->csCtx.frames == 795)) {
+            if ((play->csCtx.frames == 35) || (play->csCtx.frames == 181) || (play->csCtx.frames == 462) ||
+                (play->csCtx.frames == 795)) {
                 phi_v1 = 1;
             }
             if (play->csCtx.frames == 90) {
@@ -885,7 +867,7 @@ void BgDyYoseizo_Update(Actor* thisx, PlayState* play2) {
         }
     }
 
-    Actor_MoveForward(&this->actor);
+    Actor_MoveXZGravity(&this->actor);
     this->heightOffset = this->scale * 7500.0f;
     Actor_SetFocus(&this->actor, this->heightOffset);
     this->actor.focus.pos.y = this->heightOffset;
@@ -894,8 +876,7 @@ void BgDyYoseizo_Update(Actor* thisx, PlayState* play2) {
     Actor_SetScale(&this->actor, this->scale);
 }
 
-s32 BgDyYoseizo_OverrideLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* pos, Vec3s* rot,
-                                 void* thisx) {
+s32 BgDyYoseizo_OverrideLimbDraw(PlayState* play, s32 limbIndex, Gfx** dList, Vec3f* pos, Vec3s* rot, void* thisx) {
     BgDyYoseizo* this = (BgDyYoseizo*)thisx;
 
     if (limbIndex == 8) { // Torso
@@ -1043,7 +1024,7 @@ void BgDyYoseizo_ParticleDraw(BgDyYoseizo* this, PlayState* play) {
 
     for (i = 0; i < 200; i++, particle++) {
         FrameInterpolation_RecordOpenChild(particle, particle->epoch);
-        
+
         if (particle->alive == 1) {
             if (phi_s3 == 0) {
                 gSPDisplayList(POLY_XLU_DISP++, SEGMENTED_TO_VIRTUAL(gGreatFairyParticleMaterialDL));
@@ -1061,11 +1042,10 @@ void BgDyYoseizo_ParticleDraw(BgDyYoseizo* this, PlayState* play) {
             Matrix_Scale(particle->scale, particle->scale, 1.0f, MTXMODE_APPLY);
             Matrix_RotateZ(particle->roll, MTXMODE_APPLY);
 
-            gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(gfxCtx),
-                      G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+            gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(gfxCtx), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
             gSPDisplayList(POLY_XLU_DISP++, SEGMENTED_TO_VIRTUAL(gGreatFairyParticleModelDL));
         }
-        
+
         FrameInterpolation_RecordCloseChild();
     }
 

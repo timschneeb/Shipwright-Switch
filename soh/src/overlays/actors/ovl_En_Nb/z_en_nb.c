@@ -8,8 +8,10 @@
 #include "vt.h"
 #include "objects/object_nb/object_nb.h"
 #include "overlays/actors/ovl_Door_Warp1/z_door_warp1.h"
+#include "soh/ResourceManagerHelpers.h"
+#include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 
-#define FLAGS ACTOR_FLAG_UPDATE_WHILE_CULLED
+#define FLAGS ACTOR_FLAG_UPDATE_CULLING_DISABLED
 
 typedef enum {
     /* 0x00 */ NB_CHAMBER_INIT,
@@ -144,7 +146,7 @@ void EnNb_UpdateCollider(EnNb* this, PlayState* play) {
 
 void EnNb_Destroy(Actor* thisx, PlayState* play) {
     EnNb* this = (EnNb*)thisx;
-    
+
     D_80AB4318 = 0;
     Collider_DestroyCylinder(play, &this->collider);
 
@@ -231,7 +233,7 @@ s32 EnNb_UpdateSkelAnime(EnNb* this) {
     return SkelAnime_Update(&this->skelAnime);
 }
 
-CsCmdActorAction* EnNb_GetNpcCsAction(PlayState* play, s32 npcActionIdx) {
+CsCmdActorCue* EnNb_GetNpcCsAction(PlayState* play, s32 npcActionIdx) {
     if (play->csCtx.state != CS_STATE_IDLE) {
         return play->csCtx.npcActions[npcActionIdx];
     }
@@ -239,7 +241,7 @@ CsCmdActorAction* EnNb_GetNpcCsAction(PlayState* play, s32 npcActionIdx) {
 }
 
 void EnNb_SetupCsPosRot(EnNb* this, PlayState* play, s32 npcActionIdx) {
-    CsCmdActorAction* csCmdNPCAction = EnNb_GetNpcCsAction(play, npcActionIdx);
+    CsCmdActorCue* csCmdNPCAction = EnNb_GetNpcCsAction(play, npcActionIdx);
     s16 newRotY;
     Actor* thisx = &this->actor;
 
@@ -252,7 +254,7 @@ void EnNb_SetupCsPosRot(EnNb* this, PlayState* play, s32 npcActionIdx) {
 }
 
 s32 func_80AB1390(EnNb* this, PlayState* play, u16 arg2, s32 npcActionIdx) {
-    CsCmdActorAction* csCmdNPCAction;
+    CsCmdActorCue* csCmdNPCAction;
 
     if ((play->csCtx.state != CS_STATE_IDLE) &&
         (csCmdNPCAction = play->csCtx.npcActions[npcActionIdx], csCmdNPCAction != NULL) &&
@@ -263,7 +265,7 @@ s32 func_80AB1390(EnNb* this, PlayState* play, u16 arg2, s32 npcActionIdx) {
 }
 
 s32 func_80AB13D8(EnNb* this, PlayState* play, u16 arg2, s32 npcActionIdx) {
-    CsCmdActorAction* csCmdNPCAction;
+    CsCmdActorCue* csCmdNPCAction;
 
     if ((play->csCtx.state != CS_STATE_IDLE) &&
         (csCmdNPCAction = play->csCtx.npcActions[npcActionIdx], csCmdNPCAction != NULL) &&
@@ -274,7 +276,7 @@ s32 func_80AB13D8(EnNb* this, PlayState* play, u16 arg2, s32 npcActionIdx) {
 }
 
 void EnNb_SetInitialCsPosRot(EnNb* this, PlayState* play, s32 npcActionIdx) {
-    CsCmdActorAction* csCmdNPCAction = EnNb_GetNpcCsAction(play, npcActionIdx);
+    CsCmdActorCue* csCmdNPCAction = EnNb_GetNpcCsAction(play, npcActionIdx);
     Actor* thisx = &this->actor;
 
     if (csCmdNPCAction != NULL) {
@@ -314,8 +316,7 @@ void EnNb_SpawnBlueWarp(EnNb* this, PlayState* play) {
     f32 posY = this->actor.world.pos.y;
     f32 posZ = this->actor.world.pos.z;
 
-    Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_DOOR_WARP1, posX, posY, posZ, 0, 0, 0,
-                       WARP_SAGES);
+    Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_DOOR_WARP1, posX, posY, posZ, 0, 0, 0, WARP_SAGES);
 }
 
 void EnNb_GiveMedallion(EnNb* this, PlayState* play) {
@@ -324,9 +325,10 @@ void EnNb_GiveMedallion(EnNb* this, PlayState* play) {
     f32 posY = player->actor.world.pos.y + 50.0f;
     f32 posZ = player->actor.world.pos.z;
 
-    Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_DEMO_EFFECT, posX, posY, posZ, 0, 0, 0,
-                       0xC);
-    Item_Give(play, ITEM_MEDALLION_SPIRIT);
+    Actor_SpawnAsChild(&play->actorCtx, &this->actor, play, ACTOR_DEMO_EFFECT, posX, posY, posZ, 0, 0, 0, 0xC);
+    if (GameInteractor_Should(VB_GIVE_ITEM_SPIRIT_MEDALLION, true)) {
+        Item_Give(play, ITEM_MEDALLION_SPIRIT);
+    }
 }
 
 void EnNb_ComeUpImpl(EnNb* this, PlayState* play) {
@@ -342,14 +344,16 @@ void EnNb_SetupChamberCsImpl(EnNb* this, PlayState* play) {
         this->action = NB_CHAMBER_UNDERGROUND;
         play->csCtx.segment = &D_80AB431C;
         gSaveContext.cutsceneTrigger = 2;
-        Item_Give(play, ITEM_MEDALLION_SPIRIT);
+        if (GameInteractor_Should(VB_GIVE_ITEM_SPIRIT_MEDALLION, true)) {
+            Item_Give(play, ITEM_MEDALLION_SPIRIT);
+        }
         player->actor.world.rot.y = player->actor.shape.rot.y = this->actor.world.rot.y + 0x8000;
     }
 }
 
 void EnNb_SetupChamberWarpImpl(EnNb* this, PlayState* play) {
     CutsceneContext* csCtx = &play->csCtx;
-    CsCmdActorAction* csCmdNPCAction;
+    CsCmdActorCue* csCmdNPCAction;
 
     if (csCtx->state != CS_STATE_IDLE) {
         csCmdNPCAction = csCtx->npcActions[1];
@@ -370,7 +374,7 @@ void EnNb_SetupDefaultChamberIdle(EnNb* this) {
 
 void EnNb_SetupArmRaise(EnNb* this, PlayState* play) {
     AnimationHeader* animation = &gNabooruRaisingArmsGivingMedallionAnim;
-    CsCmdActorAction* csCmdNPCAction;
+    CsCmdActorCue* csCmdNPCAction;
 
     if (play->csCtx.state != CS_STATE_IDLE) {
         csCmdNPCAction = play->csCtx.npcActions[1];
@@ -393,7 +397,7 @@ void EnNb_SetupRaisedArmTransition(EnNb* this, s32 animFinished) {
 }
 
 void EnNb_SetupMedallion(EnNb* this, PlayState* play) {
-    CsCmdActorAction* csCmdNPCAction;
+    CsCmdActorCue* csCmdNPCAction;
 
     if (play->csCtx.state != CS_STATE_IDLE) {
         csCmdNPCAction = play->csCtx.npcActions[6];
@@ -456,7 +460,7 @@ void EnNb_SetupLightArrowOrSealingCs(EnNb* this, PlayState* play) {
 }
 
 void EnNb_PlaySealingSound(void) {
-    func_800788CC(NA_SE_SY_WHITE_OUT_T);
+    Sfx_PlaySfxCentered2(NA_SE_SY_WHITE_OUT_T);
 }
 
 void EnNb_InitializeDemo6K(EnNb* this, PlayState* play) {
@@ -556,8 +560,8 @@ void EnNb_DrawTransparency(EnNb* this, PlayState* play) {
     gSPSegment(POLY_XLU_DISP++, 0x09, SEGMENTED_TO_VIRTUAL(eyeTex));
     gDPSetEnvColor(POLY_XLU_DISP++, 0, 0, 0, this->alpha);
     gSPSegment(POLY_XLU_DISP++, 0x0C, &D_80116280[0]);
-    POLY_XLU_DISP = SkelAnime_DrawFlex(play, skelAnime->skeleton, skelAnime->jointTable, skelAnime->dListCount,
-                                       NULL, NULL, NULL, POLY_XLU_DISP);
+    POLY_XLU_DISP = SkelAnime_DrawFlex(play, skelAnime->skeleton, skelAnime->jointTable, skelAnime->dListCount, NULL,
+                                       NULL, NULL, POLY_XLU_DISP);
 
     CLOSE_DISPS(play->state.gfxCtx);
 }
@@ -571,18 +575,18 @@ void EnNb_InitKidnap(EnNb* this, PlayState* play) {
 
 void EnNb_PlayCrySFX(EnNb* this, PlayState* play) {
     if (play->csCtx.frames == 3) {
-        func_80078914(&this->actor.projectedPos, NA_SE_VO_NB_CRY_0);
+        Sfx_PlaySfxAtPos(&this->actor.projectedPos, NA_SE_VO_NB_CRY_0);
     }
 }
 
 void EnNb_PlayAgonySFX(EnNb* this, PlayState* play) {
     if (play->csCtx.frames == 420) {
-        func_80078914(&this->actor.projectedPos, NA_SE_VO_NB_AGONY);
+        Sfx_PlaySfxAtPos(&this->actor.projectedPos, NA_SE_VO_NB_AGONY);
     }
 }
 
 void EnNb_SetPosInPortal(EnNb* this, PlayState* play) {
-    CsCmdActorAction* csCmdNPCAction = EnNb_GetNpcCsAction(play, 1);
+    CsCmdActorCue* csCmdNPCAction = EnNb_GetNpcCsAction(play, 1);
     Vec3f* pos = &this->actor.world.pos;
     f32 f0;
     s32 pad;
@@ -590,8 +594,8 @@ void EnNb_SetPosInPortal(EnNb* this, PlayState* play) {
     Vec3f endPos;
 
     if (csCmdNPCAction != NULL) {
-        f0 = Environment_LerpWeightAccelDecel(csCmdNPCAction->endFrame, csCmdNPCAction->startFrame,
-                                              play->csCtx.frames, 4, 4);
+        f0 = Environment_LerpWeightAccelDecel(csCmdNPCAction->endFrame, csCmdNPCAction->startFrame, play->csCtx.frames,
+                                              4, 4);
         startPos.x = csCmdNPCAction->startPos.x;
         startPos.y = csCmdNPCAction->startPos.y;
         startPos.z = csCmdNPCAction->startPos.z;
@@ -637,7 +641,7 @@ void EnNb_SetupKidnap(EnNb* this) {
 }
 
 void EnNb_CheckKidnapCsMode(EnNb* this, PlayState* play) {
-    CsCmdActorAction* csCmdNPCAction = EnNb_GetNpcCsAction(play, 1);
+    CsCmdActorCue* csCmdNPCAction = EnNb_GetNpcCsAction(play, 1);
     s32 action;
     s32 previousCsAction;
 
@@ -703,8 +707,8 @@ void EnNb_PlayKnuckleDefeatSFX(EnNb* this, PlayState* play) {
     s32 pad[2];
 
     if (play->csCtx.frames == 548) {
-        func_80078914(&this->actor.projectedPos, NA_SE_VO_NB_CRY_0);
-        func_80078914(&this->actor.projectedPos, NA_SE_EN_FANTOM_HIT_THUNDER);
+        Sfx_PlaySfxAtPos(&this->actor.projectedPos, NA_SE_VO_NB_CRY_0);
+        Sfx_PlaySfxAtPos(&this->actor.projectedPos, NA_SE_EN_FANTOM_HIT_THUNDER);
     }
 }
 
@@ -713,7 +717,7 @@ void EnNb_PlayKneelingOnGroundSFX(EnNb* this) {
 
     if ((this->skelAnime.mode == 2) &&
         (Animation_OnFrame(&this->skelAnime, 18.0f) || Animation_OnFrame(&this->skelAnime, 25.0f))) {
-        func_80078914(&this->actor.projectedPos, NA_SE_EV_HUMAN_BOUND);
+        Sfx_PlaySfxAtPos(&this->actor.projectedPos, NA_SE_EV_HUMAN_BOUND);
     }
 }
 
@@ -721,7 +725,7 @@ void EnNb_PlayLookRightSFX(EnNb* this) {
     s32 pad[2];
 
     if ((this->skelAnime.mode == 2) && Animation_OnFrame(&this->skelAnime, 9.0f)) {
-        func_80078914(&this->actor.projectedPos, NA_SE_PL_WALK_CONCRETE);
+        Sfx_PlaySfxAtPos(&this->actor.projectedPos, NA_SE_PL_WALK_CONCRETE);
     }
 }
 
@@ -729,7 +733,7 @@ void EnNb_PlayLookLeftSFX(EnNb* this) {
     s32 pad[2];
 
     if (Animation_OnFrame(&this->skelAnime, 9.0f) || Animation_OnFrame(&this->skelAnime, 13.0f)) {
-        func_80078914(&this->actor.projectedPos, NA_SE_PL_WALK_CONCRETE);
+        Sfx_PlaySfxAtPos(&this->actor.projectedPos, NA_SE_PL_WALK_CONCRETE);
     }
 }
 
@@ -739,7 +743,7 @@ void EnNb_InitDemo6KInConfrontation(EnNb* this, PlayState* play) {
 }
 
 void func_80AB2688(EnNb* this, PlayState* play) {
-    this->skelAnime.moveFlags |= 1;
+    this->skelAnime.movementFlags |= 1;
     AnimationContext_SetMoveActor(play, &this->actor, &this->skelAnime, 1.0f);
 }
 
@@ -844,7 +848,7 @@ void EnNb_SetupConfrontationDestroy(EnNb* this) {
 }
 
 void EnNb_CheckConfrontationCsMode(EnNb* this, PlayState* play) {
-    CsCmdActorAction* csCmdNPCAction;
+    CsCmdActorCue* csCmdNPCAction;
     s32 csAction;
     s32 previousCsAction;
 
@@ -1046,7 +1050,7 @@ void EnNb_CheckIfLookingUp(EnNb* this, s32 animFinished) {
 }
 
 void EnNb_CheckCreditsCsModeImpl(EnNb* this, PlayState* play) {
-    CsCmdActorAction* csCmdNPCAction = EnNb_GetNpcCsAction(play, 1);
+    CsCmdActorCue* csCmdNPCAction = EnNb_GetNpcCsAction(play, 1);
     s32 action;
     s32 previousCsAction;
 
@@ -1111,7 +1115,7 @@ void EnNb_CrawlspaceSpawnCheck(EnNb* this, PlayState* play) {
         } else {
             EnNb_SetCurrentAnim(this, &gNabooruStandingHandsOnHipsAnim, 0, 0.0f, 0);
             this->headTurnFlag = 1;
-            this->actor.flags |= ACTOR_FLAG_TARGETABLE | ACTOR_FLAG_FRIENDLY;
+            this->actor.flags |= ACTOR_FLAG_ATTENTION_ENABLED | ACTOR_FLAG_FRIENDLY;
             this->actor.world.pos = this->finalPos;
             this->action = NB_IDLE_AFTER_TALK;
             this->drawMode = NB_DRAW_DEFAULT;
@@ -1143,7 +1147,7 @@ void func_80AB359C(EnNb* this) {
 }
 
 void EnNb_SetNoticeSFX(EnNb* this) {
-    func_80078914(&this->actor.projectedPos, NA_SE_VO_NB_NOTICE);
+    Sfx_PlaySfxAtPos(&this->actor.projectedPos, NA_SE_VO_NB_NOTICE);
 }
 
 s32 EnNb_GetNoticedStatus(EnNb* this, PlayState* play) {
@@ -1190,7 +1194,7 @@ void EnNb_SetupIdleCrawlspace(EnNb* this, s32 animFinished) {
     if (animFinished) {
         EnNb_SetCurrentAnim(this, &gNabooruStandingHandsOnHipsAnim, 0, -8.0f, 0);
         this->headTurnFlag = 1;
-        this->actor.flags |= ACTOR_FLAG_TARGETABLE | ACTOR_FLAG_FRIENDLY;
+        this->actor.flags |= ACTOR_FLAG_ATTENTION_ENABLED | ACTOR_FLAG_FRIENDLY;
         this->action = NB_IDLE_CRAWLSPACE;
     }
 }
@@ -1199,7 +1203,7 @@ void func_80AB3838(EnNb* this, PlayState* play) {
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
         this->action = NB_IN_DIALOG;
     } else {
-        this->actor.flags |= ACTOR_FLAG_TARGETABLE | ACTOR_FLAG_FRIENDLY;
+        this->actor.flags |= ACTOR_FLAG_ATTENTION_ENABLED | ACTOR_FLAG_FRIENDLY;
 
         if (!Flags_GetInfTable(INFTABLE_16C)) {
             this->actor.textId = 0x601D;
@@ -1215,7 +1219,7 @@ void EnNb_SetupPathMovement(EnNb* this, PlayState* play) {
     EnNb_SetCurrentAnim(this, &gNabooruStandingToWalkingTransitionAnim, 2, -8.0f, 0);
     Flags_SetEventChkInf(EVENTCHKINF_SPOKE_TO_NABOORU_IN_SPIRIT_TEMPLE);
     this->action = NB_IN_PATH;
-    this->actor.flags &= ~(ACTOR_FLAG_TARGETABLE | ACTOR_FLAG_FRIENDLY);
+    this->actor.flags &= ~(ACTOR_FLAG_ATTENTION_ENABLED | ACTOR_FLAG_FRIENDLY);
 }
 
 void EnNb_SetTextIdAsChild(EnNb* this, PlayState* play) {
@@ -1235,7 +1239,7 @@ void EnNb_SetTextIdAsChild(EnNb* this, PlayState* play) {
             }
             this->action = NB_IDLE_CRAWLSPACE;
         }
-        this->actor.flags &= ~(ACTOR_FLAG_TARGETABLE | ACTOR_FLAG_FRIENDLY);
+        this->actor.flags &= ~(ACTOR_FLAG_ATTENTION_ENABLED | ACTOR_FLAG_FRIENDLY);
     } else if ((Message_GetState(&play->msgCtx) == TEXT_STATE_CHOICE) && Message_ShouldAdvance(play)) {
         choiceIndex = play->msgCtx.choiceIndex;
 
@@ -1291,7 +1295,7 @@ void func_80AB3B04(EnNb* this, PlayState* play) {
     if (Actor_ProcessTalkRequest(&this->actor, play)) {
         this->action = NB_ACTION_30;
     } else {
-        this->actor.flags |= ACTOR_FLAG_TARGETABLE | ACTOR_FLAG_FRIENDLY;
+        this->actor.flags |= ACTOR_FLAG_ATTENTION_ENABLED | ACTOR_FLAG_FRIENDLY;
         this->actor.textId = Text_GetFaceReaction(play, 0x23);
 
         if ((this->actor.textId) == 0) {
@@ -1305,7 +1309,7 @@ void func_80AB3B04(EnNb* this, PlayState* play) {
 void func_80AB3B7C(EnNb* this, PlayState* play) {
     if (Message_GetState(&play->msgCtx) == TEXT_STATE_CLOSING) {
         this->action = NB_IDLE_AFTER_TALK;
-        this->actor.flags &= ~(ACTOR_FLAG_TARGETABLE | ACTOR_FLAG_FRIENDLY);
+        this->actor.flags &= ~(ACTOR_FLAG_ATTENTION_ENABLED | ACTOR_FLAG_FRIENDLY);
     }
 }
 
@@ -1428,8 +1432,7 @@ void EnNb_Init(Actor* thisx, PlayState* play) {
 
     ActorShape_Init(&this->actor.shape, 0.0f, ActorShadow_DrawCircle, 30.0f);
     EnNb_SetupCollider(thisx, play);
-    SkelAnime_InitFlex(play, &this->skelAnime, &gNabooruSkel, NULL, this->jointTable, this->morphTable,
-                       NB_LIMB_MAX);
+    SkelAnime_InitFlex(play, &this->skelAnime, &gNabooruSkel, NULL, this->jointTable, this->morphTable, NB_LIMB_MAX);
 
     switch (EnNb_GetType(this)) {
         case NB_TYPE_DEMO02:

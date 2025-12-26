@@ -8,7 +8,7 @@
 #include "objects/gameplay_keep/gameplay_keep.h"
 #include "objects/object_haka_objects/object_haka_objects.h"
 
-#define FLAGS ACTOR_FLAG_UPDATE_WHILE_CULLED
+#define FLAGS ACTOR_FLAG_UPDATE_CULLING_DISABLED
 
 void BgHakaTubo_Init(Actor* thisx, PlayState* play);
 void BgHakaTubo_Destroy(Actor* thisx, PlayState* play);
@@ -129,8 +129,7 @@ void BgHakaTubo_Idle(BgHakaTubo* this, PlayState* play) {
             pos.y = this->dyna.actor.world.pos.y + 80.0f;
             EffectSsBomb2_SpawnLayered(play, &pos, &sZeroVector, &sZeroVector, 100, 45);
             SoundSource_PlaySfxAtFixedWorldPos(play, &this->dyna.actor.world.pos, 50, NA_SE_EV_BOX_BREAK);
-            EffectSsHahen_SpawnBurst(play, &pos, 20.0f, 0, 350, 100, 50, OBJECT_HAKA_OBJECTS, 40,
-                                     gEffFragments2DL);
+            EffectSsHahen_SpawnBurst(play, &pos, 20.0f, 0, 350, 100, 50, OBJECT_HAKA_OBJECTS, 40, gEffFragments2DL);
             this->dropTimer = 5;
             this->dyna.actor.draw = NULL;
             Actor_SetScale(&this->dyna.actor, 0.0f);
@@ -163,7 +162,7 @@ void BgHakaTubo_DropCollectible(BgHakaTubo* this, PlayState* play) {
             if (sPotsDestroyed == 3) {
                 // All 3 pots destroyed
                 collectibleParams = -1;
-                func_80078884(NA_SE_SY_CORRECT_CHIME);
+                Sfx_PlaySfxCentered(NA_SE_SY_CORRECT_CHIME);
                 // Drop rupees
                 for (i = 0; i < 9; i++) {
                     collectible = Item_DropCollectible(play, &spawnPos, i % 3);
@@ -178,12 +177,12 @@ void BgHakaTubo_DropCollectible(BgHakaTubo* this, PlayState* play) {
                 Actor_Spawn(&play->actorCtx, play, ACTOR_EN_FIREFLY, this->dyna.actor.world.pos.x,
                             this->dyna.actor.world.pos.y + 80.0f, this->dyna.actor.world.pos.z, 0,
                             this->dyna.actor.shape.rot.y, 0, 2, true);
-                func_80078884(NA_SE_SY_ERROR);
+                Sfx_PlaySfxCentered(NA_SE_SY_ERROR);
             } else {
                 // Random rewards
                 if (CVarGetInteger(CVAR_ENHANCEMENT("NoRandomDrops"), 0)) {
                     collectibleParams = -1;
-                } else if(rnd < 0.4f) {
+                } else if (rnd < 0.4f) {
                     collectibleParams = ITEM00_BOMBS_A;
                 } else if (rnd < 0.6f) {
                     collectibleParams = ITEM00_MAGIC_LARGE;
@@ -192,21 +191,20 @@ void BgHakaTubo_DropCollectible(BgHakaTubo* this, PlayState* play) {
                 } else {
                     collectibleParams = ITEM00_ARROWS_SMALL;
                 }
-                func_80078884(NA_SE_SY_TRE_BOX_APPEAR);
+                Sfx_PlaySfxCentered(NA_SE_SY_TRE_BOX_APPEAR);
             }
         } else if (Flags_GetCollectible(play, this->dyna.actor.params) != 0) {
             // If small key already collected, drop recovery heart instead
             if (CVarGetInteger(CVAR_ENHANCEMENT("NoHeartDrops"), 0)) {
                 collectibleParams = -1;
-            }
-            else {
+            } else {
                 collectibleParams = ITEM00_HEART;
             }
-            func_80078884(NA_SE_SY_TRE_BOX_APPEAR);
+            Sfx_PlaySfxCentered(NA_SE_SY_TRE_BOX_APPEAR);
         } else {
             // Drops a small key and sets a collect flag
             collectibleParams = ((this->dyna.actor.params & 0x3F) << 8) | ITEM00_SMALL_KEY;
-            func_80078884(NA_SE_SY_CORRECT_CHIME);
+            Sfx_PlaySfxCentered(NA_SE_SY_CORRECT_CHIME);
         }
         if (collectibleParams != -1) {
             collectible = Item_DropCollectible(play, &spawnPos, collectibleParams);
@@ -241,8 +239,7 @@ void BgHakaTubo_DrawFlameCircle(BgHakaTubo* this, PlayState* play) {
     gSPSegment(POLY_XLU_DISP++, 0x08,
                Gfx_TwoTexScroll(play->state.gfxCtx, 0, this->fireScroll & 127, 0, 32, 64, 1, 0,
                                 (this->fireScroll * -15) & 0xFF, 32, 64));
-    gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(play->state.gfxCtx),
-              G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
+    gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(play->state.gfxCtx), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
     gSPDisplayList(POLY_XLU_DISP++, gEffFireCircleDL);
 
     CLOSE_DISPS(play->state.gfxCtx);

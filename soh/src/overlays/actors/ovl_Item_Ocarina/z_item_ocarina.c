@@ -6,8 +6,10 @@
 
 #include "z_item_ocarina.h"
 #include "scenes/overworld/spot00/spot00_scene.h"
+#include "soh/OTRGlobals.h"
+#include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 
-#define FLAGS ACTOR_FLAG_UPDATE_WHILE_CULLED
+#define FLAGS ACTOR_FLAG_UPDATE_CULLING_DISABLED
 
 void ItemOcarina_Init(Actor* thisx, PlayState* play);
 void ItemOcarina_Destroy(Actor* thisx, PlayState* play);
@@ -58,7 +60,8 @@ void ItemOcarina_Init(Actor* thisx, PlayState* play) {
             break;
         case 3:
             ItemOcarina_SetupAction(this, ItemOcarina_WaitInWater);
-            if (!Flags_GetEventChkInf(EVENTCHKINF_ZELDA_FLED_HYRULE_CASTLE) || (Flags_GetEventChkInf(EVENTCHKINF_OBTAINED_OCARINA_OF_TIME))) {
+            if (!Flags_GetEventChkInf(EVENTCHKINF_ZELDA_FLED_HYRULE_CASTLE) ||
+                (Flags_GetEventChkInf(EVENTCHKINF_OBTAINED_OCARINA_OF_TIME))) {
                 Actor_Kill(thisx);
                 return;
             }
@@ -80,7 +83,7 @@ void ItemOcarina_Destroy(Actor* thisx, PlayState* play) {
 void ItemOcarina_Fly(ItemOcarina* this, PlayState* play) {
     Vec3f ripplePos;
 
-    func_8002D7EC(&this->actor);
+    Actor_UpdatePos(&this->actor);
     this->actor.shape.rot.x += this->spinRotOffset * 2;
     this->actor.shape.rot.y += this->spinRotOffset * 3;
 
@@ -131,7 +134,7 @@ void ItemOcarina_GetThrown(ItemOcarina* this, PlayState* play) {
 }
 
 void func_80B864EC(ItemOcarina* this, PlayState* play) {
-    func_8002D7EC(&this->actor);
+    Actor_UpdatePos(&this->actor);
     this->actor.shape.rot.x += this->spinRotOffset * 2;
     this->actor.shape.rot.y += this->spinRotOffset * 3;
 
@@ -169,31 +172,22 @@ void ItemOcarina_DoNothing(ItemOcarina* this, PlayState* play) {
 
 void ItemOcarina_StartSoTCutscene(ItemOcarina* this, PlayState* play) {
     if (Actor_TextboxIsClosing(&this->actor, play)) {
-        if (!IS_RANDO) {
-            play->csCtx.segment = SEGMENTED_TO_VIRTUAL(gHyruleFieldZeldaSongOfTimeCs);
-            gSaveContext.cutsceneTrigger = 1;
-        } else {
-            play->transitionTrigger = TRANS_TRIGGER_START;
-            play->transitionType = TRANS_TYPE_FADE_WHITE;
-            gSaveContext.nextTransitionType = TRANS_TYPE_FADE_WHITE;
-            play->nextEntranceIndex = ENTR_HYRULE_FIELD_16;
-            gSaveContext.nextCutsceneIndex = 0;
-        }
+        play->csCtx.segment = SEGMENTED_TO_VIRTUAL(gHyruleFieldZeldaSongOfTimeCs);
+        gSaveContext.cutsceneTrigger = 1;
     }
 }
 
 void ItemOcarina_WaitInWater(ItemOcarina* this, PlayState* play) {
-    if (Actor_HasParent(&this->actor, play)) {
+    if (Actor_HasParent(&this->actor, play) ||
+        (!GameInteractor_Should(VB_GIVE_ITEM_OCARINA_OF_TIME, true) && (this->actor.xzDistToPlayer < 20.0f) &&
+         (fabsf(this->actor.yDistToPlayer) < 10.0f) && GET_PLAYER(play)->stateFlags2 & PLAYER_STATE2_DIVING)) {
         Flags_SetEventChkInf(EVENTCHKINF_OBTAINED_OCARINA_OF_TIME);
         Flags_SetSwitch(play, 3);
         this->actionFunc = ItemOcarina_StartSoTCutscene;
         this->actor.draw = NULL;
     } else {
-        if (!IS_RANDO) {
-            func_8002F434(&this->actor, play, GI_OCARINA_OOT, 30.0f, 50.0f);
-        } else {
-            GetItemEntry getItemEntry = Randomizer_GetItemFromKnownCheck(RC_HF_OCARINA_OF_TIME_ITEM, GI_OCARINA_OOT);
-            GiveItemEntryFromActor(&this->actor, play, getItemEntry, 30.0f, 50.0f);
+        if (GameInteractor_Should(VB_GIVE_ITEM_OCARINA_OF_TIME, true)) {
+            Actor_OfferGetItem(&this->actor, play, GI_OCARINA_OOT, 30.0f, 50.0f);
         }
 
         if ((play->gameplayFrames & 13) == 0) {
@@ -215,7 +209,10 @@ void ItemOcarina_Draw(Actor* thisx, PlayState* play) {
     func_8002ED80(thisx, play, 0);
 
     if (IS_RANDO) {
-        GetItemEntry randoGetItem = Randomizer_GetItemFromKnownCheck(RC_HF_OCARINA_OF_TIME_ITEM, GI_OCARINA_OOT);
+        GetItemEntry randoGetItem = (CVarGetInteger(CVAR_RANDOMIZER_ENHANCEMENT("MysteriousShuffle"), 0) &&
+                                     Randomizer_IsCheckShuffled(RC_HF_OCARINA_OF_TIME_ITEM))
+                                        ? GetItemMystery()
+                                        : Randomizer_GetItemFromKnownCheck(RC_HF_OCARINA_OF_TIME_ITEM, GI_OCARINA_OOT);
         EnItem00_CustomItemsParticles(&this->actor, play, randoGetItem);
         GetItemEntry_Draw(play, randoGetItem);
         return;

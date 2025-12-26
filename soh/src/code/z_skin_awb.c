@@ -1,6 +1,7 @@
 #include "global.h"
 #include "overlays/actors/ovl_En_fHG/z_en_fhg.h"
 #include <assert.h>
+#include "soh/ResourceManagerHelpers.h"
 
 /**
  * Initialises the Vtx buffers used for limb at index `limbIndex`
@@ -70,12 +71,10 @@ void Skin_Init(PlayState* play, Skin* skin, SkeletonHeader* skeletonHeader, Anim
 
             vtxEntry->index = 0;
 
-            vtxEntry->buf[0] =
-                ZELDA_ARENA_MALLOC_DEBUG(animatedLimbData->totalVtxCount * sizeof(Vtx));
+            vtxEntry->buf[0] = ZELDA_ARENA_MALLOC_DEBUG(animatedLimbData->totalVtxCount * sizeof(Vtx));
             assert(vtxEntry->buf[0] != NULL);
 
-            vtxEntry->buf[1] =
-                ZELDA_ARENA_MALLOC_DEBUG(animatedLimbData->totalVtxCount * sizeof(Vtx));
+            vtxEntry->buf[1] = ZELDA_ARENA_MALLOC_DEBUG(animatedLimbData->totalVtxCount * sizeof(Vtx));
             assert(vtxEntry->buf[1] != NULL);
 
             Skin_InitAnimatedLimb(play, skin, i);

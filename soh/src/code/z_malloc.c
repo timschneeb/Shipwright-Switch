@@ -75,7 +75,7 @@ void* ZeldaArena_Calloc(size_t num, size_t size) {
 
     ret = __osMalloc(&sZeldaArena, n);
     if (ret != NULL) {
-        memset(ret, 0,n);
+        memset(ret, 0, n);
     }
 
     ZeldaArena_CheckPointer(ret, n, "zelda_calloc", "確保");
@@ -106,5 +106,5 @@ void ZeldaArena_Cleanup() {
 }
 
 u8 ZeldaArena_IsInitalized() {
-    return __osMallocIsInitalized(&sZeldaArena);
+    return __osMallocIsInitialized(&sZeldaArena);
 }

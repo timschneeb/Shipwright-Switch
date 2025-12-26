@@ -7,8 +7,9 @@
 #include "z_en_rl.h"
 #include "vt.h"
 #include "objects/object_rl/object_rl.h"
+#include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 
-#define FLAGS ACTOR_FLAG_UPDATE_WHILE_CULLED
+#define FLAGS ACTOR_FLAG_UPDATE_CULLING_DISABLED
 
 void EnRl_Init(Actor* thisx, PlayState* play);
 void EnRl_Destroy(Actor* thisx, PlayState* play);
@@ -85,7 +86,7 @@ s32 func_80AE7494(EnRl* this) {
 }
 
 s32 func_80AE74B4(EnRl* this, PlayState* play, u16 arg2, s32 arg3) {
-    CsCmdActorAction* csCmdActorAction;
+    CsCmdActorCue* csCmdActorAction;
 
     if (play->csCtx.state != CS_STATE_IDLE) {
         csCmdActorAction = play->csCtx.npcActions[arg3];
@@ -97,7 +98,7 @@ s32 func_80AE74B4(EnRl* this, PlayState* play, u16 arg2, s32 arg3) {
 }
 
 s32 func_80AE74FC(EnRl* this, PlayState* play, u16 arg2, s32 arg3) {
-    CsCmdActorAction* csCmdActorAction;
+    CsCmdActorCue* csCmdActorAction;
 
     if (play->csCtx.state != CS_STATE_IDLE) {
         csCmdActorAction = play->csCtx.npcActions[arg3];
@@ -118,15 +119,17 @@ void func_80AE7590(EnRl* this, PlayState* play) {
     Vec3f pos;
     s16 sceneNum = play->sceneNum;
 
-    if (gSaveContext.sceneSetupIndex == 4 && sceneNum == SCENE_CHAMBER_OF_THE_SAGES && play->csCtx.state != CS_STATE_IDLE &&
-        play->csCtx.npcActions[6] != NULL && play->csCtx.npcActions[6]->action == 2 &&
-        !this->lightMedallionGiven) {
+    if (gSaveContext.sceneSetupIndex == 4 && sceneNum == SCENE_CHAMBER_OF_THE_SAGES &&
+        play->csCtx.state != CS_STATE_IDLE && play->csCtx.npcActions[6] != NULL &&
+        play->csCtx.npcActions[6]->action == 2 && !this->lightMedallionGiven) {
         player = GET_PLAYER(play);
         pos.x = player->actor.world.pos.x;
         pos.y = player->actor.world.pos.y + 80.0f;
         pos.z = player->actor.world.pos.z;
         Actor_Spawn(&play->actorCtx, play, ACTOR_DEMO_EFFECT, pos.x, pos.y, pos.z, 0, 0, 0, 0xE, true);
-        Item_Give(play, ITEM_MEDALLION_LIGHT);
+        if (GameInteractor_Should(VB_GIVE_ITEM_LIGHT_MEDALLION, true)) {
+            Item_Give(play, ITEM_MEDALLION_LIGHT);
+        }
         this->lightMedallionGiven = 1;
     }
 }
@@ -140,7 +143,7 @@ void func_80AE7668(EnRl* this, PlayState* play) {
 }
 
 void func_80AE7698(EnRl* this, PlayState* play) {
-    CsCmdActorAction* csCmdActorAction;
+    CsCmdActorCue* csCmdActorAction;
 
     if (play->csCtx.state != CS_STATE_IDLE) {
         csCmdActorAction = play->csCtx.npcActions[0];
@@ -310,8 +313,8 @@ void func_80AE7D94(EnRl* this, PlayState* play) {
     gDPSetEnvColor(POLY_XLU_DISP++, 0, 0, 0, this->alpha);
     gSPSegment(POLY_XLU_DISP++, 0x0C, D_80116280);
 
-    POLY_XLU_DISP = SkelAnime_DrawFlex(play, skelAnime->skeleton, skelAnime->jointTable, skelAnime->dListCount,
-                                       NULL, NULL, NULL, POLY_XLU_DISP);
+    POLY_XLU_DISP = SkelAnime_DrawFlex(play, skelAnime->skeleton, skelAnime->jointTable, skelAnime->dListCount, NULL,
+                                       NULL, NULL, POLY_XLU_DISP);
 
     CLOSE_DISPS(play->state.gfxCtx);
 }

@@ -12,11 +12,10 @@ typedef void (*EnGe1ActionFunc)(struct EnGe1*, PlayState*);
 typedef enum {
     /* 0x00 */ GE1_TYPE_GATE_GUARD,
     /* 0x01 */ GE1_TYPE_GATE_OPERATOR,
-    /* 0x02 */ GE1_TYPE_EXTRA_GATE_OPERATOR, // Custom guard type for entrance randomizer to open the gate
     /* 0x04 */ GE1_TYPE_NORMAL = 4,
     /* 0x05 */ GE1_TYPE_VALLEY_FLOOR,
     /* 0x45 */ GE1_TYPE_HORSEBACK_ARCHERY = 0x45,
-    /* 0x46 */ GE1_TYPE_TRAINING_GROUNDS_GUARD
+    /* 0x46 */ GE1_TYPE_TRAINING_GROUND_GUARD
 } EnGe1Type;
 
 typedef enum {
@@ -56,5 +55,7 @@ typedef struct EnGe1 {
     /* 0x02B4 */ EnGe1ActionFunc actionFunc;
     /* 0x02B8 */ EnGe1AnimFunc animFunc;
 } EnGe1; // size = 0x02BC
+
+void EnGe1_SetNormalText(EnGe1* enGe1, PlayState* play);
 
 #endif

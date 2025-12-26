@@ -145,8 +145,8 @@ void func_808B0324(BgSpot08Bakudankabe* this, PlayState* play) {
             rotationSpeed = 33;
         }
 
-        EffectSsKakera_Spawn(play, &burstDepthY, &burstDepthX, &burstDepthY, gravityInfluence, rotationSpeed, 0x1E,
-                             4, 0, scale, 1, 3, 80, KAKERA_COLOR_NONE, OBJECT_GAMEPLAY_FIELD_KEEP, gFieldKakeraDL);
+        EffectSsKakera_Spawn(play, &burstDepthY, &burstDepthX, &burstDepthY, gravityInfluence, rotationSpeed, 0x1E, 4,
+                             0, scale, 1, 3, 80, KAKERA_COLOR_NONE, OBJECT_GAMEPLAY_FIELD_KEEP, gFieldKakeraDL);
     }
 
     for (i = 0; i < ARRAY_COUNT(D_808B08AC); i++) {
@@ -187,7 +187,7 @@ void BgSpot08Bakudankabe_Update(Actor* thisx, PlayState* play) {
         func_808B0324(this, play);
         Flags_SetSwitch(play, (this->dyna.actor.params & 0x3F));
         SoundSource_PlaySfxAtFixedWorldPos(play, &this->dyna.actor.world.pos, 40, NA_SE_EV_WALL_BROKEN);
-        func_80078884(NA_SE_SY_CORRECT_CHIME);
+        Sfx_PlaySfxCentered(NA_SE_SY_CORRECT_CHIME);
         Actor_Kill(&this->dyna.actor);
     } else if (this->dyna.actor.xzDistToPlayer < 800.0f) {
         CollisionCheck_SetAC(play, &play->colChkCtx, &this->collider.base);

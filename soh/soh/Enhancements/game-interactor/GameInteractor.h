@@ -3,14 +3,11 @@
 #ifndef GameInteractor_h
 #define GameInteractor_h
 
+#include "libultraship/libultraship.h"
+#include "vanilla-behavior/GIVanillaBehavior.h"
 #include "GameInteractionEffect.h"
 #include "soh/Enhancements/item-tables/ItemTableTypes.h"
 #include <z64.h>
-
-typedef enum {
-    GI_SCHEME_SAIL,
-    GI_SCHEME_CROWD_CONTROL,
-} GIScheme;
 
 typedef enum {
     /* 0x00 */ GI_LINK_SIZE_NORMAL,
@@ -58,13 +55,13 @@ typedef enum {
 } GIColors;
 
 typedef enum {
-    /*      */ GI_TP_DEST_LINKSHOUSE = ENTR_LINKS_HOUSE_0,
-    /*      */ GI_TP_DEST_MINUET = ENTR_SACRED_FOREST_MEADOW_2,
-    /*      */ GI_TP_DEST_BOLERO = ENTR_DEATH_MOUNTAIN_CRATER_4,
-    /*      */ GI_TP_DEST_SERENADE = ENTR_LAKE_HYLIA_8,
-    /*      */ GI_TP_DEST_REQUIEM = ENTR_DESERT_COLOSSUS_5,
-    /*      */ GI_TP_DEST_NOCTURNE = ENTR_GRAVEYARD_7,
-    /*      */ GI_TP_DEST_PRELUDE = ENTR_TEMPLE_OF_TIME_7,
+    /*      */ GI_TP_DEST_LINKSHOUSE = ENTR_LINKS_HOUSE_CHILD_SPAWN,
+    /*      */ GI_TP_DEST_MINUET = ENTR_SACRED_FOREST_MEADOW_WARP_PAD,
+    /*      */ GI_TP_DEST_BOLERO = ENTR_DEATH_MOUNTAIN_CRATER_WARP_PAD,
+    /*      */ GI_TP_DEST_SERENADE = ENTR_LAKE_HYLIA_WARP_PAD,
+    /*      */ GI_TP_DEST_REQUIEM = ENTR_DESERT_COLOSSUS_WARP_PAD,
+    /*      */ GI_TP_DEST_NOCTURNE = ENTR_GRAVEYARD_WARP_PAD,
+    /*      */ GI_TP_DEST_PRELUDE = ENTR_TEMPLE_OF_TIME_WARP_PAD,
 } GITeleportDestinations;
 
 #ifdef __cplusplus
@@ -79,7 +76,7 @@ uint8_t GameInteractor_PacifistModeActive();
 uint8_t GameInteractor_DisableZTargetingActive();
 uint8_t GameInteractor_ReverseControlsActive();
 int32_t GameInteractor_DefenseModifier();
-int32_t GameInteractor_RunSpeedModifier();
+float GameInteractor_MovementSpeedMultiplier();
 GIGravityLevel GameInteractor_GravityLevel();
 uint32_t GameInteractor_GetEmulatedButtons();
 void GameInteractor_SetEmulatedButtons(uint32_t buttons);
@@ -95,30 +92,110 @@ void GameInteractor_SetTriforceHuntCreditsWarpActive(uint8_t state);
 }
 #endif
 
-
 #ifdef __cplusplus
+#include <stdarg.h>
 #include <thread>
+#include <map>
+#include <unordered_map>
 #include <vector>
 #include <functional>
 #include <string>
 
-#ifdef ENABLE_REMOTE_CONTROL
-#include <SDL2/SDL_net.h>
-#include <nlohmann/json.hpp>
+#include <version>
+#ifdef __cpp_lib_source_location
+#include <source_location>
+#else
+#pragma message("Compiling without <source_location> support, the Hook Debugger will not be available")
 #endif
 
-#define DEFINE_HOOK(name, type)         \
-    struct name {                       \
-        typedef std::function<type> fn; \
+typedef uint32_t HOOK_ID;
+
+enum HookType {
+    HOOK_TYPE_NORMAL,
+    HOOK_TYPE_ID,
+    HOOK_TYPE_PTR,
+    HOOK_TYPE_FILTER,
+};
+
+struct HookRegisteringInfo {
+    bool valid;
+    const char* file;
+    std::uint_least32_t line;
+    std::uint_least32_t column;
+    const char* function;
+    HookType type;
+
+    HookRegisteringInfo()
+        : valid(false), file("unknown file"), line(0), column(0), function("unknown function"), type(HOOK_TYPE_NORMAL) {
+    }
+
+    HookRegisteringInfo(const char* _file, std::uint_least32_t _line, std::uint_least32_t _column,
+                        const char* _function, HookType _type)
+        : valid(true), file(_file), line(_line), column(_column), function(_function), type(_type) {
+        // Trim off user parent directories
+        const char* trimmed = strstr(_file, "soh/soh/");
+        if (trimmed != nullptr) {
+            file = trimmed;
+        }
+    }
+};
+
+struct HookInfo {
+    uint32_t calls;
+    HookRegisteringInfo registering;
+};
+
+#ifdef __cpp_lib_source_location
+#define GET_CURRENT_REGISTERING_INFO(type) \
+    (HookRegisteringInfo{ location.file_name(), location.line(), location.column(), location.function_name(), type })
+#else
+#define GET_CURRENT_REGISTERING_INFO(type) (HookRegisteringInfo{})
+#endif
+
+#define REGISTER_VB_SHOULD(flag, body)                                                  \
+    GameInteractor::Instance->RegisterGameHookForID<GameInteractor::OnVanillaBehavior>( \
+        flag, [](GIVanillaBehavior _, bool* should, va_list _originalArgs) {            \
+            va_list args;                                                               \
+            va_copy(args, _originalArgs);                                               \
+            body;                                                                       \
+            va_end(args);                                                               \
+        })
+
+#define COND_HOOK(hookType, condition, body)                                                     \
+    {                                                                                            \
+        static HOOK_ID hookId = 0;                                                               \
+        GameInteractor::Instance->UnregisterGameHook<GameInteractor::hookType>(hookId);          \
+        hookId = 0;                                                                              \
+        if (condition) {                                                                         \
+            hookId = GameInteractor::Instance->RegisterGameHook<GameInteractor::hookType>(body); \
+        }                                                                                        \
+    }
+#define COND_ID_HOOK(hookType, id, condition, body)                                                       \
+    {                                                                                                     \
+        static HOOK_ID hookId = 0;                                                                        \
+        GameInteractor::Instance->UnregisterGameHookForID<GameInteractor::hookType>(hookId);              \
+        hookId = 0;                                                                                       \
+        if (condition) {                                                                                  \
+            hookId = GameInteractor::Instance->RegisterGameHookForID<GameInteractor::hookType>(id, body); \
+        }                                                                                                 \
+    }
+#define COND_VB_SHOULD(id, condition, body)                                                           \
+    {                                                                                                 \
+        static HOOK_ID hookId = 0;                                                                    \
+        GameInteractor::Instance->UnregisterGameHookForID<GameInteractor::OnVanillaBehavior>(hookId); \
+        hookId = 0;                                                                                   \
+        if (condition) {                                                                              \
+            hookId = REGISTER_VB_SHOULD(id, body);                                                    \
+        }                                                                                             \
     }
 
 class GameInteractor {
-public:
+  public:
     static GameInteractor* Instance;
 
-    // Gsme State
+    // Game State
     class State {
-    public:
+      public:
         static bool NoUIActive;
         static GILinkSize LinkSize;
         static bool InvisibleLinkActive;
@@ -127,7 +204,7 @@ public:
         static bool DisableZTargetingActive;
         static bool ReverseControlsActive;
         static int32_t DefenseModifier;
-        static int32_t RunSpeedModifier;
+        static float MovementSpeedMultiplier;
         static GIGravityLevel GravityLevel;
         static uint32_t EmulatedButtons;
         static uint8_t RandomBombFuseTimerActive;
@@ -143,104 +220,320 @@ public:
         static void SetPacifistMode(bool active);
     };
 
-    #ifdef ENABLE_REMOTE_CONTROL
-    bool isRemoteInteractorEnabled;
-    bool isRemoteInteractorConnected;
-
-    void EnableRemoteInteractor();
-    void DisableRemoteInteractor();
-    void RegisterRemoteDataHandler(std::function<void(char payload[512])> method);
-    void RegisterRemoteJsonHandler(std::function<void(nlohmann::json)> method);
-    void RegisterRemoteConnectedHandler(std::function<void()> method);
-    void RegisterRemoteDisconnectedHandler(std::function<void()> method);
-    void TransmitDataToRemote(const char* payload);
-    void TransmitJsonToRemote(nlohmann::json packet);
-    #endif
-
     // Effects
     static GameInteractionEffectQueryResult CanApplyEffect(GameInteractionEffectBase* effect);
     static GameInteractionEffectQueryResult ApplyEffect(GameInteractionEffectBase* effect);
     static GameInteractionEffectQueryResult RemoveEffect(RemovableGameInteractionEffect* effect);
 
     // Game Hooks
-    uint32_t nextHookId = 1;
-    template <typename H> struct RegisteredGameHooks { inline static std::unordered_map<uint32_t, typename H::fn> functions; };
-    template <typename H> struct HooksToUnregister { inline static std::vector<uint32_t> hooks; };
-    template <typename H> uint32_t RegisterGameHook(typename H::fn h) {
-        // Ensure hook id is unique and not 0, which is reserved for invalid hooks
-        if (this->nextHookId == 0 || this->nextHookId >= UINT32_MAX) this->nextHookId = 1;
+    HOOK_ID nextHookId = 1;
+
+    template <typename H> struct RegisteredGameHooks {
+        inline static std::unordered_map<HOOK_ID, typename H::fn> functions;
+        inline static std::unordered_map<int32_t, std::unordered_map<HOOK_ID, typename H::fn>> functionsForID;
+        inline static std::unordered_map<uintptr_t, std::unordered_map<HOOK_ID, typename H::fn>> functionsForPtr;
+        inline static std::unordered_map<HOOK_ID, std::pair<typename H::filter, typename H::fn>> functionsForFilter;
+
+        // Used for the hook debugger
+        inline static std::map<HOOK_ID, HookInfo> hookData;
+    };
+
+    template <typename H> struct HooksToUnregister {
+        inline static std::vector<HOOK_ID> hooks;
+        inline static std::vector<HOOK_ID> hooksForID;
+        inline static std::vector<HOOK_ID> hooksForPtr;
+        inline static std::vector<HOOK_ID> hooksForFilter;
+    };
+
+    template <typename H> std::map<uint32_t, HookInfo>* GetHookData() {
+        return &RegisteredGameHooks<H>::hookData;
+    }
+
+    // General Hooks
+    template <typename H>
+#ifdef __cpp_lib_source_location
+    HOOK_ID RegisterGameHook(typename H::fn h, const std::source_location location = std::source_location::current()) {
+#else
+    HOOK_ID RegisterGameHook(typename H::fn h) {
+#endif
+        if (this->nextHookId == 0 || this->nextHookId >= UINT32_MAX)
+            this->nextHookId = 1;
         while (RegisteredGameHooks<H>::functions.find(this->nextHookId) != RegisteredGameHooks<H>::functions.end()) {
             this->nextHookId++;
         }
 
         RegisteredGameHooks<H>::functions[this->nextHookId] = h;
+        RegisteredGameHooks<H>::hookData[this->nextHookId] =
+            HookInfo{ 0, GET_CURRENT_REGISTERING_INFO(HOOK_TYPE_NORMAL) };
         return this->nextHookId++;
     }
-    template <typename H> void UnregisterGameHook(uint32_t id) {
-        HooksToUnregister<H>::hooks.push_back(id);
+
+    template <typename H> void UnregisterGameHook(HOOK_ID hookId) {
+        if (hookId == 0)
+            return;
+        HooksToUnregister<H>::hooks.push_back(hookId);
     }
 
     template <typename H, typename... Args> void ExecuteHooks(Args&&... args) {
+        // Remove pending hooks for this type
         for (auto& hookId : HooksToUnregister<H>::hooks) {
             RegisteredGameHooks<H>::functions.erase(hookId);
+            RegisteredGameHooks<H>::hookData.erase(hookId);
         }
         HooksToUnregister<H>::hooks.clear();
+        // Execute hooks
         for (auto& hook : RegisteredGameHooks<H>::functions) {
             hook.second(std::forward<Args>(args)...);
+            RegisteredGameHooks<H>::hookData[hook.first].calls += 1;
         }
     }
 
-    DEFINE_HOOK(OnLoadGame, void(int32_t fileNum));
-    DEFINE_HOOK(OnExitGame, void(int32_t fileNum));
-    DEFINE_HOOK(OnGameFrameUpdate, void());
-    DEFINE_HOOK(OnItemReceive, void(GetItemEntry itemEntry));
-    DEFINE_HOOK(OnSaleEnd, void(GetItemEntry itemEntry));
-    DEFINE_HOOK(OnTransitionEnd, void(int16_t sceneNum));
-    DEFINE_HOOK(OnSceneInit, void(int16_t sceneNum));
-    DEFINE_HOOK(OnSceneFlagSet, void(int16_t sceneNum, int16_t flagType, int16_t flag));
-    DEFINE_HOOK(OnSceneFlagUnset, void(int16_t sceneNum, int16_t flagType, int16_t flag));
-    DEFINE_HOOK(OnFlagSet, void(int16_t flagType, int16_t flag));
-    DEFINE_HOOK(OnFlagUnset, void(int16_t flagType, int16_t flag));
-    DEFINE_HOOK(OnSceneSpawnActors, void());
-    DEFINE_HOOK(OnPlayerUpdate, void());
-    DEFINE_HOOK(OnOcarinaSongAction, void());
-    DEFINE_HOOK(OnShopSlotChange, void(uint8_t cursorIndex, int16_t price));
-    DEFINE_HOOK(OnActorInit, void(void* actor));
-    DEFINE_HOOK(OnActorUpdate, void(void* actor));
-    DEFINE_HOOK(OnActorKill, void(void* actor));
-    DEFINE_HOOK(OnEnemyDefeat, void(void* actor));
-    DEFINE_HOOK(OnPlayerBonk, void());
-    DEFINE_HOOK(OnPlayDestroy, void());
-    DEFINE_HOOK(OnPlayDrawEnd, void());
+    // ID based Hooks
+    template <typename H>
+#ifdef __cpp_lib_source_location
+    HOOK_ID RegisterGameHookForID(int32_t id, typename H::fn h,
+                                  std::source_location location = std::source_location::current()) {
+#else
+    HOOK_ID RegisterGameHookForID(int32_t id, typename H::fn h) {
+#endif
+        if (this->nextHookId == 0 || this->nextHookId >= UINT32_MAX)
+            this->nextHookId = 1;
+        while (RegisteredGameHooks<H>::functionsForID[id].find(this->nextHookId) !=
+               RegisteredGameHooks<H>::functionsForID[id].end()) {
+            this->nextHookId++;
+        }
 
-    DEFINE_HOOK(OnSaveFile, void(int32_t fileNum));
-    DEFINE_HOOK(OnLoadFile, void(int32_t fileNum));
-    DEFINE_HOOK(OnDeleteFile, void(int32_t fileNum));
-    
-    DEFINE_HOOK(OnDialogMessage, void());
-    DEFINE_HOOK(OnPresentTitleCard, void());
-    DEFINE_HOOK(OnInterfaceUpdate, void());
-    DEFINE_HOOK(OnKaleidoscopeUpdate, void(int16_t inDungeonScene));
-    
-    DEFINE_HOOK(OnPresentFileSelect, void());
-    DEFINE_HOOK(OnUpdateFileSelectSelection, void(uint16_t optionIndex));
-    DEFINE_HOOK(OnUpdateFileSelectConfirmationSelection, void(uint16_t optionIndex));
-    DEFINE_HOOK(OnUpdateFileCopySelection, void(uint16_t optionIndex));
-    DEFINE_HOOK(OnUpdateFileCopyConfirmationSelection, void(uint16_t optionIndex));
-    DEFINE_HOOK(OnUpdateFileEraseSelection, void(uint16_t optionIndex));
-    DEFINE_HOOK(OnUpdateFileEraseConfirmationSelection, void(uint16_t optionIndex));
-    DEFINE_HOOK(OnUpdateFileAudioSelection, void(uint8_t optionIndex));
-    DEFINE_HOOK(OnUpdateFileTargetSelection, void(uint8_t optionIndex));
-    DEFINE_HOOK(OnUpdateFileLanguageSelection, void(uint8_t optionIndex));
-    DEFINE_HOOK(OnUpdateFileQuestSelection, void(uint8_t questIndex));
-    DEFINE_HOOK(OnUpdateFileBossRushOptionSelection, void(uint8_t optionIndex, uint8_t optionValue));
-    DEFINE_HOOK(OnUpdateFileNameSelection, void(int16_t charCode));
-    
-    DEFINE_HOOK(OnSetGameLanguage, void());
+        RegisteredGameHooks<H>::functionsForID[id][this->nextHookId] = h;
+        RegisteredGameHooks<H>::hookData[this->nextHookId] = HookInfo{ 0, GET_CURRENT_REGISTERING_INFO(HOOK_TYPE_ID) };
+        return this->nextHookId++;
+    }
 
-    DEFINE_HOOK(OnFileDropped, void(std::string filePath));
-    DEFINE_HOOK(OnAssetAltChange, void());
-    DEFINE_HOOK(OnKaleidoUpdate, void());
+    template <typename H> void UnregisterGameHookForID(HOOK_ID hookId) {
+        if (hookId == 0)
+            return;
+        HooksToUnregister<H>::hooksForID.push_back(hookId);
+    }
+
+    template <typename H, typename... Args> void ExecuteHooksForID(int32_t id, Args&&... args) {
+        // Remove pending hooks for this type
+        for (auto hookIdIt = HooksToUnregister<H>::hooksForID.begin();
+             hookIdIt != HooksToUnregister<H>::hooksForID.end();) {
+            bool remove = false;
+
+            if (RegisteredGameHooks<H>::functionsForID[id].size() == 0) {
+                break;
+            }
+
+            for (auto it = RegisteredGameHooks<H>::functionsForID[id].begin();
+                 it != RegisteredGameHooks<H>::functionsForID[id].end();) {
+                if (it->first == *hookIdIt) {
+                    it = RegisteredGameHooks<H>::functionsForID[id].erase(it);
+                    RegisteredGameHooks<H>::hookData.erase(*hookIdIt);
+                    remove = true;
+                    break;
+                } else {
+                    ++it;
+                }
+            }
+
+            if (remove) {
+                hookIdIt = HooksToUnregister<H>::hooksForID.erase(hookIdIt);
+            } else {
+                ++hookIdIt;
+            }
+        }
+        // Execute hooks
+        for (auto& hook : RegisteredGameHooks<H>::functionsForID[id]) {
+            hook.second(std::forward<Args>(args)...);
+            RegisteredGameHooks<H>::hookData[hook.first].calls += 1;
+        }
+    }
+
+    // PTR based Hooks
+    template <typename H>
+#ifdef __cpp_lib_source_location
+    HOOK_ID RegisterGameHookForPtr(uintptr_t ptr, typename H::fn h,
+                                   const std::source_location location = std::source_location::current()) {
+#else
+    HOOK_ID RegisterGameHookForPtr(uintptr_t ptr, typename H::fn h) {
+#endif
+        if (this->nextHookId == 0 || this->nextHookId >= UINT32_MAX)
+            this->nextHookId = 1;
+        while (RegisteredGameHooks<H>::functionsForPtr[ptr].find(this->nextHookId) !=
+               RegisteredGameHooks<H>::functionsForPtr[ptr].end()) {
+            this->nextHookId++;
+        }
+
+        RegisteredGameHooks<H>::functionsForPtr[ptr][this->nextHookId] = h;
+        RegisteredGameHooks<H>::hookData[this->nextHookId] = HookInfo{ 0, GET_CURRENT_REGISTERING_INFO(HOOK_TYPE_PTR) };
+        return this->nextHookId++;
+    }
+
+    template <typename H> void UnregisterGameHookForPtr(HOOK_ID hookId) {
+        if (hookId == 0)
+            return;
+        HooksToUnregister<H>::hooksForPtr.push_back(hookId);
+    }
+
+    template <typename H, typename... Args> void ExecuteHooksForPtr(uintptr_t ptr, Args&&... args) {
+        // Remove pending hooks for this type
+        for (auto hookIdIt = HooksToUnregister<H>::hooksForPtr.begin();
+             hookIdIt != HooksToUnregister<H>::hooksForPtr.end();) {
+            bool remove = false;
+
+            if (RegisteredGameHooks<H>::functionsForPtr[ptr].size() == 0) {
+                break;
+            }
+
+            for (auto it = RegisteredGameHooks<H>::functionsForPtr[ptr].begin();
+                 it != RegisteredGameHooks<H>::functionsForPtr[ptr].end();) {
+                if (it->first == *hookIdIt) {
+                    it = RegisteredGameHooks<H>::functionsForPtr[ptr].erase(it);
+                    RegisteredGameHooks<H>::hookData.erase(*hookIdIt);
+                    remove = true;
+                    break;
+                } else {
+                    ++it;
+                }
+            }
+
+            if (remove) {
+                hookIdIt = HooksToUnregister<H>::hooksForPtr.erase(hookIdIt);
+            } else {
+                ++hookIdIt;
+            }
+        }
+        // Execute hooks
+        for (auto& hook : RegisteredGameHooks<H>::functionsForPtr[ptr]) {
+            hook.second(std::forward<Args>(args)...);
+            RegisteredGameHooks<H>::hookData[hook.first].calls += 1;
+        }
+    }
+
+    // Filter based Hooks
+    template <typename H>
+#ifdef __cpp_lib_source_location
+    HOOK_ID RegisterGameHookForFilter(typename H::filter f, typename H::fn h,
+                                      const std::source_location location = std::source_location::current()) {
+#else
+    HOOK_ID RegisterGameHookForFilter(typename H::filter f, typename H::fn h) {
+#endif
+        if (this->nextHookId == 0 || this->nextHookId >= UINT32_MAX)
+            this->nextHookId = 1;
+        while (RegisteredGameHooks<H>::functionsForFilter.find(this->nextHookId) !=
+               RegisteredGameHooks<H>::functionsForFilter.end()) {
+            this->nextHookId++;
+        }
+
+        RegisteredGameHooks<H>::functionsForFilter[this->nextHookId] = std::make_pair(f, h);
+        RegisteredGameHooks<H>::hookData[this->nextHookId] =
+            HookInfo{ 0, GET_CURRENT_REGISTERING_INFO(HOOK_TYPE_FILTER) };
+        return this->nextHookId++;
+    }
+
+    template <typename H> void UnregisterGameHookForFilter(HOOK_ID hookId) {
+        if (hookId == 0)
+            return;
+        HooksToUnregister<H>::hooksForFilter.push_back(hookId);
+    }
+
+    template <typename H, typename... Args> void ExecuteHooksForFilter(Args&&... args) {
+        // Remove pending hooks for this type
+        for (auto& hookId : HooksToUnregister<H>::hooksForFilter) {
+            RegisteredGameHooks<H>::functionsForFilter.erase(hookId);
+            RegisteredGameHooks<H>::hookData.erase(hookId);
+        }
+        HooksToUnregister<H>::hooksForFilter.clear();
+        // Execute hooks
+        for (auto& hook : RegisteredGameHooks<H>::functionsForFilter) {
+            if (hook.second.first(std::forward<Args>(args)...)) {
+                hook.second.second(std::forward<Args>(args)...);
+                RegisteredGameHooks<H>::hookData[hook.first].calls += 1;
+            }
+        }
+    }
+
+    template <typename H> void ProcessUnregisteredHooks() {
+        // Normal
+        for (auto& hookId : HooksToUnregister<H>::hooks) {
+            RegisteredGameHooks<H>::functions.erase(hookId);
+            RegisteredGameHooks<H>::hookData.erase(hookId);
+        }
+        HooksToUnregister<H>::hooks.clear();
+
+        // ID
+        for (auto& hookId : HooksToUnregister<H>::hooksForID) {
+            for (auto& idGroup : RegisteredGameHooks<H>::functionsForID) {
+                for (auto it = idGroup.second.begin(); it != idGroup.second.end();) {
+                    if (it->first == hookId) {
+                        it = idGroup.second.erase(it);
+                        RegisteredGameHooks<H>::hookData.erase(hookId);
+                    } else {
+                        ++it;
+                    }
+                }
+            }
+        }
+        HooksToUnregister<H>::hooksForID.clear();
+
+        // Ptr
+        for (auto& hookId : HooksToUnregister<H>::hooksForPtr) {
+            for (auto& ptrGroup : RegisteredGameHooks<H>::functionsForPtr) {
+                for (auto it = ptrGroup.second.begin(); it != ptrGroup.second.end();) {
+                    if (it->first == hookId) {
+                        it = ptrGroup.second.erase(it);
+                        RegisteredGameHooks<H>::hookData.erase(hookId);
+                    } else {
+                        ++it;
+                    }
+                }
+            }
+        }
+        HooksToUnregister<H>::hooksForPtr.clear();
+
+        // Filter
+        for (auto& hookId : HooksToUnregister<H>::hooksForFilter) {
+            RegisteredGameHooks<H>::functionsForFilter.erase(hookId);
+            RegisteredGameHooks<H>::hookData.erase(hookId);
+        }
+        HooksToUnregister<H>::hooksForFilter.clear();
+    }
+
+    void RemoveAllQueuedHooks() {
+#define DEFINE_HOOK(name, _) ProcessUnregisteredHooks<name>();
+
+#include "GameInteractor_HookTable.h"
+
+#undef DEFINE_HOOK
+    }
+
+    class HookFilter {
+      public:
+        static auto ActorNotPlayer(Actor* actor) {
+            return actor->id != ACTOR_PLAYER;
+        }
+        // For use with Should hooks
+        static auto SActorNotPlayer(Actor* actor, bool* result) {
+            return actor->id != ACTOR_PLAYER;
+        }
+        static auto ActorMatchIdAndParams(int16_t id, int16_t params) {
+            return [id, params](Actor* actor) { return actor->id == id && actor->params == params; };
+        }
+        // For use with Should hooks
+        static auto SActorMatchIdAndParams(int16_t id, int16_t params) {
+            return [id, params](Actor* actor, bool* result) { return actor->id == id && actor->params == params; };
+        }
+    };
+
+#define DEFINE_HOOK(name, args)                  \
+    struct name {                                \
+        typedef std::function<void args> fn;     \
+        typedef std::function<bool args> filter; \
+    }
+
+#include "GameInteractor_HookTable.h"
+
+#undef DEFINE_HOOK
 
     // Helpers
     static bool IsSaveLoaded(bool allowDbgSave = false);
@@ -249,9 +542,10 @@ public:
     static bool CanAddOrTakeAmmo(int16_t amount, int16_t item);
 
     class RawAction {
-    public:
+      public:
         static void SetSceneFlag(int16_t sceneNum, int16_t flagType, int16_t flag);
         static void UnsetSceneFlag(int16_t sceneNum, int16_t flagType, int16_t flag);
+        static bool CheckFlag(int16_t flagType, int16_t flag);
         static void SetFlag(int16_t flagType, int16_t chestNum);
         static void UnsetFlag(int16_t flagType, int16_t chestNum);
         static void AddOrRemoveHealthContainers(int16_t amount);
@@ -272,8 +566,6 @@ public:
         static void ClearAssignedButtons(uint8_t buttonSet);
         static void SetTimeOfDay(uint32_t time);
         static void SetCollisionViewer(bool active);
-        static void SetCosmeticsColor(uint8_t cosmeticCategory, uint8_t colorValue);
-        static void RandomizeCosmeticsColors(bool excludeBiddingWarColors);
         static void EmulateButtonPress(int32_t button);
         static void AddOrTakeAmmo(int16_t amount, int16_t item);
         static void EmulateRandomButtonPress(uint32_t chancePercentage = 100);
@@ -281,25 +573,14 @@ public:
         static void SetPlayerInvincibility(bool active);
         static void ClearCutscenePointer();
 
-        static GameInteractionEffectQueryResult SpawnEnemyWithOffset(uint32_t enemyId, int32_t enemyParams);
-        static GameInteractionEffectQueryResult SpawnActor(uint32_t actorId, int32_t actorParams);
+        static GameInteractionEffectQueryResult SpawnEnemyWithOffset(uint32_t enemyId, int32_t enemyParams,
+                                                                     std::string nameTag = "");
+        static GameInteractionEffectQueryResult SpawnActor(uint32_t actorId, int32_t actorParams,
+                                                           std::string nameTag = "");
     };
-
-    private:
-    #ifdef ENABLE_REMOTE_CONTROL
-        IPaddress remoteIP;
-        TCPsocket remoteSocket;
-        std::thread remoteThreadReceive;
-        std::function<void(char payload[512])> remoteDataHandler;
-        std::function<void(nlohmann::json)> remoteJsonHandler;
-        std::function<void()> remoteConnectedHandler;
-        std::function<void()> remoteDisconnectedHandler;
-
-        void ReceiveFromServer();
-        void HandleRemoteData(char payload[512]);
-        void HandleRemoteJson(std::string payload);
-    #endif
 };
+
+#undef GET_CURRENT_REGISTERING_INFO
 
 #endif /* __cplusplus */
 #endif /* GameInteractor_h */
