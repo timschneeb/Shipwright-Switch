@@ -300,9 +300,11 @@ void OTRGlobals::Initialize() {
     context->InitConsoleVariables();
     auto logLevel =
         static_cast<spdlog::level::level_enum>(CVarGetInteger(CVAR_DEVELOPER_TOOLS("LogLevel"), defaultLogLevel));
+    // TODO: causes heap corruption on Switch
+#ifndef __SWITCH__
     context->InitLogging(logLevel, logLevel);
     Ship::Context::GetInstance()->GetLogger()->set_pattern("[%H:%M:%S.%e] [%s:%#] [%l] %v");
-
+#endif
     context->InitGfxDebugger();
     context->InitFileDropMgr();
 
