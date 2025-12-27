@@ -1,4 +1,4 @@
-#include "OTRGlobals.h"
+﻿#include "OTRGlobals.h"
 #include "OTRAudio.h"
 #include <iostream>
 #include <algorithm>
@@ -62,9 +62,9 @@
 #endif
 
 #ifdef __SWITCH__
-#include <port/switch/SwitchImpl.h>
+#include <ship/port/switch/SwitchImpl.h>
 #elif defined(__WIIU__)
-#include <port/wiiu/WiiUImpl.h>
+#include <ship/port/wiiu/WiiUImpl.h>
 #include <coreinit/debug.h> // OSFatal
 #endif
 

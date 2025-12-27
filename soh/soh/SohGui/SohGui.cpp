@@ -17,7 +17,7 @@
 #endif
 
 #ifdef __SWITCH__
-#include <port/switch/SwitchImpl.h>
+#include <ship/port/switch/SwitchImpl.h>
 #endif
 #include "SohMenu.h"
 #include "include/global.h"
