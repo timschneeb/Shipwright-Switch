@@ -679,6 +679,12 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
         SDL2::SDL2
         -lglad
         Threads::Threads
+        -lvorbisfile
+        -lvorbisenc
+        -lvorbis
+        -logg
+        -lopusfile
+        -lopus
     )
 	target_include_directories(${PROJECT_NAME} PRIVATE
 			${DEVKITPRO}/portlibs/switch/include/opus
@@ -741,10 +747,10 @@ INSTALL(FILES ${CMAKE_BINARY_DIR}/gamecontrollerdb.txt DESTINATION . COMPONENT s
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch|CafeOS")
-    if (NOT TARGET pathconf)
-        add_library(pathconf OBJECT platform/pathconf.c)
+    if (NOT TARGET platform_stubs)
+        add_library(platform_stubs OBJECT platform/pathconf.c platform/posix_stubs.c)
     endif()
-    target_link_libraries(${PROJECT_NAME} PRIVATE "${ADDITIONAL_LIBRARY_DEPENDENCIES}" $<TARGET_OBJECTS:pathconf> )
+    target_link_libraries(${PROJECT_NAME} PRIVATE "${ADDITIONAL_LIBRARY_DEPENDENCIES}" $<TARGET_OBJECTS:platform_stubs> )
 else()
     target_link_libraries(${PROJECT_NAME} PRIVATE "${ADDITIONAL_LIBRARY_DEPENDENCIES}")
 endif()
