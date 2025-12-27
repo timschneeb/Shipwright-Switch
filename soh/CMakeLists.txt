@@ -298,7 +298,41 @@ find_package(SDL2)
 set(SDL2-INCLUDE ${SDL2_INCLUDE_DIRS})
 
 if (BUILD_REMOTE_CONTROL)
-    find_package(SDL2_net)
+	if(CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch")
+		# On Nintendo Switch portlibs provide only a pkg-config file.
+		# Use PkgConfig to discover include/lib and create IMPORTED targets
+		find_package(PkgConfig QUIET)
+		if(PkgConfig_FOUND)
+			pkg_check_modules(SDL2NET_PKG QUIET SDL2_net)
+			if(SDL2NET_PKG_FOUND)
+				message(STATUS "Found SDL2_net via pkg-config: ${SDL2NET_PKG_VERSION}")
+
+				# expose include dirs similar to Find module
+				set(SDL2-NET-INCLUDE ${SDL2NET_PKG_INCLUDE_DIRS})
+
+				# Create imported interface targets so existing link lines keep working.
+				if(NOT TARGET "SDL2_net::SDL2_net")
+					add_library("SDL2_net::SDL2_net" INTERFACE IMPORTED)
+					set_target_properties("SDL2_net::SDL2_net" PROPERTIES
+						INTERFACE_LINK_LIBRARIES "${SDL2NET_PKG_LIBRARIES}"
+						INTERFACE_INCLUDE_DIRECTORIES "${SDL2NET_PKG_INCLUDE_DIRS}"
+					)
+				endif()
+
+				if(NOT TARGET "SDL2_net::SDL2_net-static")
+					add_library("SDL2_net::SDL2_net-static" INTERFACE IMPORTED)
+					set_target_properties("SDL2_net::SDL2_net-static" PROPERTIES
+						INTERFACE_LINK_LIBRARIES "${SDL2NET_PKG_LIBRARIES}"
+						INTERFACE_INCLUDE_DIRECTORIES "${SDL2NET_PKG_INCLUDE_DIRS}"
+					)
+				endif()
+
+				set(SDL2_net_FOUND TRUE)
+			endif()
+		endif()
+	else()
+		find_package(SDL2_net)
+	endif()
 
     if(NOT SDL2_net_FOUND)
         message(STATUS "SDL2_net not found (it's possible the version installed is too old). Disabling BUILD_REMOTE_CONTROL.")
@@ -676,6 +710,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
     find_package(Threads REQUIRED)
     set(ADDITIONAL_LIBRARY_DEPENDENCIES
         "libultraship;"
+		"$<$<BOOL:${BUILD_REMOTE_CONTROL}>:SDL2_net::SDL2_net-static>"
         SDL2::SDL2
         -lglad
         Threads::Threads
