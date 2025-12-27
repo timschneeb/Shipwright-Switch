@@ -1,6 +1,39 @@
 ![Ship of Harkinian](docs/shiptitle.darkmode.png#gh-dark-mode-only)
 ![Ship of Harkinian](docs/shiptitle.lightmode.png#gh-light-mode-only)
 
+## Unofficial Nintendo Switch port revival (SoH 9.x)
+
+## How to use
+
+* Download the PC version of SoH version 9.x and use it to generate an `oot.o2r` file from your N64 ROM.
+* Download latest release from this repo (ZIP with `soh.nro` and `soh.o2r`)
+* Create a folder at `/switch/soh/` on the sd card of your Switch and copy all three files there. 
+
+## How to cross-compile
+
+Ensure you have the following prerequisites installed:
+* This repository **recursively** cloned
+* devkitPro with devkitA64
+* All portlibs installed via the devkitPro
+* ccache installed (optional, but recommended for faster builds)
+
+Configure the project with CMake (run in root of repository):
+```
+cmake -H. -Bbuild-switch -GNinja -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake -DCMAKE_BUILD_TYPE:STRING=Debug -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache -DBUILD_REMOTE_CONTROL=1
+```
+
+Build:
+```
+ cmake --build build-switch --target soh_nro -j4
+```
+
+Run on Switch via Sphaira or homebrew launcher with NetLoader enabled:
+```
+ nxlink -a 192.168.178.177 -s build-switch/soh/soh.nro
+```
+
+_______________________________________
+
 ## Website
 
 Official Website: https://www.shipofharkinian.com/
