@@ -260,7 +260,11 @@ void DrawMods(bool enabled) {
             }
         }
 
-        DrawModInfo(filePaths.at(file).filename().generic_string());
+        // Crash fix: Safe lookup for file path
+        auto fpIt = filePaths.find(file);
+        if (fpIt != filePaths.end()) {
+            DrawModInfo(fpIt->second.filename().generic_string());
+        }
         if (enabled) {
             ImGui::EndGroup();
             ModsHandleDragAndDrop(selectedModFiles, i, file);
