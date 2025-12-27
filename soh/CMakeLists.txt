@@ -679,6 +679,9 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
         -lglad
         Threads::Threads
     )
+	target_include_directories(${PROJECT_NAME} PRIVATE
+			${DEVKITPRO}/portlibs/switch/include/opus
+	)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "CafeOS")
     find_package(SDL2 REQUIRED)
     set(ADDITIONAL_LIBRARY_DEPENDENCIES
