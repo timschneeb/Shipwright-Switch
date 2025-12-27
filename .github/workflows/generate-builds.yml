@@ -282,7 +282,7 @@ jobs:
         cd libzip-1.10.1
         mkdir build
         cd build
-        cmake -H.. -B. -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake
+        cmake -H.. -B. -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake -DENABLE_ZSTD=OFF
         make
         make install
         cd ../..
