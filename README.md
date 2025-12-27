@@ -5,9 +5,9 @@
 
 ## How to use
 
-* Download the PC version of SoH version 9.x and use it to generate an `oot.o2r` file from your N64 ROM.
-* Download latest release from this repo (ZIP with `soh.nro` and `soh.o2r`)
-* Create a folder at `/switch/soh/` on the sd card of your Switch and copy all three files there. 
+* Download [the PC version of SoH version 9.x](https://github.com/HarbourMasters/Shipwright/releases/tag/9.1.1) and use it to generate an `oot.o2r` file from your N64 ROM.
+* Download and extract [the latest release from this repo](https://github.com/timschneeb/Shipwright-Switch/releases) (ZIP file with `soh.nro` and `soh.o2r`)
+* Create a folder at `/switch/soh/` on the sd card of your Switch and copy all `oot.o2r`, `soh.nro`, and `soh.o2r` there.
 
 ## How to cross-compile
 
