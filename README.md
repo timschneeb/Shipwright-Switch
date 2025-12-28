@@ -17,6 +17,24 @@ Ensure you have the following prerequisites installed:
 * All portlibs installed via the devkitPro
 * ccache installed (optional, but recommended for faster builds)
 
+Build and install libzip & json libraries to devkitPro toolchain
+```
+wget https://libzip.org/download/libzip-1.10.1.tar.gz
+tar -xzvf libzip-1.10.1.tar.gz && cd libzip-1.10.1
+mkdir build && cd build
+cmake -H.. -B. -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake -DENABLE_ZSTD=OFF
+make
+sudo make install
+cd ../..
+
+wget https://github.com/nlohmann/json/archive/refs/tags/v3.11.3.tar.gz
+tar -xzvf v3.11.3.tar.gz && cd json-3.11.3
+mkdir build && cd build
+cmake -H.. -B. -DJSON_BuildTests=OFF -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake
+make
+sudo make install
+```
+
 Configure the project with CMake (run in root of repository):
 ```
 cmake -H. -Bbuild-switch -GNinja -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake -DCMAKE_BUILD_TYPE:STRING=Debug -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache -DBUILD_REMOTE_CONTROL=1
