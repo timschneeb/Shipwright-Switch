@@ -308,12 +308,15 @@ cmake -H. -Bbuild-cmake -GNinja
 # Extract assets & generate OTR (run this anytime you need to regenerate OTR)
 cmake --build build-cmake --target ExtractAssets
 # Setup cmake project for building for Switch
-cmake -H. -Bbuild-switch -GNinja -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake
+cmake -H. -Bbuild-switch -GNinja -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake -DBUILD_REMOTE_CONTROL=1
 # Build project and generate nro
 cmake --build build-switch --target soh_nro
 
 # Now you can run the executable in ./build-switch/soh/soh.nro
 # To develop the project open the repository in VSCode (or your preferred editor)
+
+# Run on Switch via Sphaira or homebrew launcher with NetLoader enabled
+nxlink -a <ip_address> -s build-switch/soh/soh.nro
 ```
 
 ## Wii U
