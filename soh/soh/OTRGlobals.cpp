@@ -300,8 +300,12 @@ void OTRGlobals::Initialize() {
     context->InitConsoleVariables();
     auto logLevel =
         static_cast<spdlog::level::level_enum>(CVarGetInteger(CVAR_DEVELOPER_TOOLS("LogLevel"), defaultLogLevel));
-    // TODO: causes heap corruption on Switch
+
 #ifndef __SWITCH__
+    /*
+     * TODO: This causes heap corruption on the Switch and randomly crashes the game later. Likely caused by one of the spdlog sinks.
+     * Logging to stdout is functional regardless and can be streamed by connecting using `nxlink -a <ip_address> -s soh.nro` on a computer.
+     */
     context->InitLogging(logLevel, logLevel);
     Ship::Context::GetInstance()->GetLogger()->set_pattern("[%H:%M:%S.%e] [%s:%#] [%l] %v");
 #endif
@@ -1218,7 +1222,7 @@ extern "C" void InitOTR(int argc, char* argv[]) {
     }
 #endif
 
-#if not defined(__SWITCH__) && not defined(__WIIU__)
+#if not defined(__WIIU__)
     CheckAndCreateModFolder();
 #endif
     const bool ootO2RExists =
