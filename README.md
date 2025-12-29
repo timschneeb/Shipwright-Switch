@@ -1,39 +1,6 @@
 ![Ship of Harkinian](docs/shiptitle.darkmode.png#gh-dark-mode-only)
 ![Ship of Harkinian](docs/shiptitle.lightmode.png#gh-light-mode-only)
 
-## Unofficial Nintendo Switch port revival (SoH 9.x)
-
-## How to use
-
-* Download [the PC version of SoH version 9.x](https://github.com/HarbourMasters/Shipwright/releases/tag/9.1.1) and use it to generate an `oot.o2r` file from your N64 ROM.
-* Download and extract [the latest release from this repo](https://github.com/timschneeb/Shipwright-Switch/releases) (ZIP file with `soh.nro` and `soh.o2r`)
-* Create a folder at `/switch/soh/` on the sd card of your Switch and copy all `oot.o2r`, `soh.nro`, and `soh.o2r` there.
-
-## How to cross-compile
-
-Ensure you have the following prerequisites installed:
-* This repository **recursively** cloned
-* devkitPro with devkitA64
-* All portlibs installed via the devkitPro
-* ccache installed (optional, but recommended for faster builds)
-
-Configure the project with CMake (run in root of repository):
-```
-cmake -H. -Bbuild-switch -GNinja -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache -DBUILD_REMOTE_CONTROL=1
-```
-
-Build:
-```
- cmake --build build-switch --target soh_nro -j4
-```
-
-Run on Switch via Sphaira or homebrew launcher with NetLoader enabled:
-```
- nxlink -a 192.168.178.177 -s build-switch/soh/soh.nro
-```
-
-_______________________________________
-
 ## Website
 
 Official Website: https://www.shipofharkinian.com/
@@ -54,6 +21,22 @@ You can verify you have dumped a supported copy of the game by using the compati
 ### 2. Download The Ship of Harkinian from [Releases](https://github.com/HarbourMasters/Shipwright/releases)
 
 ### 3. Launch the Game!
+
+#### Nintendo Switch
+* Run one of the [PC releases](https://github.com/HarbourMasters/Shipwright/releases/tag/9.1.1) to generate an `oot.o2r` and/or `oot-mq.o2r` file. After launching the game on PC, you will be able to find these files in the same directory as `soh.exe` or `soh.appimage`. On macOS, these files can be found in `/Users/<username>/Library/Application Support/com.shipofharkinian.soh/`
+* Download and extract the latest Switch release from releases (ZIP file with `soh.nro` and `soh.o2r`)
+* Copy the files to your sd card
+```
+sdcard
+└── switch
+    └── soh
+        ├── oot-mq.o2r
+        ├── oot.o2r
+        ├── soh.nro
+        └── soh.o2r
+```
+* Launch via Atmosphere's `Game+R` launcher method.
+
 #### Windows
 * Extract the zip
 * Launch `soh.exe`
@@ -66,19 +49,6 @@ You can verify you have dumped a supported copy of the game by using the compati
 * Run `soh.app`. When prompted, select your supported copy of the game.
 * You should see a notification saying `Processing OTR`, then, once the process is complete, you should get a notification saying `OTR Successfully Generated`, then the game should start.
 
-#### Nintendo Switch
-* Run one of the PC releases to generate an `oot.otr` and/or `oot-mq.otr` file. After launching the game on PC, you will be able to find these files in the same directory as `soh.exe` or `soh.appimage`. On macOS, these files can be found in `/Users/<username>/Library/Application Support/com.shipofharkinian.soh/`
-* Copy the files to your sd card
-```
-sdcard
-└── switch
-    └── soh
-        ├── oot-mq.otr
-        ├── oot.otr
-        ├── soh.nro
-        └── soh.otr
-```
-* Launch via Atmosphere's `Game+R` launcher method.
 
 ### 4. Play!
 
