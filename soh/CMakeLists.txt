@@ -782,10 +782,10 @@ INSTALL(FILES ${CMAKE_BINARY_DIR}/gamecontrollerdb.txt DESTINATION . COMPONENT s
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch|CafeOS")
-    if (NOT TARGET platform_stubs)
-        add_library(platform_stubs OBJECT platform/pathconf.c platform/posix_stubs.c)
+    if (NOT TARGET pathconf)
+        add_library(pathconf OBJECT platform/pathconf.c)
     endif()
-    target_link_libraries(${PROJECT_NAME} PRIVATE "${ADDITIONAL_LIBRARY_DEPENDENCIES}" $<TARGET_OBJECTS:platform_stubs> )
+    target_link_libraries(${PROJECT_NAME} PRIVATE "${ADDITIONAL_LIBRARY_DEPENDENCIES}" $<TARGET_OBJECTS:pathconf> )
 else()
     target_link_libraries(${PROJECT_NAME} PRIVATE "${ADDITIONAL_LIBRARY_DEPENDENCIES}")
 endif()
