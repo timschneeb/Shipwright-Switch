@@ -75,6 +75,7 @@ jobs:
         retention-days: 3
 
   build-macos:
+    if: 0 # Disable Windows build on fork
     needs: generate-soh-otr
     runs-on: macos-14
     steps:
@@ -312,6 +313,7 @@ jobs:
           soh.o2r
           readme.txt
   build-windows:
+    if: 0 # Disable Windows build on fork
     needs: generate-soh-otr
     runs-on: windows-latest
     steps:
