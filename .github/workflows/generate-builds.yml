@@ -271,6 +271,15 @@ jobs:
     container:
       image: devkitpro/devkita64:20251117
     steps:
+    - name: Cache CMake build dir
+      uses: actions/cache@v2
+      with:
+        path: |
+          ${{github.workspace}}/build-switch/_deps
+        key: nx-build-${{ github.ref }}-${{ github.sha }}
+        restore-keys: |          
+          nx-build-${{ github.ref }}
+          nx-build
     - name: Configure ccache
       uses: hendrikmuhs/ccache-action@v1.2
       with:
