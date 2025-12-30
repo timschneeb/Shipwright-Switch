@@ -8,6 +8,10 @@
 #include "UIWidgets.hpp"
 #include <spdlog/fmt/fmt.h>
 
+#ifdef __SWITCH__
+#include <ship/port/switch/SwitchImpl.h>
+#endif
+
 extern "C" {
 #include "include/z64audio.h"
 #include "variables.h"
@@ -58,6 +62,18 @@ static const std::unordered_map<int32_t, const char*> bootSequenceLabels = {
     { BOOTSEQUENCE_AUTHENTIC, "Authentic" },
     { BOOTSEQUENCE_FILESELECT, "File Select" },
 };
+
+#ifdef __SWITCH__
+    static const std::unordered_map<int32_t, const char*> switchPerformanceProfiles = {
+        { Ship::MAXIMUM, SWITCH_CPU_PROFILES[Ship::MAXIMUM] },
+        { Ship::HIGH, SWITCH_CPU_PROFILES[Ship::HIGH] },
+        { Ship::BOOST, SWITCH_CPU_PROFILES[Ship::BOOST] },
+        { Ship::STOCK, SWITCH_CPU_PROFILES[Ship::STOCK] },
+        { Ship::POWERSAVINGM1, SWITCH_CPU_PROFILES[Ship::POWERSAVINGM1] },
+        { Ship::POWERSAVINGM2, SWITCH_CPU_PROFILES[Ship::POWERSAVINGM2] },
+        { Ship::POWERSAVINGM3, SWITCH_CPU_PROFILES[Ship::POWERSAVINGM3] }
+    };
+#endif
 
 const char* GetGameVersionString(uint32_t index) {
     uint32_t gameVersion = ResourceMgr_GetGameVersion(index);
@@ -185,6 +201,19 @@ void SohMenu::AddMenuSettings() {
             SDL_OpenURL(std::string("file:///" + std::filesystem::absolute(filesPath).string()).c_str());
         })
         .Options(ButtonOptions().Tooltip("Opens the folder that contains the save and mods folders, etc."));
+#endif
+#ifdef __SWITCH__
+    AddWidget(path, "Hardware", WIDGET_SEPARATOR_TEXT);
+    AddWidget(path, "Switch performance mode", WIDGET_CVAR_COMBOBOX)
+        .CVar(CVAR_SWITCH_PERF_MODE)
+        .RaceDisable(false)
+        .Callback([](WidgetInfo& info) {
+            Ship::Switch::ApplyOverclock();
+        })
+        .Options(ComboboxOptions()
+                     .DefaultIndex(Ship::MAXIMUM)
+                     .ComboMap(switchPerformanceProfiles)
+                     .Tooltip("Sets the Nintendo Switch CPU performance profile."));
 #endif
     AddWidget(path, "Boot", WIDGET_SEPARATOR_TEXT);
     AddWidget(path, "Boot Sequence", WIDGET_CVAR_COMBOBOX)
