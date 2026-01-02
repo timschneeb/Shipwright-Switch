@@ -49,15 +49,15 @@ class Randomizer {
     RandomizerInf GetRandomizerInfFromCheck(RandomizerCheck rc);
     Rando::Location* GetCheckObjectFromActor(s16 actorId, s16 sceneNum, s32 actorParams);
     ScrubIdentity IdentifyScrub(s32 sceneNum, s32 actorParams, s32 respawnData);
-    BeehiveIdentity IdentifyBeehive(s32 sceneNum, s16 xPosition, s32 respawnData);
+    CheckIdentity IdentifyBeehive(s32 sceneNum, s16 xPosition, s32 respawnData);
     ShopItemIdentity IdentifyShopItem(s32 sceneNum, u8 slotIndex);
-    CowIdentity IdentifyCow(s32 sceneNum, s32 posX, s32 posZ);
-    PotIdentity IdentifyPot(s32 sceneNum, s32 posX, s32 posZ);
-    FishIdentity IdentifyFish(s32 sceneNum, s32 actorParams);
-    GrassIdentity IdentifyGrass(s32 sceneNum, s32 posX, s32 posZ, s32 respawnData, s32 linkAge);
-    CrateIdentity IdentifyCrate(s32 sceneNum, s32 posX, s32 posZ);
-    SmallCrateIdentity IdentifySmallCrate(s32 sceneNum, s32 posX, s32 posZ);
-    TreeIdentity IdentifyTree(s32 sceneNum, s32 posX, s32 posZ);
+    CheckIdentity IdentifyCow(s32 sceneNum, s32 posX, s32 posZ);
+    CheckIdentity IdentifyPot(s32 sceneNum, s32 posX, s32 posZ);
+    CheckIdentity IdentifyFish(s32 sceneNum, s32 actorParams);
+    CheckIdentity IdentifyGrass(s32 sceneNum, s32 posX, s32 posZ, s32 respawnData, s32 linkAge);
+    CheckIdentity IdentifyCrate(s32 sceneNum, s32 posX, s32 posZ);
+    CheckIdentity IdentifySmallCrate(s32 sceneNum, s32 posX, s32 posZ);
+    CheckIdentity IdentifyTree(s32 sceneNum, s32 posX, s32 posZ);
     GetItemEntry GetItemFromKnownCheck(RandomizerCheck randomizerCheck, GetItemID ogItemId,
                                        bool checkObtainability = true);
     GetItemEntry GetItemFromActor(s16 actorId, s16 sceneNum, s16 actorParams, GetItemID ogItemId,

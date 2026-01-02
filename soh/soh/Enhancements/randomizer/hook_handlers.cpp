@@ -773,8 +773,8 @@ void RandomizerOnDialogMessageHandler() {
                     EnDns* enDns = (EnDns*)actor;
                     auto checkIdentity = ObjectExtension::GetInstance().Get<ScrubIdentity>(actor);
                     if (checkIdentity != nullptr) {
-                        reveal =
-                            OTRGlobals::Instance->gRandomizer->GetCheckFromRandomizerInf(checkIdentity->randomizerInf);
+                        reveal = OTRGlobals::Instance->gRandomizer->GetCheckFromRandomizerInf(
+                            checkIdentity->identity.randomizerInf);
                     }
                 }
                 break;
@@ -1398,8 +1398,8 @@ void RandomizerOnVanillaBehaviorHandler(GIVanillaBehavior id, bool* should, va_l
             ScrubIdentity scrubIdentity = OTRGlobals::Instance->gRandomizer->IdentifyScrub(
                 gPlayState->sceneNum, enShopnuts->actor.params, respawnData);
 
-            if (scrubIdentity.randomizerCheck != RC_UNKNOWN_CHECK) {
-                *should = Flags_GetRandomizerInf(scrubIdentity.randomizerInf);
+            if (scrubIdentity.identity.randomizerCheck != RC_UNKNOWN_CHECK) {
+                *should = Flags_GetRandomizerInf(scrubIdentity.identity.randomizerInf);
             }
             break;
         }
@@ -1989,7 +1989,7 @@ void EnSi_DrawRandomizedItem(EnSi* enSi, PlayState* play) {
 
 u32 EnDns_RandomizerPurchaseableCheck(EnDns* enDns) {
     auto checkIdentity = ObjectExtension::GetInstance().Get<ScrubIdentity>(enDns);
-    if (checkIdentity != nullptr && Flags_GetRandomizerInf(checkIdentity->randomizerInf)) {
+    if (checkIdentity != nullptr && Flags_GetRandomizerInf(checkIdentity->identity.randomizerInf)) {
         return DNS_CANBUY_RESULT_CANT_GET_NOW;
     }
     if (gSaveContext.rupees < enDns->dnsItemEntry->itemPrice) {
@@ -2002,7 +2002,7 @@ void EnDns_RandomizerPurchase(EnDns* enDns) {
     Rupees_ChangeBy(-enDns->dnsItemEntry->itemPrice);
     auto checkIdentity = ObjectExtension::GetInstance().Get<ScrubIdentity>(enDns);
     if (checkIdentity != nullptr) {
-        Flags_SetRandomizerInf(checkIdentity->randomizerInf);
+        Flags_SetRandomizerInf(checkIdentity->identity.randomizerInf);
     }
 }
 
@@ -2075,7 +2075,7 @@ void RandomizerOnActorInitHandler(void* actorRef) {
         auto scrubIdentity =
             OTRGlobals::Instance->gRandomizer->IdentifyScrub(gPlayState->sceneNum, enDns->actor.params, respawnData);
 
-        if (scrubIdentity.randomizerCheck != RC_UNKNOWN_CHECK) {
+        if (scrubIdentity.identity.randomizerCheck != RC_UNKNOWN_CHECK) {
             // DNS uses pointers so we're creating our own entry instead of modifying the original
             ObjectExtension::GetInstance().Set<DnsItemEntry>(actorRef, std::move(DnsItemEntry{
                                                                            enDns->dnsItemEntry->itemPrice,

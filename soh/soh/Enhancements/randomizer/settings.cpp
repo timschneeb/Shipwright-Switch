@@ -2311,6 +2311,7 @@ void Settings::CreateOptions() {
                                   &mOptions[RSK_SHUFFLE_POTS],
                                   &mOptions[RSK_SHUFFLE_CRATES],
                                   &mOptions[RSK_SHUFFLE_TREES],
+                                  &mOptions[RSK_SHUFFLE_BUSHES],
                                   &mOptions[RSK_SHUFFLE_FROG_SONG_RUPEES],
                                   &mOptions[RSK_SHUFFLE_ADULT_TRADE],
                                   &mOptions[RSK_SHUFFLE_100_GS_REWARD],

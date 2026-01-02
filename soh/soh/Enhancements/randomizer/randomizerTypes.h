@@ -6846,65 +6846,23 @@ typedef enum {
     CANT_OBTAIN_NEED_EMPTY_BOTTLE,
 } ItemObtainability;
 
-typedef struct BeehiveIdentity {
+typedef struct CheckIdentity {
     RandomizerInf randomizerInf;
     RandomizerCheck randomizerCheck;
-} BeehiveIdentity;
+} CheckIdentity;
 
 typedef struct ScrubIdentity {
-    RandomizerInf randomizerInf;
-    RandomizerCheck randomizerCheck;
+    CheckIdentity identity;
     GetItemID getItemId;
     int32_t itemPrice;
 } ScrubIdentity;
 
 typedef struct ShopItemIdentity {
-    RandomizerInf randomizerInf;
-    RandomizerCheck randomizerCheck;
+    CheckIdentity identity;
     GetItemID ogItemId;
     int32_t enGirlAShopItem;
     int32_t itemPrice;
 } ShopItemIdentity;
-
-typedef struct CowIdentity {
-    RandomizerInf randomizerInf;
-    RandomizerCheck randomizerCheck;
-} CowIdentity;
-
-typedef struct PotIdentity {
-    RandomizerInf randomizerInf;
-    RandomizerCheck randomizerCheck;
-} PotIdentity;
-
-typedef struct FishIdentity {
-    RandomizerInf randomizerInf;
-    RandomizerCheck randomizerCheck;
-} FishIdentity;
-
-typedef struct FairyIdentity {
-    RandomizerInf randomizerInf;
-    RandomizerCheck randomizerCheck;
-} FairyIdentity;
-
-typedef struct GrassIdentity {
-    RandomizerInf randomizerInf;
-    RandomizerCheck randomizerCheck;
-} GrassIdentity;
-
-typedef struct CrateIdentity {
-    RandomizerInf randomizerInf;
-    RandomizerCheck randomizerCheck;
-} CrateIdentity;
-
-typedef struct SmallCrateIdentity {
-    RandomizerInf randomizerInf;
-    RandomizerCheck randomizerCheck;
-} SmallCrateIdentity;
-
-typedef struct TreeIdentity {
-    RandomizerInf randomizerInf;
-    RandomizerCheck randomizerCheck;
-} TreeIdentity;
 
 typedef enum {
     TRACKER_WINDOW_FLOATING,

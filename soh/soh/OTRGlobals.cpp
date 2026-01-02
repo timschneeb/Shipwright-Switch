@@ -2169,24 +2169,8 @@ extern "C" RandomizerCheck Randomizer_GetCheckFromActor(s16 actorId, s16 sceneNu
     return OTRGlobals::Instance->gRandomizer->GetCheckFromActor(actorId, sceneNum, actorParams);
 }
 
-extern "C" ScrubIdentity Randomizer_IdentifyScrub(s32 sceneNum, s32 actorParams, s32 respawnData) {
-    return OTRGlobals::Instance->gRandomizer->IdentifyScrub(sceneNum, actorParams, respawnData);
-}
-
-extern "C" BeehiveIdentity Randomizer_IdentifyBeehive(s32 sceneNum, s16 xPosition, s32 respawnData) {
-    return OTRGlobals::Instance->gRandomizer->IdentifyBeehive(sceneNum, xPosition, respawnData);
-}
-
 extern "C" ShopItemIdentity Randomizer_IdentifyShopItem(s32 sceneNum, u8 slotIndex) {
     return OTRGlobals::Instance->gRandomizer->IdentifyShopItem(sceneNum, slotIndex);
-}
-
-extern "C" CowIdentity Randomizer_IdentifyCow(s32 sceneNum, s32 posX, s32 posZ) {
-    return OTRGlobals::Instance->gRandomizer->IdentifyCow(sceneNum, posX, posZ);
-}
-
-extern "C" FishIdentity Randomizer_IdentifyFish(s32 sceneNum, s32 actorParams) {
-    return OTRGlobals::Instance->gRandomizer->IdentifyFish(sceneNum, actorParams);
 }
 
 extern "C" GetItemEntry ItemTable_Retrieve(int16_t getItemID) {
@@ -2536,7 +2520,7 @@ extern "C" int CustomMessage_RetrieveIfExists(PlayState* play) {
             auto scrubIdentity = ObjectExtension::GetInstance().Get<ScrubIdentity>(player->talkActor);
             if (scrubIdentity != nullptr) {
                 RandomizerCheck rc =
-                    OTRGlobals::Instance->gRandomizer->GetCheckFromRandomizerInf(scrubIdentity->randomizerInf);
+                    OTRGlobals::Instance->gRandomizer->GetCheckFromRandomizerInf(scrubIdentity->identity.randomizerInf);
                 messageEntry = OTRGlobals::Instance->gRandomizer->GetMerchantMessage(
                     rc, TEXT_SCRUB_RANDOM, TEXT_SCRUB_RANDOM_FREE,
                     Randomizer_GetSettingValue(RSK_SCRUB_TEXT_HINT) == RO_GENERIC_OFF);

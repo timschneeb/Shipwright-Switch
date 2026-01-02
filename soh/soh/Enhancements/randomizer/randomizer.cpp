@@ -40,6 +40,9 @@
 #include "fishsanity.h"
 #include "randomizerTypes.h"
 #include "soh/Notification/Notification.h"
+#include "soh/ObjectExtension/ObjectExtension.h"
+
+static ObjectExtension::Register<CheckIdentity> RegisterIdentity;
 
 extern std::map<RandomizerCheckArea, std::string> rcAreaNames;
 
@@ -3487,8 +3490,8 @@ std::map<RandomizerCheck, RandomizerInf> rcToRandomizerInf = {
     { RC_ZF_BUSH_6, RAND_INF_ZF_BUSH_6 },
 };
 
-BeehiveIdentity Randomizer::IdentifyBeehive(s32 sceneNum, s16 xPosition, s32 respawnData) {
-    struct BeehiveIdentity beehiveIdentity;
+CheckIdentity Randomizer::IdentifyBeehive(s32 sceneNum, s16 xPosition, s32 respawnData) {
+    struct CheckIdentity beehiveIdentity;
 
     beehiveIdentity.randomizerInf = RAND_INF_MAX;
     beehiveIdentity.randomizerCheck = RC_UNKNOWN_CHECK;
@@ -3649,8 +3652,8 @@ Rando::Location* Randomizer::GetCheckObjectFromActor(s16 actorId, s16 sceneNum, 
 ScrubIdentity Randomizer::IdentifyScrub(s32 sceneNum, s32 actorParams, s32 respawnData) {
     struct ScrubIdentity scrubIdentity;
 
-    scrubIdentity.randomizerInf = RAND_INF_MAX;
-    scrubIdentity.randomizerCheck = RC_UNKNOWN_CHECK;
+    scrubIdentity.identity.randomizerInf = RAND_INF_MAX;
+    scrubIdentity.identity.randomizerCheck = RC_UNKNOWN_CHECK;
     scrubIdentity.getItemId = GI_NONE;
     scrubIdentity.itemPrice = -1;
 
@@ -3675,11 +3678,11 @@ ScrubIdentity Randomizer::IdentifyScrub(s32 sceneNum, s32 actorParams, s32 respa
             return scrubIdentity;
         }
 
-        scrubIdentity.randomizerInf = rcToRandomizerInf[location->GetRandomizerCheck()];
-        scrubIdentity.randomizerCheck = location->GetRandomizerCheck();
+        scrubIdentity.identity.randomizerInf = rcToRandomizerInf[location->GetRandomizerCheck()];
+        scrubIdentity.identity.randomizerCheck = location->GetRandomizerCheck();
         scrubIdentity.getItemId = (GetItemID)Rando::StaticData::RetrieveItem(location->GetVanillaItem()).GetItemID();
         scrubIdentity.itemPrice =
-            OTRGlobals::Instance->gRandoContext->GetItemLocation(scrubIdentity.randomizerCheck)->GetPrice();
+            OTRGlobals::Instance->gRandoContext->GetItemLocation(scrubIdentity.identity.randomizerCheck)->GetPrice();
     }
 
     return scrubIdentity;
@@ -3688,8 +3691,8 @@ ScrubIdentity Randomizer::IdentifyScrub(s32 sceneNum, s32 actorParams, s32 respa
 ShopItemIdentity Randomizer::IdentifyShopItem(s32 sceneNum, u8 slotIndex) {
     ShopItemIdentity shopItemIdentity;
 
-    shopItemIdentity.randomizerInf = RAND_INF_MAX;
-    shopItemIdentity.randomizerCheck = RC_UNKNOWN_CHECK;
+    shopItemIdentity.identity.randomizerInf = RAND_INF_MAX;
+    shopItemIdentity.identity.randomizerCheck = RC_UNKNOWN_CHECK;
     shopItemIdentity.ogItemId = GI_NONE;
     shopItemIdentity.itemPrice = -1;
     shopItemIdentity.enGirlAShopItem = 0x32;
@@ -3705,25 +3708,26 @@ ShopItemIdentity Randomizer::IdentifyShopItem(s32 sceneNum, u8 slotIndex) {
         slotIndex - 1);
 
     if (location->GetRandomizerCheck() != RC_UNKNOWN_CHECK) {
-        shopItemIdentity.randomizerInf = rcToRandomizerInf[location->GetRandomizerCheck()];
-        shopItemIdentity.randomizerCheck = location->GetRandomizerCheck();
+        shopItemIdentity.identity.randomizerInf = rcToRandomizerInf[location->GetRandomizerCheck()];
+        shopItemIdentity.identity.randomizerCheck = location->GetRandomizerCheck();
         shopItemIdentity.ogItemId = (GetItemID)Rando::StaticData::RetrieveItem(location->GetVanillaItem()).GetItemID();
 
-        RandomizerGet randoGet =
-            Rando::Context::GetInstance()->GetItemLocation(shopItemIdentity.randomizerCheck)->GetPlacedRandomizerGet();
+        RandomizerGet randoGet = Rando::Context::GetInstance()
+                                     ->GetItemLocation(shopItemIdentity.identity.randomizerCheck)
+                                     ->GetPlacedRandomizerGet();
         if (randomizerGetToEnGirlShopItem.find(randoGet) != randomizerGetToEnGirlShopItem.end()) {
             shopItemIdentity.enGirlAShopItem = randomizerGetToEnGirlShopItem[randoGet];
         }
 
         shopItemIdentity.itemPrice =
-            OTRGlobals::Instance->gRandoContext->GetItemLocation(shopItemIdentity.randomizerCheck)->GetPrice();
+            OTRGlobals::Instance->gRandoContext->GetItemLocation(shopItemIdentity.identity.randomizerCheck)->GetPrice();
     }
 
     return shopItemIdentity;
 }
 
-CowIdentity Randomizer::IdentifyCow(s32 sceneNum, s32 posX, s32 posZ) {
-    struct CowIdentity cowIdentity;
+CheckIdentity Randomizer::IdentifyCow(s32 sceneNum, s32 posX, s32 posZ) {
+    struct CheckIdentity cowIdentity;
 
     cowIdentity.randomizerInf = RAND_INF_MAX;
     cowIdentity.randomizerCheck = RC_UNKNOWN_CHECK;
@@ -3744,8 +3748,8 @@ CowIdentity Randomizer::IdentifyCow(s32 sceneNum, s32 posX, s32 posZ) {
     return cowIdentity;
 }
 
-PotIdentity Randomizer::IdentifyPot(s32 sceneNum, s32 posX, s32 posZ) {
-    struct PotIdentity potIdentity;
+CheckIdentity Randomizer::IdentifyPot(s32 sceneNum, s32 posX, s32 posZ) {
+    struct CheckIdentity potIdentity;
     uint32_t potSceneNum = sceneNum;
 
     if (sceneNum == SCENE_GANONDORF_BOSS) {
@@ -3769,8 +3773,8 @@ PotIdentity Randomizer::IdentifyPot(s32 sceneNum, s32 posX, s32 posZ) {
     return potIdentity;
 }
 
-FishIdentity Randomizer::IdentifyFish(s32 sceneNum, s32 actorParams) {
-    struct FishIdentity fishIdentity;
+CheckIdentity Randomizer::IdentifyFish(s32 sceneNum, s32 actorParams) {
+    struct CheckIdentity fishIdentity;
 
     fishIdentity.randomizerInf = RAND_INF_MAX;
     fishIdentity.randomizerCheck = RC_UNKNOWN_CHECK;
@@ -3790,8 +3794,8 @@ FishIdentity Randomizer::IdentifyFish(s32 sceneNum, s32 actorParams) {
     return fishIdentity;
 }
 
-GrassIdentity Randomizer::IdentifyGrass(s32 sceneNum, s32 posX, s32 posZ, s32 respawnData, s32 linkAge) {
-    struct GrassIdentity grassIdentity;
+CheckIdentity Randomizer::IdentifyGrass(s32 sceneNum, s32 posX, s32 posZ, s32 respawnData, s32 linkAge) {
+    struct CheckIdentity grassIdentity;
 
     grassIdentity.randomizerInf = RAND_INF_MAX;
     grassIdentity.randomizerCheck = RC_UNKNOWN_CHECK;
@@ -3852,8 +3856,8 @@ GrassIdentity Randomizer::IdentifyGrass(s32 sceneNum, s32 posX, s32 posZ, s32 re
     return grassIdentity;
 }
 
-CrateIdentity Randomizer::IdentifyCrate(s32 sceneNum, s32 posX, s32 posZ) {
-    struct CrateIdentity crateIdentity;
+CheckIdentity Randomizer::IdentifyCrate(s32 sceneNum, s32 posX, s32 posZ) {
+    struct CheckIdentity crateIdentity;
     uint32_t crateSceneNum = sceneNum;
 
     // pretend night is day to align crates in market and align GF child/adult crates
@@ -3885,8 +3889,8 @@ CrateIdentity Randomizer::IdentifyCrate(s32 sceneNum, s32 posX, s32 posZ) {
     return crateIdentity;
 }
 
-SmallCrateIdentity Randomizer::IdentifySmallCrate(s32 sceneNum, s32 posX, s32 posZ) {
-    struct SmallCrateIdentity smallCrateIdentity;
+CheckIdentity Randomizer::IdentifySmallCrate(s32 sceneNum, s32 posX, s32 posZ) {
+    struct CheckIdentity smallCrateIdentity;
     uint32_t smallCrateSceneNum = sceneNum;
 
     smallCrateIdentity.randomizerInf = RAND_INF_MAX;
@@ -3907,8 +3911,8 @@ SmallCrateIdentity Randomizer::IdentifySmallCrate(s32 sceneNum, s32 posX, s32 po
     return smallCrateIdentity;
 }
 
-TreeIdentity Randomizer::IdentifyTree(s32 sceneNum, s32 posX, s32 posZ) {
-    struct TreeIdentity treeIdentity;
+CheckIdentity Randomizer::IdentifyTree(s32 sceneNum, s32 posX, s32 posZ) {
+    struct CheckIdentity treeIdentity;
 
     if (sceneNum == SCENE_MARKET_NIGHT) {
         sceneNum = SCENE_MARKET_DAY;
