@@ -201,6 +201,10 @@ void GameInteractor_ExecuteOnPlayerBonk() {
     GameInteractor::Instance->ExecuteHooks<GameInteractor::OnPlayerBonk>();
 }
 
+void GameInteractor_ExecuteOnPlayerSetModels(Player* player, u8 modelGroup) {
+    GameInteractor::Instance->ExecuteHooks<GameInteractor::OnPlayerSetModels>(player, modelGroup);
+}
+
 void GameInteractor_ExecuteOnPlayerHealthChange(int16_t amount) {
     GameInteractor::Instance->ExecuteHooks<GameInteractor::OnPlayerHealthChange>(amount);
 }
