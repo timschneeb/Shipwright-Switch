@@ -1,10 +1,17 @@
 ﻿#include "SohMenu.h"
+#include <soh/Enhancements/enhancementTypes.h>
 #include <soh/Enhancements/mods.h>
 #include <soh/Enhancements/game-interactor/GameInteractor.h>
 #include <soh/OTRGlobals.h>
 #include <soh/Enhancements/cosmetics/authenticGfxPatches.h>
 #include <soh/Enhancements/enemyrandomizer.h>
 #include <soh/Enhancements/TimeDisplay/TimeDisplay.h>
+
+extern "C" {
+#include "functions.h"
+#include "variables.h"
+extern PlayState* gPlayState;
+}
 
 #define CVAR_INT_SHIP_INIT(cvar, val) \
     CVarSetInteger(cvar, val);        \
@@ -27,26 +34,26 @@ namespace SohGui {
 extern std::shared_ptr<SohMenu> mSohMenu;
 using namespace UIWidgets;
 
-static std::unordered_map<int32_t, const char*> bunnyHoodEffectMap = {
+static std::map<int32_t, const char*> bunnyHoodEffectMap = {
     { BUNNY_HOOD_VANILLA, "Vanilla" },
     { BUNNY_HOOD_FAST, "Faster Run" },
     { BUNNY_HOOD_FAST_AND_JUMP, "Faster + Longer Jump" },
 };
 
-static const std::unordered_map<int32_t, const char*> dekuStickCheat = {
+static const std::map<int32_t, const char*> dekuStickCheat = {
     { DEKU_STICK_NORMAL, "Normal" },
     { DEKU_STICK_UNBREAKABLE, "Unbreakable" },
     { DEKU_STICK_UNBREAKABLE_AND_ALWAYS_ON_FIRE, "Unbreakable + Always on Fire" },
 };
 
-static const std::unordered_map<int32_t, const char*> skipForcedDialogOptions = {
+static const std::map<int32_t, const char*> skipForcedDialogOptions = {
     { FORCED_DIALOG_SKIP_NONE, "None" },
     { FORCED_DIALOG_SKIP_NAVI, "Navi" },
     { FORCED_DIALOG_SKIP_NPC, "NPCs" },
     { FORCED_DIALOG_SKIP_ALL, "All" },
 };
 
-static const std::unordered_map<int32_t, const char*> timeTravelOptions = {
+static const std::map<int32_t, const char*> timeTravelOptions = {
     { TIME_TRAVEL_DISABLED, "Disabled" },
     { TIME_TRAVEL_OOT, "Ocarina of Time" },
     { TIME_TRAVEL_OOT_MS, "Ocarina of Time + Master Sword" },
@@ -54,13 +61,13 @@ static const std::unordered_map<int32_t, const char*> timeTravelOptions = {
     { TIME_TRAVEL_ANY_MS, "Any Ocarina + Master Sword" },
 };
 
-static const std::unordered_map<int32_t, const char*> sleepingWaterfallOptions = {
+static const std::map<int32_t, const char*> sleepingWaterfallOptions = {
     { WATERFALL_ALWAYS, "Always" },
     { WATERFALL_ONCE, "Once" },
     { WATERFALL_NEVER, "Never" },
 };
 
-static const std::unordered_map<int32_t, const char*> allPowers = {
+static const std::map<int32_t, const char*> allPowers = {
     { DAMAGE_VANILLA, "Vanilla (1x)" },      { DAMAGE_DOUBLE, "Double (2x)" },
     { DAMAGE_QUADRUPLE, "Quadruple (4x)" },  { DAMAGE_OCTUPLE, "Octuple (8x)" },
     { DAMAGE_FOOLISH, "Foolish (16x)" },     { DAMAGE_RIDICULOUS, "Ridiculous (32x)" },
@@ -68,28 +75,28 @@ static const std::unordered_map<int32_t, const char*> allPowers = {
     { DAMAGE_OHKO, "OHKO (256x)" },
 };
 
-static const std::unordered_map<int32_t, const char*> subPowers = {
+static const std::map<int32_t, const char*> subPowers = {
     { DAMAGE_VANILLA, "Vanilla (1x)" },      { DAMAGE_DOUBLE, "Double (2x)" },
     { DAMAGE_QUADRUPLE, "Quadruple (4x)" },  { DAMAGE_OCTUPLE, "Octuple (8x)" },
     { DAMAGE_FOOLISH, "Foolish (16x)" },     { DAMAGE_RIDICULOUS, "Ridiculous (32x)" },
     { DAMAGE_MERCILESS, "Merciless (64x)" }, { DAMAGE_TORTURE, "Pure Torture (128x)" },
 };
 
-static const std::unordered_map<int32_t, const char*> subSubPowers = {
+static const std::map<int32_t, const char*> subSubPowers = {
     { DAMAGE_VANILLA, "Vanilla (1x)" },      { DAMAGE_DOUBLE, "Double (2x)" },
     { DAMAGE_QUADRUPLE, "Quadruple (4x)" },  { DAMAGE_OCTUPLE, "Octuple (8x)" },
     { DAMAGE_FOOLISH, "Foolish (16x)" },     { DAMAGE_RIDICULOUS, "Ridiculous (32x)" },
     { DAMAGE_MERCILESS, "Merciless (64x)" },
 };
 
-static const std::unordered_map<int32_t, const char*> bonkDamageValues = {
+static const std::map<int32_t, const char*> bonkDamageValues = {
     { BONK_DAMAGE_NONE, "No Damage" },        { BONK_DAMAGE_QUARTER_HEART, "0.25 Hearts" },
     { BONK_DAMAGE_HALF_HEART, "0.5 Hearts" }, { BONK_DAMAGE_1_HEART, "1 Heart" },
     { BONK_DAMAGE_2_HEARTS, "2 Hearts" },     { BONK_DAMAGE_4_HEARTS, "4 Hearts" },
     { BONK_DAMAGE_8_HEARTS, "8 Hearts" },     { BONK_DAMAGE_OHKO, "OHKO" },
 };
 
-static const std::unordered_map<int32_t, const char*> dampeDropRates = {
+static const std::map<int32_t, const char*> dampeDropRates = {
     { DAMPE_NONE, "None" },
     { DAMPE_NORMAL, "Vanilla" },
     { DAMPE_JALAPENO, "Jalapeño" },
@@ -99,25 +106,25 @@ static const std::unordered_map<int32_t, const char*> dampeDropRates = {
     { DAMPE_INFERNO, "Dampe's Inferno" },
 };
 
-static const std::unordered_map<int32_t, const char*> cursorAnywhereValues = {
+static const std::map<int32_t, const char*> cursorAnywhereValues = {
     { PAUSE_ANY_CURSOR_RANDO_ONLY, "Only in Rando" },
     { PAUSE_ANY_CURSOR_ALWAYS_ON, "Always" },
     { PAUSE_ANY_CURSOR_ALWAYS_OFF, "Never" },
 };
 
-static const std::unordered_map<int32_t, const char*> zFightingOptions = {
+static const std::map<int32_t, const char*> zFightingOptions = {
     { ZFIGHT_FIX_DISABLED, "Disabled" },
     { ZFIGHT_FIX_CONSISTENT_VANISH, "Consistent Vanish" },
     { ZFIGHT_FIX_NO_VANISH, "No Vanish" },
 };
 
-static const std::unordered_map<int32_t, const char*> swordToggleModes = {
+static const std::map<int32_t, const char*> swordToggleModes = {
     { SWORD_TOGGLE_NONE, "None" },
     { SWORD_TOGGLE_CHILD, "Child Toggle" },
     { SWORD_TOGGLE_BOTH_AGES, "Both Ages" },
 };
 
-static const std::unordered_map<int32_t, const char*> mirroredWorldModes = {
+static const std::map<int32_t, const char*> mirroredWorldModes = {
     { MIRRORED_WORLD_OFF, "Disabled" },
     { MIRRORED_WORLD_ALWAYS, "Always" },
     { MIRRORED_WORLD_RANDOM, "Random" },
@@ -129,7 +136,7 @@ static const std::unordered_map<int32_t, const char*> mirroredWorldModes = {
     { MIRRORED_WORLD_DUNGEONS_RANDOM_SEEDED, "Dungeons Random (Seeded)" },
 };
 
-static const std::unordered_map<int32_t, const char*> enemyRandomizerModes = {
+static const std::map<int32_t, const char*> enemyRandomizerModes = {
     { ENEMY_RANDOMIZER_OFF, "Disabled" },
     { ENEMY_RANDOMIZER_RANDOM, "Random" },
     { ENEMY_RANDOMIZER_RANDOM_SEEDED, "Random (Seeded)" },

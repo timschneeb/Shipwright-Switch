@@ -13,7 +13,6 @@
 #include <string>
 #include <libultraship/bridge.h>
 #include <libultraship/libultraship.h>
-#include "soh_assets.h"
 
 extern "C" {
 #include <z64.h>
@@ -22,10 +21,6 @@ extern "C" {
 #include "macros.h"
 #include "soh/cvar_prefixes.h"
 extern PlayState* gPlayState;
-
-#include "textures/icon_item_static/icon_item_static.h"
-#include "textures/icon_item_24_static/icon_item_24_static.h"
-#include "textures/parameter_static/parameter_static.h"
 }
 
 #include "message_data_static.h"
@@ -156,7 +151,7 @@ std::string decodeNTSCPlayerNameChar(int code) {
 
 enum MagicLevel { MAGIC_LEVEL_NONE, MAGIC_LEVEL_SINGLE, MAGIC_LEVEL_DOUBLE };
 
-std::unordered_map<int8_t, const char*> magicLevelMap = {
+std::map<int8_t, const char*> magicLevelMap = {
     { MAGIC_LEVEL_NONE, "None" },
     { MAGIC_LEVEL_SINGLE, "Single" },
     { MAGIC_LEVEL_DOUBLE, "Double" },
@@ -169,7 +164,7 @@ enum AudioOutput {
     AUDIO_SURROUND,
 };
 
-std::unordered_map<uint8_t, const char*> audioMap = {
+std::map<uint8_t, const char*> audioMap = {
     { AUDIO_STEREO, "Stereo" },
     { AUDIO_MONO, "Mono" },
     { AUDIO_HEADSET, "Headset" },
@@ -181,24 +176,24 @@ enum ZTarget {
     Z_TARGET_HOLD,
 };
 
-std::unordered_map<uint8_t, const char*> zTargetMap = {
+std::map<uint8_t, const char*> zTargetMap = {
     { Z_TARGET_SWITCH, "Switch" },
     { Z_TARGET_HOLD, "Hold" },
 };
 
-std::unordered_map<int32_t, const char*> fileNumMap = {
+std::map<int32_t, const char*> fileNumMap = {
     { 0, "File 1" },
     { 1, "File 2" },
     { 2, "File 3" },
 };
 
-std::unordered_map<uint8_t, const char*> filenameLanguageMap = {
+std::map<uint8_t, const char*> filenameLanguageMap = {
     { NAME_LANGUAGE_PAL, "PAL" },
     { NAME_LANGUAGE_NTSC_JPN, "NTSC JPN" },
     { NAME_LANGUAGE_NTSC_ENG, "NTSC ENG" },
 };
 
-std::unordered_map<uint8_t, const char*> filenameLanguageMapNTSCOnly = {
+std::map<uint8_t, const char*> filenameLanguageMapNTSCOnly = {
     { NAME_LANGUAGE_NTSC_JPN, "NTSC JPN" },
     { NAME_LANGUAGE_NTSC_ENG, "NTSC ENG" },
 };
@@ -592,7 +587,7 @@ void DrawInventoryTab() {
                     }
                 }
 
-                for (int32_t pickerIndex = 0; pickerIndex < possibleItems.size(); pickerIndex++) {
+                for (size_t pickerIndex = 0; pickerIndex < possibleItems.size(); pickerIndex++) {
                     if (((pickerIndex + 1) % 8) != 0) {
                         ImGui::SameLine();
                     }
@@ -1034,14 +1029,14 @@ void DrawFlagsTab() {
         },
         "Gold Skulltulas");
 
-    for (int i = 0; i < flagTables.size(); i++) {
+    for (size_t i = 0; i < flagTables.size(); i++) {
         const FlagTable& flagTable = flagTables[i];
         if (flagTable.flagTableType == RANDOMIZER_INF && !IS_RANDO && !IS_BOSS_RUSH) {
             continue;
         }
 
         if (ImGui::TreeNode(flagTable.name)) {
-            for (int j = 0; j < flagTable.size + 1; j++) {
+            for (size_t j = 0; j < flagTable.size + 1; j++) {
                 DrawGroupWithBorder(
                     [&]() {
                         if (j == 0) {
@@ -1116,7 +1111,7 @@ void DrawUpgrade(const std::string& categoryName, int32_t categoryId, const std:
     PushStyleCombobox(THEME_COLOR);
     ImGui::AlignTextToFramePadding();
     if (ImGui::BeginCombo("##upgrade", names[CUR_UPG_VALUE(categoryId)].c_str())) {
-        for (int32_t i = 0; i < names.size(); i++) {
+        for (size_t i = 0; i < names.size(); i++) {
             if (ImGui::Selectable(names[i].c_str())) {
                 Inventory_ChangeUpgrade(categoryId, i);
             }
@@ -1153,7 +1148,7 @@ void DrawUpgradeIcon(const std::string& categoryName, int32_t categoryId, const 
     Tooltip(categoryName.c_str());
 
     if (ImGui::BeginPopup(upgradePopupPicker)) {
-        for (int32_t pickerIndex = 0; pickerIndex < items.size(); pickerIndex++) {
+        for (size_t pickerIndex = 0; pickerIndex < items.size(); pickerIndex++) {
             if ((pickerIndex % 8) != 0) {
                 ImGui::SameLine();
             }
@@ -1192,7 +1187,7 @@ void DrawEquipmentTab() {
         ITEM_TUNIC_KOKIRI, ITEM_TUNIC_GORON,   ITEM_TUNIC_ZORA,    ITEM_NONE,
         ITEM_BOOTS_KOKIRI, ITEM_BOOTS_IRON,    ITEM_BOOTS_HOVER,   ITEM_NONE,
     };
-    for (int32_t i = 0; i < equipmentValues.size(); i++) {
+    for (size_t i = 0; i < equipmentValues.size(); i++) {
         // Skip over unused 4th slots for shields, boots, and tunics
         if (equipmentValues[i] == ITEM_NONE) {
             continue;

@@ -1,5 +1,4 @@
 #include "Presets.h"
-#include <variant>
 #include <string>
 #include <fstream>
 #include <ship/config/Config.h>
@@ -295,7 +294,7 @@ void DrawNewPresetPopup() {
         auto config = Ship::Context::GetInstance()->GetConfig()->GetNestedJson();
         for (int i = PRESET_SECTION_SETTINGS; i < PRESET_SECTION_MAX; i++) {
             if (saveSection[i]) {
-                for (int j = 0; j < blockInfo[i].sections.size(); j++) {
+                for (size_t j = 0; j < blockInfo[i].sections.size(); j++) {
                     presets[newPresetName].presetValues["blocks"][blockInfo[i].names[1]][blockInfo[i].sections[j]] =
                         config["CVars"][blockInfo[i].sections[j]];
                 }
