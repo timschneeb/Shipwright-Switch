@@ -2157,6 +2157,7 @@ void Settings::CreateOptions() {
                                                                           &mOptions[RSK_LOGIC_RULES],
                                                                           &mOptions[RSK_ALL_LOCATIONS_REACHABLE],
                                                                           &mOptions[RSK_SKULLS_SUNS_SONG],
+                                                                          &mOptions[RSK_BIG_POE_COUNT],
                                                                       });
     // TODO: Exclude Locations Menus
     mTricksByArea.clear();
@@ -2177,6 +2178,7 @@ void Settings::CreateOptions() {
                                                                       &mOptions[RSK_ALL_LOCATIONS_REACHABLE],
                                                                       &mOptions[RSK_STARTING_AGE],
                                                                       &mOptions[RSK_SKULLS_SUNS_SONG],
+                                                                      &mOptions[RSK_BIG_POE_COUNT],
                                                                       &mOptions[RSK_BLUE_FIRE_ARROWS],
                                                                       &mOptions[RSK_SUNLIGHT_ARROWS],
                                                                       &mOptions[RSK_FULL_WALLETS],
