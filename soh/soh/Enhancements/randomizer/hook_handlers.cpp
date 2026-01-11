@@ -2030,6 +2030,9 @@ void RandomizerOnActorInitHandler(void* actorRef) {
                 if (!isVanilla && Flags_GetRandomizerInf(RAND_INF_DEKU_TREE_MQ_TORCH_SWITCH)) {
                     Flags_SetSwitch(gPlayState, 0x27);
                 }
+                if (isVanilla) { // make falling platform respawn
+                    Flags_UnsetSwitch(gPlayState, 0x14);
+                }
                 break;
             case SCENE_DODONGOS_CAVERN:
                 if (!isVanilla && Flags_GetRandomizerInf(RAND_INF_DODONGOS_CAVERN_MQ_SILVER_RUPEES)) {
