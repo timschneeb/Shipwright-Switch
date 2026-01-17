@@ -1488,8 +1488,6 @@ extern "C" void InitOTR(int argc, char* argv[]) {
     SohGui::SetupGuiElements();
     SohGui::SetupMenuElements();
 
-    Rando::StaticData::InitHashMaps();
-    OTRGlobals::Instance->gRandoContext->AddExcludedOptions();
     AudioCollection::Instance = new AudioCollection();
     ActorDB::Instance = new ActorDB();
 #ifdef __APPLE__
@@ -1546,6 +1544,8 @@ extern "C" void InitOTR(int argc, char* argv[]) {
         Anchor::Instance->Enable();
     }
     ShipInit::InitAll();
+    Rando::StaticData::InitHashMaps();
+    OTRGlobals::Instance->gRandoContext->AddExcludedOptions();
 }
 
 extern "C" void SaveManager_ThreadPoolWait() {
