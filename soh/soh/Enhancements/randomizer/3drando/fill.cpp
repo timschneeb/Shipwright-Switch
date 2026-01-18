@@ -4,7 +4,6 @@
 #include "../SeedContext.h"
 #include "item_pool.hpp"
 #include "random.hpp"
-#include "spoiler_log.hpp"
 #include "starting_inventory.hpp"
 #include "hints.hpp"
 #include "shops.hpp"
@@ -757,7 +756,7 @@ static void CalculateWotH() {
             // necessary, so add it unless it is in Links Pocket or an isolated place.
             auto itemLoc = ctx->GetItemLocation(ctx->playthroughLocations[i][j]);
             if (itemLoc->IsHintable() && itemLoc->GetFirstArea() > RA_LINKS_POCKET &&
-                !(IsBeatableWithout(ctx->playthroughLocations[i][j], true))) {
+                !IsBeatableWithout(ctx->playthroughLocations[i][j], true)) {
                 itemLoc->SetWothCandidate();
             }
         }

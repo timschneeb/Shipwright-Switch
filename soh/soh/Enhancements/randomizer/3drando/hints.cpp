@@ -6,7 +6,6 @@
 #include "fill.hpp"
 #include "../trial.h"
 #include "../entrance.h"
-#include "z64item.h"
 #include <spdlog/spdlog.h>
 #include "../randomizerTypes.h"
 #include "pool_functions.hpp"
@@ -649,7 +648,7 @@ void CreateStoneHints() {
     if (ctx->GetOption(RSK_SKIP_CHILD_ZELDA)) {
         ctx->GetItemLocation(RC_SONG_FROM_IMPA)->SetHintAccesible();
     }
-    if (ctx->GetOption(RSK_SELECTED_STARTING_AGE).Is(RO_AGE_ADULT)) {
+    if (ctx->GetOption(RSK_SELECTED_STARTING_AGE).Is(RO_AGE_ADULT) || !ctx->GetOption(RSK_SHUFFLE_MASTER_SWORD)) {
         ctx->GetItemLocation(RC_TOT_MASTER_SWORD)->SetHintAccesible();
     }
 
@@ -662,7 +661,7 @@ void CreateStoneHints() {
             auto gregLocations = FilterFromPool(ctx->allLocations, [ctx](const RandomizerCheck loc) {
                 return ((ctx->GetItemLocation(loc)->GetPlacedRandomizerGet() == RG_GREG_RUPEE)) &&
                        ctx->GetItemLocation(loc)->IsHintable() &&
-                       !(ctx->GetOption(RSK_GREG_HINT) && (IsReachableWithout({ RC_GREG_HINT }, loc, true)));
+                       !(ctx->GetOption(RSK_GREG_HINT) && IsReachableWithout({ RC_GREG_HINT }, loc, true));
             });
             if (gregLocations.size() > 0) {
                 alwaysHintLocations.push_back(gregLocations[0]);
