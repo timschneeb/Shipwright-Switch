@@ -2548,11 +2548,11 @@ bool Logic::ReachDistantScarecrow() {
 }
 
 bool Logic::CanClimbLadder() {
-    return CanUse(RG_CLIMB) || (ctx->GetTrickOption(RT_HOOKSHOT_LADDERS) && CanUse(RG_HOOKSHOT));
+    return HasItem(RG_CLIMB) || (ctx->GetTrickOption(RT_HOOKSHOT_LADDERS) && CanUse(RG_HOOKSHOT));
 }
 
 bool Logic::CanClimbHighLadder() {
-    return CanUse(RG_CLIMB) || (ctx->GetTrickOption(RT_HOOKSHOT_LADDERS) && CanUse(RG_LONGSHOT));
+    return HasItem(RG_CLIMB) || (ctx->GetTrickOption(RT_HOOKSHOT_LADDERS) && CanUse(RG_LONGSHOT));
 }
 
 bool Logic::SummonEpona() {
