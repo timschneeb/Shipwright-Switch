@@ -612,6 +612,14 @@ typedef enum {
 
     // #### `result`
     // ```c
+    // EnKo_GetForestQuestState2(this)
+    // ```
+    // #### `args`
+    // - `*EnKo`
+    VB_KOKIRI_GET_FOREST_QUEST_STATE2,
+
+    // #### `result`
+    // ```c
     // true
     // ```
     // #### `args`
