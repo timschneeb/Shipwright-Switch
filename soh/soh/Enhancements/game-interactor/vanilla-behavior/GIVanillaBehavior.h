@@ -2625,6 +2625,22 @@ typedef enum {
 
     // #### `result`
     // ```c
+    // (uint8_t)font->msgBuf[msgCtx->msgBufPos + 1] >= ITEM_CUSTOM
+    // ```
+    // #### `args`
+    // - uint8_t (sDisplayNextMessageAsEnglish)
+    VB_LOAD_ITEM_ICON,
+
+    // #### `result`
+    // ```c
+    // itemId < ITEM_CUSTOM
+    // ```
+    // #### `args`
+    // - `Gfx**`
+    VB_DRAW_ITEM_ICON,
+
+    // #### `result`
+    // ```c
     // true
     // ```
     // #### `args`
