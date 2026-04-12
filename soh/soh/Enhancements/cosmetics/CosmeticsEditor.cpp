@@ -2104,24 +2104,28 @@ void ApplySideEffects(CosmeticOption& cosmeticOption) {
     }
 }
 
-static uint64_t seeded_cosmetics_state = 0;
-
 void RandomizeColor(CosmeticOption& cosmeticOption, bool manual = true) {
     ImVec4 randomColor;
 
-    if (!manual && CVarGetInteger(CVAR_COSMETIC("RandomizeCosmeticsGenModes"), 0) == RANDOMIZE_ON_FILE_LOAD_SEEDED ||
-        !manual && CVarGetInteger(CVAR_COSMETIC("RandomizeCosmeticsGenModes"), 0) == RANDOMIZE_ON_RANDO_GEN_ONLY) {
+    uint64_t local_seed_state = 0;
+    uint64_t* randomState = nullptr;
 
-        uint32_t finalSeed = cosmeticOption.defaultColor.r + cosmeticOption.defaultColor.g +
-                             cosmeticOption.defaultColor.b + cosmeticOption.defaultColor.a +
-                             (IS_RANDO ? Rando::Context::GetInstance()->GetSeed()
-                                       : static_cast<uint32_t>(gSaveContext.ship.stats.fileCreatedAt));
+    if (!manual) {
+        int randomizeMode = CVarGetInteger(CVAR_COSMETIC("RandomizeCosmeticsGenModes"), 0);
+        if (randomizeMode == RANDOMIZE_ON_FILE_LOAD_SEEDED || randomizeMode == RANDOMIZE_ON_RANDO_GEN_ONLY) {
 
-        randomColor = GetRandomValue(finalSeed, &seeded_cosmetics_state);
-    } else {
-        randomColor = GetRandomValue();
+            uint32_t finalSeed = cosmeticOption.defaultColor.r + cosmeticOption.defaultColor.g +
+                                 cosmeticOption.defaultColor.b + cosmeticOption.defaultColor.a +
+                                 (IS_RANDO ? Rando::Context::GetInstance()->GetSeed()
+                                           : static_cast<uint32_t>(gSaveContext.ship.stats.fileCreatedAt));
+
+            randomState = &local_seed_state;
+            ShipUtils::RandInit(finalSeed, randomState);
+        }
+        // For RANDOMIZE_ON_NEW_SCENE, randomState remains nullptr, which uses the global RNG
     }
 
+    randomColor = GetRandomValue(randomState);
     Color_RGBA8 newColor;
     newColor.r = static_cast<uint8_t>(randomColor.x * 255.0f);
     newColor.g = static_cast<uint8_t>(randomColor.y * 255.0f);
