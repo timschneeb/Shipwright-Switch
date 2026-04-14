@@ -405,7 +405,7 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
     std::vector<std::string> args;
     if (argc > 1) {
         for (int i = 1; i < argc; i++) {
-            args.push_back(argv[argc]);
+            args.push_back(argv[i]);
         }
     }
     Extractor extract;
@@ -464,7 +464,7 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
 #elif (defined(__WIIU__) || defined(__SWITCH__))
                     extractStep = ES_VERIFY;
 #else
-                    extractStep = ES_EXTRACT;
+                    extractStep = args.empty() ? ES_EXTRACT : ES_EXTRACT_ARGS;
 #endif
                 } else {
                     std::string msg;
@@ -549,11 +549,7 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
                                                   "OK", "", [&]() { exit(0); });
                         } else {
                             windowsStep = WS_DONE;
-                            if (args.size() > 0) {
-                                extractStep = ES_EXTRACT_ARGS;
-                            } else {
-                                extractStep = ES_EXTRACT;
-                            }
+                            extractStep = args.empty() ? ES_EXTRACT : ES_EXTRACT_ARGS;
                         }
                         continue;
                     }
@@ -564,7 +560,7 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
             }
             case ES_EXTRACT_ARGS: {
 #if !defined(__SWITCH__) && !defined(__WIIU__)
-                if (args.size() == 0) {
+                if (args.empty()) {
                     SohGui::RegisterPopup(
                         "Run Ship of Harkinian", "All files have been processed. Run SoH?", "Yes", "No",
                         [&]() {
