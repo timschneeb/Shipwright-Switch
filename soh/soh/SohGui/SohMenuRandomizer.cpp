@@ -181,6 +181,11 @@ void DrawLocationsMenu(WidgetInfo& info) {
     ImGui::EndDisabled();
 }
 
+void MarkRandomizerMenusDirty() {
+    locationsDirty = true;
+    tricksDirty = true;
+}
+
 void UpdateMenuLocations() {
     RandomizerCheckObjects::UpdateImGuiVisibility();
     // todo: this efficiently when we build out cvar array support
