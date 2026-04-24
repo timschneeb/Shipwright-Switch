@@ -22,7 +22,7 @@ It is recommended that you install Python and Git standalone, the install proces
 
 _Note: Be sure to either clone with the ``--recursive`` flag or do ``git submodule update --init`` after cloning to pull in the libultraship submodule!_
 
-2. After setup and initial build, use the built-in OTR extraction to make your oot.otr/oot-mq.otr files.
+2. After setup and initial build, use the built-in OTR extraction to make your oot.o2r/oot-mq.o2r files.
 
 _Note: Instructions assume using powershell_
 ```powershell
@@ -34,7 +34,7 @@ cd Shipwright
 # Add `-DSUPPRESS_WARNINGS=0` to prevent suppression of warnings from LUS and decomp (src) files. set to 1 to re-enable suppression
 & 'C:\Program Files\CMake\bin\cmake' -S . -B "build/x64" -G "Visual Studio 17 2022" -T v143 -A x64
 
-# Generate soh.otr
+# Generate soh.o2r
 & 'C:\Program Files\CMake\bin\cmake.exe' --build .\build\x64 --target GenerateSohOtr
 
 # Compile project
@@ -90,34 +90,26 @@ C:\Program Files\CMake\bin\cmake.exe --build build-cmake --target ExtractAssetHe
 #### Debian/Ubuntu
 ```sh
 # using gcc
-apt-get install gcc g++ git cmake ninja-build lsb-release libsdl2-dev libpng-dev libsdl2-net-dev libzip-dev zipcmp zipmerge ziptool nlohmann-json3-dev libtinyxml2-dev libspdlog-dev libopengl-dev
+apt-get install gcc g++ git cmake ninja-build lsb-release libsdl2-dev libpng-dev libsdl2-net-dev libzip-dev zipcmp zipmerge ziptool nlohmann-json3-dev libtinyxml2-dev libspdlog-dev libopengl-dev libopusfile-dev libvorbis-dev
 
 # or using clang
-apt-get install clang git cmake ninja-build lsb-release libsdl2-dev libpng-dev libsdl2-net-dev libzip-dev zipcmp zipmerge ziptool nlohmann-json3-dev libtinyxml2-dev libspdlog-dev libopengl-dev
+apt-get install clang git cmake ninja-build lsb-release libsdl2-dev libpng-dev libsdl2-net-dev libzip-dev zipcmp zipmerge ziptool nlohmann-json3-dev libtinyxml2-dev libspdlog-dev libopengl-dev libopusfile-dev libvorbis-dev
 ```
 #### Arch
 ```sh
 # using gcc
-pacman -S gcc git cmake ninja lsb-release sdl2 libpng libzip nlohmann-json tinyxml2 spdlog sdl2_net
+pacman -S gcc git cmake ninja lsb-release sdl2 libpng libzip nlohmann-json tinyxml2 spdlog sdl2_net opusfile libvorbis
 
 # or using clang
-pacman -S clang git cmake ninja lsb-release sdl2 libpng libzip nlohmann-json tinyxml2 spdlog sdl2_net
+pacman -S clang git cmake ninja lsb-release sdl2 libpng libzip nlohmann-json tinyxml2 spdlog sdl2_net opusfile libvorbis
 ```
 #### Fedora
 ```sh
 # using gcc
-dnf install gcc gcc-c++ git cmake ninja-build lsb_release SDL2-devel libpng-devel libzip-devel libzip-tools nlohmann-json-devel tinyxml2-devel spdlog-devel
+dnf install gcc gcc-c++ git cmake ninja-build lsb_release SDL2-devel libpng-devel libzip-devel libzip-tools nlohmann-json-devel tinyxml2-devel spdlog-devel opusfile-devel libvorbis-devel
 
 # or using clang
-dnf install clang git cmake ninja-build lsb_release SDL2-devel libpng-devel libzip-devel libzip-tools nlohmann-json-devel tinyxml2-devel spdlog-devel
-```
-#### openSUSE
-```sh
-# using gcc
-zypper in gcc gcc-c++ git cmake ninja SDL2-devel libpng16-devel libzip-devel libzip-tools nlohmann_json-devel tinyxml2-devel spdlog-devel
-
-# or using clang
-zypper in clang libstdc++-devel git cmake ninja SDL2-devel libpng16-devel libzip-devel libzip-tools nlohmann_json-devel tinyxml2-devel spdlog-devel
+dnf install clang git cmake ninja-build lsb_release SDL2-devel libpng-devel libzip-devel libzip-tools nlohmann-json-devel tinyxml2-devel spdlog-devel opusfile-devel libvorbis-devel
 ```
 #### Nix
 You can use a `flake.nix` file to instantly setup a development environment using [Nix](https://nixos.org/). Write this `flake.nix` file in the root directory:
@@ -128,19 +120,20 @@ You can use a `flake.nix` file to instantly setup a development environment usin
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    pinned.url = "github:NixOS/nixpkgs/e6f23dc08d3624daab7094b701aa3954923c6bbb";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
+  outputs = { self, nixpkgs, pinned, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+        pinned-pkgs = pinned.legacyPackages.${system};
       in
       {
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
             # Build tools
-            clang
             git
             cmake
             ninja
@@ -151,6 +144,10 @@ You can use a `flake.nix` file to instantly setup a development environment usin
             SDL2
             SDL2.dev
             SDL2_net
+
+            # Assets pipeline
+            python3
+            imagemagick
 
             # Other libraries
             libpng
@@ -163,7 +160,7 @@ You can use a `flake.nix` file to instantly setup a development environment usin
             bzip2
 
             # X11 libraries
-            xorg.libX11
+            libx11
 
             # Audio libraries
             libogg
@@ -174,10 +171,16 @@ You can use a `flake.nix` file to instantly setup a development environment usin
             libopus.dev
             opusfile
             opusfile.dev
+
+            # Runtime dependencies
+            zenity
+          ] ++ [
+            # Version of clang-format used by decomp
+            pinned-pkgs.clang_14
           ];
           shellHook = ''
             echo "Shipwright development environment loaded"
-            echo "Available tools: clang, git, cmake, ninja"
+            echo "Available tools: clang, git, cmake, ninja, python3"
           '';
         };
       });
@@ -204,7 +207,7 @@ git submodule update --init
 # Add `-DPython3_EXECUTABLE=$(which python3)` if you are using non-standard Python installations such as PyEnv
 cmake -H. -Bbuild-cmake -GNinja
 
-# Generate soh.otr
+# Generate soh.o2r
 cmake --build build-cmake --target GenerateSohOtr
 
 # Compile the project
@@ -239,7 +242,7 @@ cmake --build build-cmake --target ExtractAssetHeaders
 ```
 
 ## macOS
-Requires Xcode (or xcode-tools) && `sdl2, libpng, glew, ninja, cmake, tinyxml2, nlohmann-json, libzip` (can be installed via [homebrew](https://brew.sh/), macports, etc)
+Requires Xcode (or xcode-tools) && `sdl2, libpng, glew, ninja, cmake, tinyxml2, nlohmann-json, libzip, opusfile, libvorbis` (can be installed via [homebrew](https://brew.sh/), macports, etc)
 
 **Important: For maximum performance make sure you have ninja build tools installed!**
 
@@ -254,14 +257,14 @@ cd ShipWright
 git submodule update --init
 
 # Install development dependencies (assuming homebrew)
-brew install sdl2 libpng glew ninja cmake tinyxml2 nlohmann-json libzip
+brew install sdl2 libpng glew ninja cmake tinyxml2 nlohmann-json libzip opusfile libvorbis
 
 # Generate Ninja project
 # Add `-DCMAKE_BUILD_TYPE:STRING=Release` if you're packaging
 # Add `-DSUPPRESS_WARNINGS=0` to prevent suppression of warnings from LUS and decomp (src) files. set to 1 to re-enable suppression
 cmake -H. -Bbuild-cmake -GNinja
 
-# Generate soh.otr
+# Generate soh.o2r
 cmake --build build-cmake --target GenerateSohOtr
 
 # Compile the project

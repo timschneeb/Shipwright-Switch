@@ -1,6 +1,7 @@
 #include "item_location.h"
-#include "context.h"
+#include "SeedContext.h"
 #include "logic.h"
+#include "3drando/random.hpp"
 
 namespace Rando {
 ItemLocation::ItemLocation() : rc(RC_UNKNOWN_CHECK) {
@@ -151,7 +152,7 @@ bool ItemLocation::GetIsSkipped() {
 }
 
 bool ItemLocation::IsHintable() const {
-    return isHintable;
+    return isHintable && !hidden;
 }
 
 void ItemLocation::SetAsHintable() {

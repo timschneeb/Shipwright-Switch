@@ -1,6 +1,5 @@
 #include "Anchor.h"
 #include "soh/Enhancements/nametag.h"
-#include "soh/frame_interpolation.h"
 
 extern "C" {
 #include "macros.h"
@@ -158,13 +157,13 @@ void DummyPlayer_Update(Actor* actor, PlayState* play) {
         player->actor.world.pos.y += diff.y * player->actor.scale.y;
     }
 
-    if (player->modelGroup != Player_ActionToModelGroup(player, player->itemAction)) {
+    if (player->modelGroup != client.modelGroup) {
         // Hack to account for usage of gSaveContext
         s32 originalAge = gSaveContext.linkAge;
         gSaveContext.linkAge = client.linkAge;
         u8 originalButtonItem0 = gSaveContext.equips.buttonItems[0];
         gSaveContext.equips.buttonItems[0] = client.buttonItem0;
-        Player_SetModelGroup(player, Player_ActionToModelGroup(player, player->itemAction));
+        Player_SetModelGroup(player, client.modelGroup);
         gSaveContext.linkAge = originalAge;
         gSaveContext.equips.buttonItems[0] = originalButtonItem0;
     }
@@ -243,4 +242,10 @@ void DummyPlayer_Draw(Actor* actor, PlayState* play) {
 }
 
 void DummyPlayer_Destroy(Actor* actor, PlayState* play) {
+    // DummyPlayer Actors are initially spawned as ACTOR_PLAYER, but change their
+    // ID shortly afterwards to ACTOR_EN_OE2. This would cause ACTOR_PLAYER's
+    // ActorDB Entry's `numLoaded` to leak, which is mostly harmless but hits debug
+    // asserts. Set the id back to ACTOR_PLAYER so that `numLoaded` will be decremented
+    // correctly.
+    actor->id = ACTOR_PLAYER;
 }

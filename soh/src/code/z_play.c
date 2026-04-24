@@ -5,8 +5,6 @@
 
 #include "soh/Enhancements/gameconsole.h"
 #include "soh/frame_interpolation.h"
-#include "soh/Enhancements/debugconsole.h"
-#include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include <overlays/actors/ovl_En_Niw/z_en_niw.h>
 #include <overlays/misc/ovl_kaleido_scope/z_kaleido_scope.h>
 #include "soh/Enhancements/enhancementTypes.h"
@@ -594,6 +592,10 @@ void Play_Init(GameState* thisx) {
         gSlotAgeReqs[SLOT_TRADE_CHILD] = AGE_REQ_CHILD;
     }
 
+    // Handle Rocs Feather requirement
+    gItemAgeReqs[ITEM_ROCS_FEATHER] = AGE_REQ_NONE;
+    gSlotAgeReqs[SLOT_NAYRUS_LOVE] = AGE_REQ_NONE;
+
     func_800304DC(play, &play->actorCtx, play->linkActorEntry);
 
     while (!func_800973FC(play, &play->roomCtx)) {
@@ -631,7 +633,6 @@ void Play_Init(GameState* thisx) {
     } else {
         play->unk_1242B = 0;
     }
-
     Interface_SetSceneRestrictions(play);
     Environment_PlaySceneSequence(play);
     gSaveContext.seqId = play->sequenceCtx.seqId;
@@ -685,8 +686,11 @@ void Play_Init(GameState* thisx) {
     if (CVarGetInteger(CVAR_ENHANCEMENT("IvanCoopModeEnabled"), 0)) {
         Actor_Spawn(&play->actorCtx, play, gEnPartnerId, GET_PLAYER(play)->actor.world.pos.x,
                     GET_PLAYER(play)->actor.world.pos.y + Player_GetHeight(GET_PLAYER(play)) + 5.0f,
-                    GET_PLAYER(play)->actor.world.pos.z, 0, 0, 0, 1, true);
+                    GET_PLAYER(play)->actor.world.pos.z, 0, 0, 0, 1);
     }
+
+    // nextEntranceIndex was not initialized, so the previous value was carried over during soft resets.
+    gPlayState->nextEntranceIndex = gSaveContext.entranceIndex;
 }
 
 void Play_Update(PlayState* play) {
@@ -781,10 +785,10 @@ void Play_Update(PlayState* play) {
             }
 
             // Start RTA timing on first non-c-up input after intro cutscene
-            if (!gSaveContext.ship.stats.fileCreatedAt && !Player_InCsMode(play) &&
+            if (!gSaveContext.ship.stats.firstInput && !Player_InCsMode(play) &&
                 ((input[0].press.button && input[0].press.button != 0x8) || input[0].rel.stick_x != 0 ||
                  input[0].rel.stick_y != 0)) {
-                gSaveContext.ship.stats.fileCreatedAt = GetUnixTimestamp();
+                gSaveContext.ship.stats.firstInput = GetUnixTimestamp();
             }
         }
         // #endregion
@@ -1303,6 +1307,8 @@ void Play_Update(PlayState* play) {
 skip:
     PLAY_LOG(3801);
 
+    GameInteractor_ExecuteOnCameraState(play);
+
     if (!isPaused || gDbgCamEnabled) {
         s32 i;
 
@@ -1694,7 +1700,7 @@ void Play_Main(GameState* thisx) {
 
     if (play->envCtx.unk_EE[2] == 0 && CVarGetInteger(CVAR_GENERAL("LetItSnow"), 0)) {
         play->envCtx.unk_EE[3] = 64;
-        Actor_Spawn(&gPlayState->actorCtx, gPlayState, ACTOR_OBJECT_KANKYO, 0, 0, 0, 0, 0, 0, 3, 0);
+        Actor_Spawn(&gPlayState->actorCtx, gPlayState, ACTOR_OBJECT_KANKYO, 0, 0, 0, 0, 0, 0, 3);
     }
 
     D_8012D1F8 = &play->state.input[0];

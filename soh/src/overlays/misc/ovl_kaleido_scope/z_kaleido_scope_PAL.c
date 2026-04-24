@@ -15,13 +15,13 @@
 #include "vt.h"
 
 #include "soh/frame_interpolation.h"
-#include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include "soh/Enhancements/cosmetics/cosmeticsTypes.h"
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include "soh/OTRGlobals.h"
 #include "soh/ResourceManagerHelpers.h"
 #include "soh/SaveManager.h"
 #include "soh/Enhancements/kaleido.h"
+#include <soh_assets.h>
 
 static void* sEquipmentFRATexs[] = {
     gPauseEquipment00FRATex, gPauseEquipment01Tex, gPauseEquipment02Tex, gPauseEquipment03Tex, gPauseEquipment04Tex,
@@ -995,7 +995,7 @@ u8 gEquipAgeReqs[][4] = {
 
 };
 
-u8 gItemAgeReqs[] = {
+u8 gItemAgeReqs[ITEM_NONE] = {
     AGE_REQ_CHILD, // ITEM_DEKU_STICK
     AGE_REQ_NONE,  // ITEM_DEKU_NUT
     AGE_REQ_NONE,  // ITEM_BOMB
@@ -2493,7 +2493,10 @@ void KaleidoScope_UpdateNamePanel(PlayState* play) {
                 osSyncPrintf("J_N=%d  point=%d\n", gSaveContext.language, sp2A);
 
                 const char* textureName = iconNameTextures[sp2A];
-                memcpy(pauseCtx->nameSegment, textureName, strlen(textureName) + 1);
+
+                if (!GameInteractor_Should(VB_DRAW_CUSTOM_ITEM_NAME, false, pauseCtx->namedItem)) {
+                    memcpy(pauseCtx->nameSegment, textureName, strlen(textureName) + 1);
+                }
             }
 
             pauseCtx->nameDisplayTimer = 0;
@@ -4274,7 +4277,8 @@ void KaleidoScope_Update(PlayState* play) {
                         Interface_ChangeAlpha(50);
                         pauseCtx->unk_1EC = 0;
                         pauseCtx->state = 7;
-                    } else if (CHECK_BTN_ALL(input->press.button, BTN_CUP) && pauseCtx->pageIndex == PAUSE_QUEST) {
+                    } else if (IS_RANDO && CHECK_BTN_ALL(input->press.button, BTN_CUP) &&
+                               pauseCtx->pageIndex == PAUSE_QUEST) {
                         Audio_PlaySoundGeneral(NA_SE_SY_DECIDE, &gSfxDefaultPos, 4, &gSfxDefaultFreqAndVolScale,
                                                &gSfxDefaultFreqAndVolScale, &gSfxDefaultReverb);
                         pauseCtx->randoQuestMode ^= 1;

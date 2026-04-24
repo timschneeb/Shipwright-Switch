@@ -3,6 +3,7 @@
 #include "textures/icon_item_static/icon_item_static.h"
 #include "textures/icon_item_24_static/icon_item_24_static.h"
 #include "textures/parameter_static/parameter_static.h"
+#include <soh_assets.h>
 
 // Bit Flag array in which gBitFlags[n] is literally (1 << n)
 u32 gBitFlags[] = {
@@ -168,6 +169,36 @@ void* gItemIcons[] = {
     gOcarinaBtnIconCLeftTex,
     gOcarinaBtnIconCRightTex,
     gOcarinaBtnIconATex,
+    // Push down array to reach newly added item IDs
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "", // ITEM_CUSTOM
+    // Start custom items
+    gRocsFeatherTex,
 };
 
 // Used to map item IDs to inventory slots
@@ -187,6 +218,8 @@ u8 gItemSlots[] = {
 void Inventory_ChangeEquipment(s16 equipment, u16 value) {
     gSaveContext.equips.equipment &= gEquipNegMasks[equipment];
     gSaveContext.equips.equipment |= value << gEquipShifts[equipment];
+
+    GameInteractor_ExecuteOnLinkEquipmentChange();
 }
 
 u8 Inventory_DeleteEquipment(PlayState* play, s16 equipment) {

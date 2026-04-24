@@ -45,7 +45,7 @@ extern "C" void gSPSegment(void* value, int segNum, uintptr_t target) {
     if (res) {
         uintptr_t desiredTarget = (uintptr_t)ResourceMgr_LoadIfDListByName(imgData);
 
-        if (desiredTarget != NULL)
+        if (desiredTarget)
             target = desiredTarget;
     }
 
@@ -75,6 +75,20 @@ extern "C" void gSPDisplayList(Gfx* pkt, Gfx* dl) {
     }
 
     __gSPDisplayList(pkt, dl);
+}
+
+extern "C" void gDPSetTileSizeInterp(Gfx* pkt, int t, float uls, float ult, float lrs, float lrt) {
+    __gDPSetTileSizeInterp(pkt, t, 0, 0, 0, 0);
+    pkt->words.w0 = _SHIFTL(G_SETTILESIZE_INTERP, 24, 8);
+    pkt++;
+
+    pkt->words.w0 = *(u32*)&uls;
+    pkt->words.w1 = *(u32*)&ult;
+    pkt++;
+
+    pkt->words.w0 = *(u32*)&lrs;
+    pkt->words.w1 = *(u32*)&lrt;
+    pkt++;
 }
 
 extern "C" void gSPDisplayListOffset(Gfx* pkt, Gfx* dl, int offset) {
