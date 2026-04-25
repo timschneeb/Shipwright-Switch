@@ -29,6 +29,32 @@
 extern "C" SaveContext gSaveContext;
 using namespace std::string_literals;
 
+#if defined(__WIIU__) || defined(__SWITCH__)
+// std::filesystem::copy_file doesn't work properly with the Wii U's toolchain atm
+int copy_file(const char* src, const char* dst) {
+    alignas(0x40) uint8_t buf[4096];
+    FILE* r = fopen(src, "r");
+    if (!r) {
+        return -1;
+    }
+    FILE* w = fopen(dst, "w");
+    if (!w) {
+        return -2;
+    }
+
+    size_t res;
+    while ((res = fread(buf, 1, sizeof(buf), r)) > 0) {
+        if (fwrite(buf, 1, res, w) != res) {
+            break;
+        }
+    }
+
+    fclose(r);
+    fclose(w);
+    return res >= 0 ? 0 : res;
+}
+#endif
+
 void SaveManager::WriteSaveFile(const std::filesystem::path& savePath, const uintptr_t addr, void* dramAddr,
                                 const size_t size) {
     std::ofstream saveFile = std::ofstream(savePath, std::fstream::in | std::fstream::out | std::fstream::binary);
@@ -1098,32 +1124,6 @@ void SaveManager::InitFileMaxed() {
     Flags_SetRandomizerInf(RAND_INF_OBTAINED_NAYRUS_LOVE);
     Flags_SetRandomizerInf(RAND_INF_OBTAINED_ROCS_FEATHER);
 }
-
-#if defined(__WIIU__) || defined(__SWITCH__)
-// std::filesystem::copy_file doesn't work properly with the Wii U's toolchain atm
-int copy_file(const char* src, const char* dst) {
-    alignas(0x40) uint8_t buf[4096];
-    FILE* r = fopen(src, "r");
-    if (!r) {
-        return -1;
-    }
-    FILE* w = fopen(dst, "w");
-    if (!w) {
-        return -2;
-    }
-
-    size_t res;
-    while ((res = fread(buf, 1, sizeof(buf), r)) > 0) {
-        if (fwrite(buf, 1, res, w) != res) {
-            break;
-        }
-    }
-
-    fclose(r);
-    fclose(w);
-    return res >= 0 ? 0 : res;
-}
-#endif
 
 // Threaded SaveFile takes copy of gSaveContext for local unmodified storage
 
