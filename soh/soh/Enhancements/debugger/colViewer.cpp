@@ -644,7 +644,15 @@ void DrawColCheckList(std::vector<Gfx>& dl, Collider** objects, int32_t count) {
             } break;
             case COLSHAPE_QUAD: {
                 ColliderQuad* quad = (ColliderQuad*)col;
+#ifdef __SWITCH__
+                /*
+                 * Really weird compiler behavior. The actual member in the c struct is called quad, but the C++ compiler insists that it's quad_t!?
+                 * The C code that accesses this member can use 'quad' just fine
+                 */
+                DrawQuad(dl, quad->dim.quad_t[0], quad->dim.quad_t[2], quad->dim.quad_t[3], quad->dim.quad_t[1]);
+#else
                 DrawQuad(dl, quad->dim.quad[0], quad->dim.quad[2], quad->dim.quad[3], quad->dim.quad[1]);
+#endif
             } break;
             default:
                 break;
