@@ -154,6 +154,7 @@ jobs:
   build-linux:
     needs: generate-soh-otr
     runs-on: ubuntu-22.04
+    if: 0 # Disable Linux build on fork
     steps:
     - name: Git Checkout
       uses: actions/checkout@v6
@@ -299,7 +300,7 @@ jobs:
       run: |
         export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
         cmake -H. -Bbuild-switch -GNinja -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake -DCMAKE_BUILD_TYPE:STRING=Release -DBUILD_REMOTE_CONTROL=1 -DDISABLE_SCRIPTING=1
-        cmake --build build-switch --target soh_nro --config Release -j6
+        cmake --build build-switch --target soh_nro --config Release -j3
 
         mv build-switch/soh/*.nro soh.nro
         mv README.md readme.txt
