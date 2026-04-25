@@ -408,7 +408,7 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
             args.push_back(argv[i]);
         }
     }
-    Extractor extract;
+    // TODO Extractor extract;
     PromptSteps promptStep = PS_FILE_CHECK;
     bool generatedIsMQ = false;
     std::atomic<size_t> extractCount = 0, totalExtract = 0;
@@ -610,6 +610,7 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
                 break;
             }
             case ES_EXTRACT: {
+#if not defined(__SWITCH__) && not defined(__WIIU__)
                 switch (promptStep) {
                     case PS_FILE_CHECK: {
                         const bool ootO2RExists =
@@ -681,6 +682,7 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
                     default:
                         break;
                 }
+#endif
                 break;
             }
             case ES_VERIFY: {
