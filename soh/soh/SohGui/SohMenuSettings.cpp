@@ -64,7 +64,7 @@ static const std::map<int32_t, const char*> bootSequenceLabels = {
 };
 
 #ifdef __SWITCH__
-    static const std::unordered_map<int32_t, const char*> switchPerformanceProfiles = {
+    static const std::map<int32_t, const char*> switchPerformanceProfiles = {
         { Ship::MAXIMUM, SWITCH_CPU_PROFILES[Ship::MAXIMUM] },
         { Ship::HIGH, SWITCH_CPU_PROFILES[Ship::HIGH] },
         { Ship::BOOST, SWITCH_CPU_PROFILES[Ship::BOOST] },

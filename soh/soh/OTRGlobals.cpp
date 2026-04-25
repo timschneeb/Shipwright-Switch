@@ -408,7 +408,10 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
             args.push_back(argv[i]);
         }
     }
-    // TODO Extractor extract;
+
+#if not defined(__SWITCH__) && not defined(__WIIU__)
+    Extractor extract;
+#endif
     PromptSteps promptStep = PS_FILE_CHECK;
     bool generatedIsMQ = false;
     std::atomic<size_t> extractCount = 0, totalExtract = 0;
@@ -1466,7 +1469,6 @@ extern "C" void Messagebox_ShowErrorBox(char* title, char* body) {
 #endif
 }
 
-
 bool VerifyArchiveVersion(OTRVersion version) {
     return version.major != INT16_MAX && version.major != gBuildVersionMajor;
 }
@@ -1478,6 +1480,7 @@ extern "C" void InitOTR(int argc, char* argv[]) {
 #elif defined(__WIIU__)
     Ship::WiiU::Init(appShortName);
 #endif
+    OTRGlobals::Instance->RunExtract(argc, argv);
 
     OTRGlobals::Instance->Initialize();
     CustomMessageManager::Instance = new CustomMessageManager();
