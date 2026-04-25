@@ -420,21 +420,24 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
     std::string dataPath = Ship::Context::GetAppDirectoryPath(appShortName);
     std::string file;
 
+#if defined(__SWITCH__) || defined(__WIIU__)
+    if (shouldRegen) {
 #if defined(__SWITCH__)
-    SohGui::RegisterPopup("Outdated ROM Archives",
-                          "You've launched the Ship with an old ROM O2R file.\n\n"
-                          "Please regenerate a new ROM O2R and relaunch.\n\n"
-                          "Press the Home button to exit...",
-                          "OK", "", [&]() { exit(1); });
+        SohGui::RegisterPopup("Outdated ROM Archives",
+                              "You've launched the Ship with an old ROM O2R file.\n\n"
+                              "Please regenerate a new ROM O2R and relaunch.\n\n"
+                              "Press the Home button to exit...",
+                              "OK", "", [&]() { exit(1); });
 #elif defined(__WIIU__)
-    SohGui::RegisterPopup("Outdated ROM Archives",
-                          "You've launched the Ship with an old a ROM O2R file.\n\n"
-                          "Please generate a ROM O2R and relaunch.\n\n"
-                          "Press and hold the Power button to shutdown...",
-                          "OK", "", [&]() { exit(1); });
-    OSFatal();
+        SohGui::RegisterPopup("Outdated ROM Archives",
+                              "You've launched the Ship with an old a ROM O2R file.\n\n"
+                              "Please generate a ROM O2R and relaunch.\n\n"
+                              "Press and hold the Power button to shutdown...",
+                              "OK", "", [&]() { exit(1); });
+        OSFatal();
 #endif
-
+    }
+#else
     if (!std::filesystem::exists(installPath + "/assets")) {
         SohGui::RegisterPopup("Extractor assets not found",
                               "No O2R files found. Missing 'assets/' folder needed to generate OTR file.\nPlease "
@@ -447,6 +450,7 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
         std::filesystem::remove("oot.o2r");
         std::filesystem::remove("oot-mq.o2r");
     }
+#endif
 
     std::shared_ptr<BS::thread_pool> threadPool = std::make_shared<BS::thread_pool>(1);
     std::optional<std::future<void>> extractionTask;
