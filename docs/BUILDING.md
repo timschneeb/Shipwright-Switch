@@ -299,7 +299,7 @@ cmake --build build-cmake --target ExtractAssetHeaders
 ```
 
 ## Switch
-1. Requires that your build machine is setup with the tools necessary for your platform above
+1. Requires that your build machine is setup with the tools necessary for your platform above (devkitPro-A64 and required libraries)
 2. Requires that you have the switch build tools installed
 3. Clone the Ship of Harkinian repository
 4. Place one or more [compatible](#compatible-roms) roms in the `OTRExporter` directory with namings of your choice
@@ -311,7 +311,7 @@ cmake -H. -Bbuild-cmake -GNinja
 # Extract assets & generate OTR (run this anytime you need to regenerate OTR)
 cmake --build build-cmake --target ExtractAssets
 # Setup cmake project for building for Switch
-cmake -H. -Bbuild-switch -GNinja -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake -DBUILD_REMOTE_CONTROL=1
+cmake -H. -Bbuild-switch -GNinja -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake -DCMAKE_BUILD_TYPE:STRING=Release -DBUILD_REMOTE_CONTROL=1 -DDISABLE_SCRIPTING=1
 # Build project and generate nro
 cmake --build build-switch --target soh_nro
 
