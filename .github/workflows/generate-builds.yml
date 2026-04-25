@@ -316,6 +316,12 @@ jobs:
           soh.nro
           soh.o2r
           readme.txt
+    - name: Upload ELF
+      uses: actions/upload-artifact@v4
+      with:
+        name: soh-elf-debug-symbols
+        path: |
+          build-switch/soh/*.elf
   build-windows:
     if: 0 # Disable Windows build on fork
     needs: generate-soh-otr
