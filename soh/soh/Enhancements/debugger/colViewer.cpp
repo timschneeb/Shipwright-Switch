@@ -647,7 +647,7 @@ void DrawColCheckList(std::vector<Gfx>& dl, Collider** objects, int32_t count) {
 #ifdef __SWITCH__
                 /*
                  * Really weird compiler behavior. The actual member in the c struct is called quad, but the C++ compiler insists that it's quad_t!?
-                 * The C code that accesses this member can use 'quad' just fine
+                 * The C code that accesses this member can use 'quad' just fine. This wasn't an issue 4 months ago with 9.1.2 (as of writing: 9.2.3).
                  */
                 DrawQuad(dl, quad->dim.quad_t[0], quad->dim.quad_t[2], quad->dim.quad_t[3], quad->dim.quad_t[1]);
 #else
