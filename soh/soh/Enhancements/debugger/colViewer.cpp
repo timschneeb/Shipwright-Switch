@@ -644,7 +644,7 @@ void DrawColCheckList(std::vector<Gfx>& dl, Collider** objects, int32_t count) {
             } break;
             case COLSHAPE_QUAD: {
                 ColliderQuad* quad = (ColliderQuad*)col;
-                DrawQuad(dl, quad->dim.quad[0], quad->dim.quad[2], quad->dim.quad[3], quad->dim.quad[1]);
+                DrawQuad(dl, quad->dim.quad_t[0], quad->dim.quad_t[2], quad->dim.quad_t[3], quad->dim.quad_t[1]);
             } break;
             default:
                 break;
