@@ -77,7 +77,7 @@ ResourceFactoryXMLSkeletonV0::ReadResource(std::shared_ptr<Ship::File> file,
     auto child = reader->FirstChildElement();
 
     skel->type = SkeletonType::Flex; // Default to Flex for legacy reasons
-    if (reader->Attribute("Type")) {
+    if (reader->FindAttribute("Type")) {
         std::string skeletonType = reader->Attribute("Type");
 
         if (skeletonType == "Flex") {
@@ -90,7 +90,7 @@ ResourceFactoryXMLSkeletonV0::ReadResource(std::shared_ptr<Ship::File> file,
     }
 
     skel->limbType = LimbType::LOD; // Default to LOD for legacy reasons
-    if (reader->Attribute("LimbType")) {
+    if (reader->FindAttribute("LimbType")) {
         std::string skeletonLimbType = reader->Attribute("LimbType");
 
         if (skeletonLimbType == "Standard") {
