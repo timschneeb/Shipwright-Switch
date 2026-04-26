@@ -23,7 +23,7 @@ You can verify you have dumped a supported copy of the game by using the compati
 ### 3. Launch the Game!
 
 #### Nintendo Switch
-* Run one of the [PC releases](https://github.com/HarbourMasters/Shipwright/releases/tag/9.1.1) to generate an `oot.o2r` and/or `oot-mq.o2r` file. After launching the game on PC, you will be able to find these files in the same directory as `soh.exe` or `soh.appimage`. On macOS, these files can be found in `/Users/<username>/Library/Application Support/com.shipofharkinian.soh/`
+* Run one of the [PC releases](https://github.com/HarbourMasters/Shipwright/releases/tag/9.2.3) to generate an `oot.o2r` and/or `oot-mq.o2r` file. After launching the game on PC, you will be able to find these files in the same directory as `soh.exe` or `soh.appimage`. On macOS, these files can be found in `/Users/<username>/Library/Application Support/com.shipofharkinian.soh/`
 * Download and extract the latest Switch release from releases (ZIP file with `soh.nro` and `soh.o2r`)
 * Copy the files to your sd card
 ```
