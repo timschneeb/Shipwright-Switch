@@ -1,5 +1,6 @@
 #include "global.h"
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
+#include "libultraship/bridge/controllerbridge.h"
 
 typedef struct {
     u8 x;
@@ -56,6 +57,23 @@ InputCombo inputCombos[REG_GROUPS] = {
 };
 
 char regChar[] = " SOPQMYDUIZCNKXcsiWAVHGmnBdkb";
+
+static const char* GetSwitchStyleDebugName(s32 styleCode) {
+    switch (styleCode) {
+        case 1:
+            return "Handheld";
+        case 2:
+            return "FullKey";
+        case 3:
+            return "JoyDual";
+        case 4:
+            return "JoyLeft";
+        case 5:
+            return "JoyRight";
+        default:
+            return "None";
+    }
+}
 
 // initialize GameInfo
 void func_800636C0(void) {
@@ -262,6 +280,26 @@ void func_80063D7C(GraphicsContext* gfxCtx) {
     if (gGameInfo->regPage != 0) {
         func_80063C04(&printer);
     }
+
+#ifdef __SWITCH__
+    if (CVarGetInteger(CVAR_DEVELOPER_TOOLS("SwitchGyroOverlay"), 0)) {
+        float pitch = 0.0f;
+        float yaw = 0.0f;
+        float roll = 0.0f;
+        const s32 hasGyro = ControllerReadSwitchGyroDebug(0, &pitch, &yaw, &roll);
+        const u64 styleSet = ControllerGetSwitchStyleSetDebug(0);
+        const s32 activeStyle = ControllerGetSwitchStyleDebug(0);
+
+        GfxPrint_SetColor(&printer, 100, 255, 120, 255);
+        GfxPrint_SetPos(&printer, 3, 2);
+        GfxPrint_Printf(&printer, "SW Gyro P1: %s", hasGyro ? "OK" : "NO DATA");
+        GfxPrint_SetPos(&printer, 3, 3);
+        GfxPrint_Printf(&printer, "P:% .3f Y:% .3f R:% .3f", pitch, yaw, roll);
+        GfxPrint_SetPos(&printer, 3, 4);
+        GfxPrint_Printf(&printer, "Style: %s (0x%llX)", GetSwitchStyleDebugName(activeStyle),
+                        (unsigned long long)styleSet);
+    }
+#endif
 
     D_8011E0B0 = 0;
     sp7C = GfxPrint_Close(&printer);

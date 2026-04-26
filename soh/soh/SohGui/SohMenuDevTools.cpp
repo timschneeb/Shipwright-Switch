@@ -79,6 +79,14 @@ void SohMenu::AddMenuDevTools() {
         .CVar(CVAR_DEVELOPER_TOOLS("ResourceLogging"))
         .Options(CheckboxOptions().Tooltip("Logs some resources as XML when they're loaded in binary format."));
 
+#ifdef __SWITCH__
+    AddWidget(path, "Switch Gyro Overlay", WIDGET_CVAR_CHECKBOX)
+        .CVar(CVAR_DEVELOPER_TOOLS("SwitchGyroOverlay"))
+        .PreFunc([](WidgetInfo& info) { info.isHidden = !CVarGetInteger(CVAR_DEVELOPER_TOOLS("DebugEnabled"), 0); })
+        .Options(CheckboxOptions().Tooltip(
+            "Debug overlay that prints live Switch gyro values and active controller style tag."));
+#endif
+
     AddWidget(path, "Frame Advance", WIDGET_CHECKBOX)
         .Options(CheckboxOptions().Tooltip(
             "This allows you to advance through the game one frame at a time on command. "
