@@ -15,6 +15,8 @@ void SohStatsWindow::DrawElement() {
     ImGui::Text("Platform: macOS");
 #elif defined(__linux__)
     ImGui::Text("Platform: Linux");
+#elif defined(__SWITCH__)
+    ImGui::Text("Platform: Nintendo Switch");
 #else
     ImGui::Text("Platform: Unknown");
 #endif
