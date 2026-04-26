@@ -299,10 +299,12 @@ cmake --build build-cmake --target ExtractAssetHeaders
 ```
 
 ## Switch
-1. Requires that your build machine is setup with the tools necessary for your platform above (devkitPro-A64 and required libraries)
-2. Requires that you have the switch build tools installed
+1. Requires that your build machine is setup with the tools necessary for your platform above
+2. Requires that you have the switch build tools installed (devkitPro-A64 and required libraries)
 3. Clone the Ship of Harkinian repository
 4. Place one or more [compatible](#compatible-roms) roms in the `OTRExporter` directory with namings of your choice
+
+You can also look [at the `build-switch` job in the GitHub actions workflow](.github/workflows/generate-builds.yml) for guidance on how to setup the build environment.
 
 ```bash
 cd Shipwright

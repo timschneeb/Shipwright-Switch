@@ -18,14 +18,13 @@ The Ship does not include any copyrighted assets.  You are required to provide a
 ### 1. Verify your ROM dump
 You can verify you have dumped a supported copy of the game by using the compatibility checker at https://ship.equipment/. If you'd prefer to manually validate your ROM dump, you can cross-reference its `sha1` hash with the hashes [here](docs/supportedHashes.json).
 
-### 2. Download The Ship of Harkinian from [Releases](https://github.com/HarbourMasters/Shipwright/releases)
-
-### 3. Launch the Game!
-
-#### Nintendo Switch
+### 2. Prepare the asset files on your PC
 * Run one of the [PC releases](https://github.com/HarbourMasters/Shipwright/releases/tag/9.2.3) to generate an `oot.o2r` and/or `oot-mq.o2r` file. After launching the game on PC, you will be able to find these files in the same directory as `soh.exe` or `soh.appimage`. On macOS, these files can be found in `/Users/<username>/Library/Application Support/com.shipofharkinian.soh/`
-* Download and extract the latest Switch release from releases (ZIP file with `soh.nro` and `soh.o2r`)
+
+### 3. Installation on the Switch
+* Download and extract [the latest Switch release](https://github.com/timschneeb/Shipwright-Switch/releases) from releases (ZIP file with `soh.nro` and `soh.o2r`)
 * Copy the files to your sd card
+
 ```
 sdcard
 └── switch
@@ -36,18 +35,6 @@ sdcard
         └── soh.o2r
 ```
 * Launch via Atmosphere's `Game+R` launcher method.
-
-#### Windows
-* Extract the zip
-* Launch `soh.exe`
-
-#### Linux
-* Place your supported copy of the game in the same folder as the appimage.
-* Execute `soh.appimage`.  You may have to `chmod +x` the appimage via terminal.
-
-#### macOS
-* Run `soh.app`. When prompted, select your supported copy of the game.
-* You should see a notification saying `Processing OTR`, then, once the process is complete, you should get a notification saying `OTR Successfully Generated`, then the game should start.
 
 ### 4. Play!
 
@@ -61,17 +48,17 @@ Congratulations, you are now sailing with the Ship of Harkinian! Have fun!
 | Keyboard | X | C | Z | Space | WASD | Arrow keys | TFGH |
 
 ### Other shortcuts
-| Keys | Action |
-| - | - |
-| ESC | Toggle menu |
-| F2 | Toggle capture mouse input |
-| F5 | Save state |
-| F6 | Change state |
-| F7 | Load state |
-| F9 | Toggle Text-to-Speech (Windows and Mac only) |
-| F11 | Fullscreen |
-| Tab | Toggle Alternate assets |
-| Ctrl+R | Reset |
+| Keys                | Action |
+|---------------------| - |
+| ESC or Minus Button | Toggle menu |
+| F2                  | Toggle capture mouse input |
+| F5                  | Save state |
+| F6                  | Change state |
+| F7                  | Load state |
+| F9                  | Toggle Text-to-Speech (Windows and Mac only) |
+| F11                 | Fullscreen |
+| Tab                 | Toggle Alternate assets |
+| Ctrl+R              | Reset |
 
 # Project Overview
 Ship of Harkinian (SOH) is built atop a custom library dubbed libultraship (LUS). Back in the N64 days, there was an SDK distributed to developers named libultra; LUS is designed to mimic the functionality of libultra on modern hardware. In addition, we are dependant on the source code provided by the OOT decompilation project.
@@ -97,9 +84,7 @@ If you want to manually compile SoH, please consult the [building instructions](
 ### Playtesting
 If you want to playtest a continuous integration build, you can find them at the links below. Keep in mind that these are for playtesting only, and you will likely encounter bugs and possibly crashes. 
 
-* [Windows](https://nightly.link/HarbourMasters/Shipwright/workflows/generate-builds/develop/soh-windows.zip)
-* [macOS](https://nightly.link/HarbourMasters/Shipwright/workflows/generate-builds/develop/soh-mac.zip)
-* [Linux](https://nightly.link/HarbourMasters/Shipwright/workflows/generate-builds/develop/soh-linux.zip)
+* [Nintendo Switch](https://nightly.link/timschneeb/Shipwright/workflows/generate-builds/develop/soh-nx.zip)
 
 ### Further Reading
 More detailed documentation can be found in the 'docs' directory, including the aforementioned [building instructions](docs/BUILDING.md).
