@@ -353,16 +353,6 @@ typedef enum WindowsSteps {
     WS_DONE,
 } WindowsSteps;
 
-extern "C" void Messagebox_ShowErrorBox(char* title, char* body) {
-#if not defined(__SWITCH__) && not defined(__WIIU__)
-    Extractor::ShowErrorBox(title, body);
-#elif defined(__SWITCH__)
-    Ship::Switch::ShowErrorApplet((std::string(title) + "\n\n" + std::string(body)).c_str());
-#elif defined(__WIIU__)
-    OSFatal((std::string(title) + "\n\n" + std::string(body)).c_str());
-#endif
-}
-
 bool IsSubpath(const std::filesystem::path& path, const std::filesystem::path& base) {
     auto rel = std::filesystem::relative(path, base);
     return !rel.empty() && rel.native()[0] != '.';
@@ -432,14 +422,14 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
     std::string dataPath = Ship::Context::GetAppDirectoryPath(appShortName);
     std::string file;
 
-#if defined(__SWITCH__) || defined(__WIIU__)
+#if defined(__SWITCH__)
     if (!foundVanilla && !foundMq) {
-        Messagebox_ShowErrorBox("Missing O2R ROM Archives",
+        Ship::Switch::ShowErrorApplet("Missing O2R ROM Archives\n\n",
                   "The oot.o2r or oot-mq.o2r file is missing.\n"
                   "Please generate a ROM O2R using the PC version, place it on the SD card and relaunch.");
     }
     else if (shouldRegen) {
-        Messagebox_ShowErrorBox("Outdated ROM Archives",
+        Ship::Switch::ShowErrorApplet("Outdated ROM Archives\n\n"
                               "Your oot.o2r or oot-mq.o2r were created with incompatible versions of SoH.\n"
                               "Please regenerate a new ROM O2R using the PC version, place it on the SD card and relaunch.");
     }
@@ -1461,6 +1451,16 @@ OTRVersion DetectOTRVersion(std::string fileName, bool isMQ) {
     }
 
     return ReadPortVersionFromOTR(otrPath);
+}
+
+extern "C" void Messagebox_ShowErrorBox(char* title, char* body) {
+#if not defined(__SWITCH__) && not defined(__WIIU__)
+    Extractor::ShowErrorBox(title, body);
+#elif defined(__SWITCH__)
+    Ship::Switch::ShowErrorApplet((std::string(title) + "\n\n" + std::string(body)).c_str());
+#elif defined(__WIIU__)
+    OSFatal((std::string(title) + "\n\n" + std::string(body)).c_str());
+#endif
 }
 
 bool VerifyArchiveVersion(OTRVersion version) {
