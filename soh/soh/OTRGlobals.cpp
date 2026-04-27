@@ -424,7 +424,7 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
 
 #if defined(__SWITCH__)
     if (!foundVanilla && !foundMq) {
-        Ship::Switch::ShowErrorApplet("Missing O2R ROM Archives\n\n",
+        Ship::Switch::ShowErrorApplet("Missing O2R ROM Archives\n\n"
                   "The oot.o2r or oot-mq.o2r file is missing.\n"
                   "Please generate a ROM O2R using the PC version, place it on the SD card and relaunch.");
     }
