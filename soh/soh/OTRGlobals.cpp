@@ -264,6 +264,7 @@ typedef struct {
 } OTRVersion;
 
 std::shared_ptr<Fast::Fast3dWindow> sohFast3dWindow;
+extern "C" void Messagebox_ShowErrorBox(char* title, char* body);
 static OTRVersion DetectOTRVersion(std::string path, bool isMq);
 static bool VerifyArchiveVersion(OTRVersion version);
 std::string portArchivePath = "";
@@ -399,6 +400,8 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
     OTRVersion vanillaVersion = DetectOTRVersion("oot.o2r", false);
     OTRVersion mqVersion = DetectOTRVersion("oot-mq.o2r", true);
 
+    bool foundVanilla = std::filesystem::exists(Ship::Context::LocateFileAcrossAppDirs("oot.o2r", appShortName));
+    bool foundMq = std::filesystem::exists(Ship::Context::LocateFileAcrossAppDirs("oot-mq.o2r", appShortName));
     bool shouldRegen = VerifyArchiveVersion(vanillaVersion) || VerifyArchiveVersion(mqVersion);
 
     std::filesystem::path ownPath;
@@ -421,21 +424,15 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
     std::string file;
 
 #if defined(__SWITCH__) || defined(__WIIU__)
-    if (shouldRegen) {
-#if defined(__SWITCH__)
-        SohGui::RegisterPopup("Outdated ROM Archives",
-                              "You've launched the Ship with an old ROM O2R file.\n\n"
-                              "Please regenerate a new ROM O2R and relaunch.\n\n"
-                              "Press the Home button to exit...",
-                              "OK", "", [&]() { exit(1); });
-#elif defined(__WIIU__)
-        SohGui::RegisterPopup("Outdated ROM Archives",
-                              "You've launched the Ship with an old a ROM O2R file.\n\n"
-                              "Please generate a ROM O2R and relaunch.\n\n"
-                              "Press and hold the Power button to shutdown...",
-                              "OK", "", [&]() { exit(1); });
-        OSFatal();
-#endif
+    if (!foundVanilla && !foundMq) {
+        Messagebox_ShowErrorBox("Missing O2R ROM Archives",
+                  "The oot.o2r or oot-mq.o2r file is missing.\n"
+                  "Please generate a ROM O2R using the PC version, place it on the SD card and relaunch.");
+    }
+    else if (shouldRegen) {
+        Messagebox_ShowErrorBox("Outdated ROM Archives",
+                              "Your oot.o2r or oot-mq.o2r were created with incompatible versions of SoH.\n"
+                              "Please regenerate a new ROM O2R using the PC version, place it on the SD card and relaunch.");
     }
 #else
     if (!std::filesystem::exists(installPath + "/assets")) {
@@ -1461,7 +1458,7 @@ extern "C" void Messagebox_ShowErrorBox(char* title, char* body) {
 #if not defined(__SWITCH__) && not defined(__WIIU__)
     Extractor::ShowErrorBox(title, body);
 #elif defined(__SWITCH__)
-    Ship::Switch::PrintErrorMessageToScreen(("\x1b[2;2H" + std::string(title) + "\n\n" + std::string(body)).c_str());
+    Ship::Switch::ShowErrorApplet((std::string(title) + "\n\n" + std::string(body)).c_str());
 #elif defined(__WIIU__)
     OSFatal((std::string(title) + "\n\n" + std::string(body)).c_str());
 #endif
