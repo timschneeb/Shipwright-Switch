@@ -2,9 +2,9 @@ name: generate-builds
 on:
   push:
   pull_request:
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+#concurrency:
+#  group: ${{ github.workflow }}-${{ github.ref }}
+#  cancel-in-progress: true
 jobs:
 
   generate-soh-otr:
