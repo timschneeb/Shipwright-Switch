@@ -264,7 +264,6 @@ typedef struct {
 } OTRVersion;
 
 std::shared_ptr<Fast::Fast3dWindow> sohFast3dWindow;
-extern "C" void Messagebox_ShowErrorBox(char* title, char* body);
 static OTRVersion DetectOTRVersion(std::string path, bool isMq);
 static bool VerifyArchiveVersion(OTRVersion version);
 std::string portArchivePath = "";
@@ -353,6 +352,16 @@ typedef enum WindowsSteps {
     WS_ONEDRIVE,
     WS_DONE,
 } WindowsSteps;
+
+extern "C" void Messagebox_ShowErrorBox(char* title, char* body) {
+#if not defined(__SWITCH__) && not defined(__WIIU__)
+    Extractor::ShowErrorBox(title, body);
+#elif defined(__SWITCH__)
+    Ship::Switch::ShowErrorApplet((std::string(title) + "\n\n" + std::string(body)).c_str());
+#elif defined(__WIIU__)
+    OSFatal((std::string(title) + "\n\n" + std::string(body)).c_str());
+#endif
+}
 
 bool IsSubpath(const std::filesystem::path& path, const std::filesystem::path& base) {
     auto rel = std::filesystem::relative(path, base);
@@ -1452,16 +1461,6 @@ OTRVersion DetectOTRVersion(std::string fileName, bool isMQ) {
     }
 
     return ReadPortVersionFromOTR(otrPath);
-}
-
-extern "C" void Messagebox_ShowErrorBox(char* title, char* body) {
-#if not defined(__SWITCH__) && not defined(__WIIU__)
-    Extractor::ShowErrorBox(title, body);
-#elif defined(__SWITCH__)
-    Ship::Switch::ShowErrorApplet((std::string(title) + "\n\n" + std::string(body)).c_str());
-#elif defined(__WIIU__)
-    OSFatal((std::string(title) + "\n\n" + std::string(body)).c_str());
-#endif
 }
 
 bool VerifyArchiveVersion(OTRVersion version) {
