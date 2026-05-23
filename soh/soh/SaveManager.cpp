@@ -21,6 +21,10 @@
 #define NOGDI // avoid various windows defines that conflict with things in z64.h
 #include <spdlog/spdlog.h>
 
+#if defined(__SWITCH__)
+#include <pthread.h>
+#endif
+
 #include <fstream>
 #include <filesystem>
 #include <array>
@@ -1276,9 +1280,33 @@ void SaveManager::SaveSection(int fileNum, int sectionID, bool threaded) {
     memcpy(saveContext, &gSaveContext, sizeof(gSaveContext));
 #if defined(__SWITCH__)
     // BS::thread_pool uses std::thread internally, which defaults to ~128KB stack on libnx.  SaveFileThreaded's JSON
-    // serialization and section handler iteration overflows this.  Run synchronously on the calling thread, which has
-    // a full-size stack.
-    SaveFileThreaded(fileNum, saveContext, sectionID);
+    // serialization and section handler iteration overflows this.  Use pthread with an explicit 2MB stack instead.
+    if (threaded) {
+        struct SaveArgs {
+            SaveManager* self = nullptr;
+            int fileNum = -1;
+            SaveContext* context = nullptr;
+            int sectionId = -1;
+        };
+
+        const auto args = new SaveArgs{ this, fileNum, saveContext, sectionID };
+        pthread_t saveThread = {};
+        pthread_attr_t attr = {};
+        pthread_attr_init(&attr);
+        pthread_attr_setstacksize(&attr, 0x200000); // 2MB
+
+        pthread_create(&saveThread, &attr, [](void* arg) -> void* {
+            const auto saveArgs = static_cast<SaveArgs*>(arg);
+            saveArgs->self->SaveFileThreaded(saveArgs->fileNum, saveArgs->context, saveArgs->sectionId);
+            delete saveArgs;
+            return nullptr;
+        }, args);
+
+        pthread_attr_destroy(&attr);
+        pthread_detach(saveThread);
+    } else {
+        SaveFileThreaded(fileNum, saveContext, sectionID);
+    }
 #else
     if (threaded) {
         smThreadPool->detach_task(std::bind(&SaveManager::SaveFileThreaded, this, fileNum, saveContext, sectionID));
