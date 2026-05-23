@@ -29,6 +29,10 @@
 #include "soh/Notification/Notification.h"
 #include "soh/ObjectExtension/ObjectExtension.h"
 
+#ifdef __SWITCH__
+#include <pthread.h>
+#endif
+
 extern "C" {
 #include "src/overlays/actors/ovl_Obj_Bean/z_obj_bean.h"
 
@@ -4439,7 +4443,11 @@ RandomizerCheck Randomizer::GetCheckFromRandomizerInf(RandomizerInf randomizerIn
     return RC_UNKNOWN_CHECK;
 }
 
+#ifdef __SWITCH__
+static pthread_t randoPthread;
+#else
 std::thread randoThread;
+#endif
 
 void GenerateRandomizerImgui(std::string seed = "") {
     CVarSetInteger(CVAR_GENERAL("RandoGenerating"), 1);
@@ -4490,10 +4498,31 @@ void GenerateRandomizerImgui(std::string seed = "") {
 bool GenerateRandomizer(std::string seed /*= ""*/) {
     if (generated) {
         generated = false;
+#ifdef __SWITCH__
+        pthread_join(randoPthread, nullptr);
+#else
         randoThread.join();
+#endif
     }
     if (CVarGetInteger(CVAR_GENERAL("RandoGenerating"), 0) == 0) {
+#ifdef __SWITCH__
+        pthread_attr_t attr = {};
+        pthread_attr_init(&attr);
+        pthread_attr_setstacksize(&attr, 0x200000); // 2MB stack for randomizer
+
+        const auto seedCopy = new std::string(seed);
+
+        pthread_create(&randoPthread, &attr, [](void* arg) -> void* {
+            const auto seedStr = static_cast<std::string*>(arg);
+            GenerateRandomizerImgui(*seedStr);
+            delete seedStr;
+            return nullptr;
+        }, seedCopy);
+
+        pthread_attr_destroy(&attr);
+#else
         randoThread = std::thread(&GenerateRandomizerImgui, seed);
+#endif
         return true;
     }
     return false;
@@ -4505,7 +4534,11 @@ static bool tricksTabOpen = false;
 void JoinRandoGenerationThread() {
     if (generated) {
         generated = false;
+#ifdef __SWITCH__
+        pthread_join(randoPthread, nullptr);
+#else
         randoThread.join();
+#endif
     }
 }
 
