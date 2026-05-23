@@ -1274,11 +1274,18 @@ void SaveManager::SaveSection(int fileNum, int sectionID, bool threaded) {
     }
     auto saveContext = new SaveContext;
     memcpy(saveContext, &gSaveContext, sizeof(gSaveContext));
+#if defined(__SWITCH__)
+    // BS::thread_pool uses std::thread internally, which defaults to ~128KB stack on libnx.  SaveFileThreaded's JSON
+    // serialization and section handler iteration overflows this.  Run synchronously on the calling thread, which has
+    // a full-size stack.
+    SaveFileThreaded(fileNum, saveContext, sectionID);
+#else
     if (threaded) {
         smThreadPool->detach_task(std::bind(&SaveManager::SaveFileThreaded, this, fileNum, saveContext, sectionID));
     } else {
         SaveFileThreaded(fileNum, saveContext, sectionID);
     }
+#endif
 }
 
 void SaveManager::SaveFile(int fileNum) {
