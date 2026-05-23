@@ -87,6 +87,11 @@ std::filesystem::path SaveManager::GetFileTempName(int fileNum) {
     return sSavePath / ("file" + std::to_string(fileNum + 1) + ".temp");
 }
 
+std::filesystem::path SaveManager::GetFileBackupName(int fileNum) {
+    const std::filesystem::path sSavePath(Ship::Context::GetPathRelativeToAppDirectory("Save"));
+    return sSavePath / ("file" + std::to_string(fileNum - 1) + ".bak");
+}
+
 std::vector<RandomizerHint> Rando::StaticData::oldVerHintOrder{
     RH_COLOSSUS_GOSSIP_STONE,
     RH_DMC_GOSSIP_STONE,
@@ -487,6 +492,24 @@ void SaveManager::Init() {
 
     // Load files to initialize metadata
     for (int fileNum = 0; fileNum < MaxFiles; fileNum++) {
+#ifdef __SWITCH__
+        // Recover from interrupted saves: if a backup exists but the save doesn't, the previous save was
+        // interrupted between deleting the original and completing the copy.
+        std::filesystem::path backupFile = GetFileBackupName(fileNum);
+        if (std::filesystem::exists(backupFile) && !std::filesystem::exists(GetFileName(fileNum))) {
+            SPDLOG_WARN("Save File - recovering backup for fileNum: {}", fileNum);
+            copy_file(backupFile.c_str(), GetFileName(fileNum).c_str());
+        }
+
+        // Clean up any stale/backup temp files from a completed save.
+        if (std::filesystem::exists(backupFile)) {
+            std::filesystem::remove(backupFile);
+        }
+
+        if (std::filesystem::path tempFile = GetFileTempName(fileNum); std::filesystem::exists(tempFile)) {
+            std::filesystem::remove(tempFile);
+        }
+#endif
         if (std::filesystem::exists(GetFileName(fileNum))) {
             StartupCheckAndInitMeta(fileNum);
         }
@@ -1188,7 +1211,37 @@ void SaveManager::SaveFileThreaded(int fileNum, SaveContext* saveContext, int se
     output.close();
 #endif
 
-#if defined(__SWITCH__) || defined(__WIIU__)
+#if defined(__SWITCH__)
+    // Backup-safe file replacement: ensure a valid save always exists on disk.  If we crash between any of these
+    // steps, Init() will recover from the backup.
+    const std::filesystem::path backupFile = GetFileBackupName(fileNum);
+    if (std::filesystem::exists(fileName)) {
+        // Preserve the current save as a backup before touching it.
+        if (std::filesystem::exists(backupFile)) {
+            std::filesystem::remove(backupFile);
+        }
+
+        copy_file(fileName.c_str(), backupFile.c_str());
+        std::filesystem::remove(fileName);
+    }
+
+    if (copy_file(tempFile.c_str(), fileName.c_str()) == 0) {
+        // New save written successfully, clean up.
+        if (std::filesystem::exists(backupFile)) {
+            std::filesystem::remove(backupFile);
+        }
+
+        if (std::filesystem::exists(tempFile)) {
+            std::filesystem::remove(tempFile);
+        }
+    } else {
+        // Copy failed, restore from backup.
+        SPDLOG_ERROR("Save File - copy failed for fileNum: {}, restoring backup", fileNum);
+        if (std::filesystem::exists(backupFile)) {
+            copy_file(backupFile.c_str(), fileName.c_str());
+        }
+    }
+#elif defined(__WIIU__)
     if (std::filesystem::exists(fileName)) {
         std::filesystem::remove(fileName);
     }
