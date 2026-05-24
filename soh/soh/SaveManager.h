@@ -167,6 +167,9 @@ class SaveManager {
     void ConvertFromUnversioned();
     void CreateDefaultGlobal();
 
+#if defined(__SWITCH__)
+    void SaveFileIOThreaded(int fileNum, std::string* jsonData, int sectionID);
+#endif
     void SaveFileThreaded(int fileNum, SaveContext* saveContext, int sectionID);
 
     void InitMeta(int slotNum);
