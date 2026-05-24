@@ -1524,12 +1524,19 @@ void SaveManager::ThreadPoolWait() {
 }
 
 bool SaveManager::SaveFile_Exist(int fileNum) {
+#if defined(__SWITCH__)
+    // Exception unwinding fails on Switch (calls abort instead of catching), so we use the non-throwing overload to
+    // avoid crashes when the save thread has the file in a transitional state during backup-safe replacement.
+    std::error_code ec = {};
+    return std::filesystem::exists(GetFileName(fileNum), ec);
+#else
     try {
         return std::filesystem::exists(GetFileName(fileNum));
     } catch (std::filesystem::filesystem_error const& ex) {
         SPDLOG_ERROR("Filesystem error");
         return false;
     }
+#endif
 }
 
 void SaveManager::AddInitFunction(InitFunc func) {
