@@ -1289,13 +1289,18 @@ void SaveManager::SaveSection(int fileNum, int sectionID, bool threaded) {
             int sectionId = -1;
         };
 
+        // Join any previous save thread before replacing its handle to avoid a resource leak.
+        if (mSaveThreadActive) {
+            pthread_join(mSaveThread, nullptr);
+            mSaveThreadActive = false;
+        }
+
         const auto args = new SaveArgs{ this, fileNum, saveContext, sectionID };
-        pthread_t saveThread = {};
         pthread_attr_t attr = {};
         pthread_attr_init(&attr);
         pthread_attr_setstacksize(&attr, 0x200000); // 2MB
 
-        pthread_create(&saveThread, &attr, [](void* arg) -> void* {
+        pthread_create(&mSaveThread, &attr, [](void* arg) -> void* {
             const auto saveArgs = static_cast<SaveArgs*>(arg);
             saveArgs->self->SaveFileThreaded(saveArgs->fileNum, saveArgs->context, saveArgs->sectionId);
             delete saveArgs;
@@ -1303,7 +1308,7 @@ void SaveManager::SaveSection(int fileNum, int sectionID, bool threaded) {
         }, args);
 
         pthread_attr_destroy(&attr);
-        pthread_detach(saveThread);
+        mSaveThreadActive = true;
     } else {
         SaveFileThreaded(fileNum, saveContext, sectionID);
     }
@@ -1415,6 +1420,12 @@ void SaveManager::LoadFile(int fileNum) {
 }
 
 void SaveManager::ThreadPoolWait() {
+#if defined(__SWITCH__)
+    if (mSaveThreadActive) {
+        pthread_join(mSaveThread, nullptr);
+        mSaveThreadActive = false;
+    }
+#endif
     if (smThreadPool) {
         smThreadPool->wait();
     }

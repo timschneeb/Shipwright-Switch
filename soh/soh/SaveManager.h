@@ -59,6 +59,10 @@ typedef enum {
 
 #include <nlohmann/json.hpp>
 
+#if defined(__SWITCH__)
+#include <pthread.h>
+#endif
+
 class SaveManager {
   public:
     static SaveManager* Instance;
@@ -197,6 +201,10 @@ class SaveManager {
     nlohmann::json::iterator currentJsonArrayContext;
     std::shared_ptr<BS::thread_pool> smThreadPool;
     std::mutex saveMtx;
+#if defined(__SWITCH__)
+    pthread_t mSaveThread = {};
+    bool mSaveThreadActive = false;
+#endif
 };
 
 #else
