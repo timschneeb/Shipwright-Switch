@@ -1152,6 +1152,59 @@ void SaveManager::InitFileMaxed() {
     Flags_SetRandomizerInf(RAND_INF_OBTAINED_ROCS_FEATHER);
 }
 
+#if defined(__SWITCH__)
+// Switch-only: file I/O thread function. JSON is already serialized on the main thread.
+void SaveManager::SaveFileIOThreaded(int fileNum, std::string* jsonData, int sectionID) {
+    saveMtx.lock();
+
+    const std::filesystem::path fileName = GetFileName(fileNum);
+    const std::filesystem::path tempFile = GetFileTempName(fileNum);
+
+    if (std::filesystem::exists(tempFile)) {
+        std::filesystem::remove(tempFile);
+    }
+
+    FILE* w = fopen(tempFile.c_str(), "w");
+    fwrite(jsonData->c_str(), sizeof(char), jsonData->length(), w);
+    fclose(w);
+    delete jsonData;
+
+    // Backup-safe file replacement: ensure a valid save always exists on disk. If we crash between any of these
+    // steps, Init() will recover from the backup.
+    const std::filesystem::path backupFile = GetFileBackupName(fileNum);
+
+    if (std::filesystem::exists(fileName)) {
+        if (std::filesystem::exists(backupFile)) {
+            std::filesystem::remove(backupFile);
+        }
+
+        copy_file(fileName.c_str(), backupFile.c_str());
+        std::filesystem::remove(fileName);
+    }
+
+    if (copy_file(tempFile.c_str(), fileName.c_str()) == 0) {
+        if (std::filesystem::exists(backupFile)) {
+            std::filesystem::remove(backupFile);
+        }
+
+        if (std::filesystem::exists(tempFile)) {
+            std::filesystem::remove(tempFile);
+        }
+    } else {
+        SPDLOG_ERROR("Save File - copy failed for fileNum: {}, restoring backup", fileNum);
+
+        if (std::filesystem::exists(backupFile)) {
+            copy_file(backupFile.c_str(), fileName.c_str());
+        }
+    }
+
+    InitMeta(fileNum);
+    GameInteractor::Instance->ExecuteHooks<GameInteractor::OnSaveFile>(fileNum, sectionID);
+    SPDLOG_INFO("Save File Finish - fileNum: {}", fileNum);
+    saveMtx.unlock();
+}
+#endif
+
 // Threaded SaveFile takes copy of gSaveContext for local unmodified storage
 
 void SaveManager::SaveFileThreaded(int fileNum, SaveContext* saveContext, int sectionID) {
@@ -1278,31 +1331,70 @@ void SaveManager::SaveSection(int fileNum, int sectionID, bool threaded) {
     }
     auto saveContext = new SaveContext;
     memcpy(saveContext, &gSaveContext, sizeof(gSaveContext));
-#if defined(__SWITCH__)
-    // BS::thread_pool uses std::thread internally, which defaults to ~128KB stack on libnx.  SaveFileThreaded's JSON
-    // serialization and section handler iteration overflows this.  Use pthread with an explicit 2MB stack instead.
-    if (threaded) {
-        struct SaveArgs {
-            SaveManager* self = nullptr;
-            int fileNum = -1;
-            SaveContext* context = nullptr;
-            int sectionId = -1;
-        };
 
+#if defined(__SWITCH__)
+    // Build JSON on the main thread where game state is consistent. Section handlers read globals beyond gSaveContext,
+    // so running them on a background thread races with scene transitions and gameplay updates.
+    SPDLOG_INFO("Save File - fileNum: {}", fileNum);
+    saveBlock["version"] = 1;
+    saveBlock["fileType"] = IS_RANDO ? FILE_TYPE_SAVE_RANDO : FILE_TYPE_SAVE_VANILLA;
+
+    if (sectionID == SECTION_ID_BASE) {
+        for (auto& val : sectionSaveHandlers | std::views::values) {
+            auto& saveFuncInfo = val;
+            if (!saveFuncInfo.saveWithBase || (saveFuncInfo.name == "randomizer" && !IS_RANDO)) {
+                continue;
+            }
+
+            nlohmann::json& sectionBlock = saveBlock["sections"][saveFuncInfo.name];
+            sectionBlock["version"] = val.version;
+            currentJsonContext = &sectionBlock["data"];
+            val.func(saveContext, sectionID, true);
+        }
+    } else {
+        SaveFuncInfo svi = sectionSaveHandlers.find(sectionID)->second;
+        auto& sectionName = svi.name;
+        auto sectionVersion = svi.version;
+
+        if (svi.parentSection != -1 && svi.parentSection < sectionIndex) {
+            const auto parentSvi = sectionSaveHandlers.find(svi.parentSection)->second;
+            sectionName = parentSvi.name;
+            sectionVersion = parentSvi.version;
+        }
+
+        nlohmann::json& sectionBlock = saveBlock["sections"][sectionName];
+        sectionBlock["version"] = sectionVersion;
+        currentJsonContext = &sectionBlock["data"];
+        svi.func(saveContext, sectionID, false);
+    }
+
+    // Serialize to string on main thread, then dispatch only file I/O to pthread.
+    const auto jsonData = new std::string(saveBlock.dump(1));
+    delete saveContext;
+
+    struct SaveIOArgs {
+        SaveManager* self = nullptr;
+        int fileNum = -1;
+        std::string* json = nullptr;
+        int sectionID = -1;
+    };
+
+    if (threaded) {
         // Join any previous save thread before replacing its handle to avoid a resource leak.
         if (mSaveThreadActive) {
             pthread_join(mSaveThread, nullptr);
             mSaveThreadActive = false;
         }
 
-        const auto args = new SaveArgs{ this, fileNum, saveContext, sectionID };
+        const auto args = new SaveIOArgs{ this, fileNum, jsonData, sectionID };
+
         pthread_attr_t attr = {};
         pthread_attr_init(&attr);
         pthread_attr_setstacksize(&attr, 0x200000); // 2MB
 
         pthread_create(&mSaveThread, &attr, [](void* arg) -> void* {
-            const auto saveArgs = static_cast<SaveArgs*>(arg);
-            saveArgs->self->SaveFileThreaded(saveArgs->fileNum, saveArgs->context, saveArgs->sectionId);
+            const auto saveArgs = static_cast<SaveIOArgs*>(arg);
+            saveArgs->self->SaveFileIOThreaded(saveArgs->fileNum, saveArgs->json, saveArgs->sectionID);
             delete saveArgs;
             return nullptr;
         }, args);
@@ -1310,7 +1402,7 @@ void SaveManager::SaveSection(int fileNum, int sectionID, bool threaded) {
         pthread_attr_destroy(&attr);
         mSaveThreadActive = true;
     } else {
-        SaveFileThreaded(fileNum, saveContext, sectionID);
+        SaveFileIOThreaded(fileNum, jsonData, sectionID);
     }
 #else
     if (threaded) {
@@ -1432,12 +1524,19 @@ void SaveManager::ThreadPoolWait() {
 }
 
 bool SaveManager::SaveFile_Exist(int fileNum) {
+#if defined(__SWITCH__)
+    // Exception unwinding fails on Switch (calls abort instead of catching), so we use the non-throwing overload to
+    // avoid crashes when the save thread has the file in a transitional state during backup-safe replacement.
+    std::error_code ec = {};
+    return std::filesystem::exists(GetFileName(fileNum), ec);
+#else
     try {
         return std::filesystem::exists(GetFileName(fileNum));
     } catch (std::filesystem::filesystem_error const& ex) {
         SPDLOG_ERROR("Filesystem error");
         return false;
     }
+#endif
 }
 
 void SaveManager::AddInitFunction(InitFunc func) {
