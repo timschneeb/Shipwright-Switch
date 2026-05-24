@@ -93,7 +93,7 @@ std::filesystem::path SaveManager::GetFileTempName(int fileNum) {
 
 std::filesystem::path SaveManager::GetFileBackupName(int fileNum) {
     const std::filesystem::path sSavePath(Ship::Context::GetPathRelativeToAppDirectory("Save"));
-    return sSavePath / ("file" + std::to_string(fileNum - 1) + ".bak");
+    return sSavePath / ("file" + std::to_string(fileNum + 1) + ".bak");
 }
 
 std::vector<RandomizerHint> Rando::StaticData::oldVerHintOrder{
