@@ -61,6 +61,7 @@ typedef enum {
 
 #if defined(__SWITCH__)
 #include <pthread.h>
+#include <queue>
 #endif
 
 class SaveManager {
@@ -167,9 +168,6 @@ class SaveManager {
     void ConvertFromUnversioned();
     void CreateDefaultGlobal();
 
-#if defined(__SWITCH__)
-    void SaveFileIOThreaded(int fileNum, std::string* jsonData, int sectionID);
-#endif
     void SaveFileThreaded(int fileNum, SaveContext* saveContext, int sectionID);
 
     void InitMeta(int slotNum);
@@ -204,9 +202,29 @@ class SaveManager {
     nlohmann::json::iterator currentJsonArrayContext;
     std::shared_ptr<BS::thread_pool> smThreadPool;
     std::mutex saveMtx;
+
 #if defined(__SWITCH__)
-    pthread_t mSaveThread = {};
-    bool mSaveThreadActive = false;
+    ~SaveManager();
+
+    void SaveFileIOThreaded(int fileNum, std::string* jsonData, int sectionID);
+
+    void InitSaveWorker();
+    void ShutdownSaveWorker();
+    static void* SaveWorkerEntry(void* arg);
+
+    struct SaveJob {
+        int fileNum = -1;
+        std::string* json = nullptr;
+        int sectionID = -1;
+    };
+
+    pthread_t mSaveWorker = {};
+    pthread_mutex_t mSaveWorkerMtx = PTHREAD_MUTEX_INITIALIZER;    // Protects queue, busy flag, and running flag.
+    pthread_cond_t mSaveWorkerCond = PTHREAD_COND_INITIALIZER;     // Signals new work or shutdown to the worker.
+    pthread_cond_t mSaveWorkerDoneCond = PTHREAD_COND_INITIALIZER; // Signals ThreadPoolWait that the worker is idle.
+    bool mSaveWorkerRunning = false;
+    bool mSaveWorkerBusy = false;
+    std::queue<SaveJob> mSaveJobQueue = {};
 #endif
 };
 
