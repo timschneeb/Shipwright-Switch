@@ -441,6 +441,26 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU|Clang|AppleClang")
     )
 endif()
 ################################################################################
+# Anchor client version (fetched from upstream Shipwright tags at configure time for Switch/PC cross-play compat)
+################################################################################
+if(CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch")
+    # Get upstream commit hash for release
+    execute_process(
+        COMMAND bash -c "git ls-remote https://github.com/HarbourMasters/Shipwright refs/tags/${CMAKE_PROJECT_VERSION} | awk '{print $1}' | cut -c 1-7"
+        OUTPUT_VARIABLE ANCHOR_CLIENT_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+        TIMEOUT 15
+    )
+
+    if(ANCHOR_CLIENT_VERSION)
+    message(STATUS "Anchor client version: ${ANCHOR_CLIENT_VERSION}")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE
+        "OVERRIDE_ANCHOR_CLIENT_VERSION=\"${ANCHOR_CLIENT_VERSION}\""
+    )
+endif()
+endif()
+################################################################################
 # Compile and link options
 ################################################################################
 if(MSVC)

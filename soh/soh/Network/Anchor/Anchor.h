@@ -111,7 +111,11 @@ class Anchor : public Network {
 
   public:
     uint32_t ownClientId;
+#ifdef OVERRIDE_ANCHOR_CLIENT_VERSION
+    inline static const std::string clientVersion = OVERRIDE_ANCHOR_CLIENT_VERSION;
+#else
     inline static const std::string clientVersion = (char*)gGitCommitHash;
+#endif
 
     // Packet types //
     inline static const std::string ALL_CLIENT_STATE = "ALL_CLIENT_STATE";
