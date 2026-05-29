@@ -454,11 +454,11 @@ if(CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch")
     )
 
     if(ANCHOR_CLIENT_VERSION)
-    message(STATUS "Anchor client version: ${ANCHOR_CLIENT_VERSION}")
-    target_compile_definitions(${PROJECT_NAME} PRIVATE
-        "OVERRIDE_ANCHOR_CLIENT_VERSION=\"${ANCHOR_CLIENT_VERSION}\""
-    )
-endif()
+        message(STATUS "Anchor client version: ${ANCHOR_CLIENT_VERSION}")
+        target_compile_definitions(${PROJECT_NAME} PRIVATE
+            "OVERRIDE_ANCHOR_CLIENT_VERSION=\"${ANCHOR_CLIENT_VERSION}\""
+        )
+    endif()
 endif()
 ################################################################################
 # Compile and link options
