@@ -3,6 +3,7 @@
 #include <libultraship/libultraship.h>
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include "soh/OTRGlobals.h"
+#include "soh/Enhancements/randomizer/randomizerEnums/RandomizerCheck.h"
 
 static bool isResultOfHandling = false;
 
@@ -39,6 +40,10 @@ void Anchor::HandlePacket_SetCheckStatus(nlohmann::json payload) {
     auto randoContext = Rando::Context::GetInstance();
 
     RandomizerCheck rc = payload["rc"].get<RandomizerCheck>();
+    if (rc < 0 || rc >= RC_MAX) {
+        SPDLOG_ERROR("[Anchor] SET_CHECK_STATUS: rc {} out of range", (int)rc);
+        return;
+    }
     RandomizerCheckStatus status = payload["status"].get<RandomizerCheckStatus>();
     bool skipped = payload["skipped"].get<bool>();
 
