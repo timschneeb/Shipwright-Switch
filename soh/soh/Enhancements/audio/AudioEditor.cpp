@@ -264,7 +264,7 @@ void Draw_SfxTab(const std::string& tabId, SeqType type, const std::string& tabN
         auto currentBGM = func_800FA0B4(SEQ_PLAYER_BGM_MAIN);
         auto prevReplacement = AudioCollection::Instance->GetReplacementSequence(currentBGM);
         ResetGroup(map, type);
-        Ship::Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
+        Ship::Context::GetRawInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
         auto curReplacement = AudioCollection::Instance->GetReplacementSequence(currentBGM);
         if (type == SEQ_BGM_WORLD && prevReplacement != curReplacement) {
             ReplayCurrentBGM();
@@ -276,7 +276,7 @@ void Draw_SfxTab(const std::string& tabId, SeqType type, const std::string& tabN
         auto currentBGM = func_800FA0B4(SEQ_PLAYER_BGM_MAIN);
         auto prevReplacement = AudioCollection::Instance->GetReplacementSequence(currentBGM);
         RandomizeGroup(type);
-        Ship::Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
+        Ship::Context::GetRawInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
         auto curReplacement = AudioCollection::Instance->GetReplacementSequence(currentBGM);
         if (type == SEQ_BGM_WORLD && prevReplacement != curReplacement) {
             ReplayCurrentBGM();
@@ -288,7 +288,7 @@ void Draw_SfxTab(const std::string& tabId, SeqType type, const std::string& tabN
         auto currentBGM = func_800FA0B4(SEQ_PLAYER_BGM_MAIN);
         auto prevReplacement = AudioCollection::Instance->GetReplacementSequence(currentBGM);
         LockGroup(map, type);
-        Ship::Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
+        Ship::Context::GetRawInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
         auto curReplacement = AudioCollection::Instance->GetReplacementSequence(currentBGM);
         if (type == SEQ_BGM_WORLD && prevReplacement != curReplacement) {
             ReplayCurrentBGM();
@@ -300,7 +300,7 @@ void Draw_SfxTab(const std::string& tabId, SeqType type, const std::string& tabN
         auto currentBGM = func_800FA0B4(SEQ_PLAYER_BGM_MAIN);
         auto prevReplacement = AudioCollection::Instance->GetReplacementSequence(currentBGM);
         UnlockGroup(map, type);
-        Ship::Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
+        Ship::Context::GetRawInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
         auto curReplacement = AudioCollection::Instance->GetReplacementSequence(currentBGM);
         if (type == SEQ_BGM_WORLD && prevReplacement != curReplacement) {
             ReplayCurrentBGM();
@@ -361,7 +361,7 @@ void Draw_SfxTab(const std::string& tabId, SeqType type, const std::string& tabN
 
                 if (ImGui::Selectable(seqData.label.c_str())) {
                     CVarSetInteger(cvarKey.c_str(), value);
-                    Ship::Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
+                    Ship::Context::GetRawInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
                     UpdateCurrentBGM(defaultValue, type);
                 }
 
@@ -388,7 +388,7 @@ void Draw_SfxTab(const std::string& tabId, SeqType type, const std::string& tabN
                                                        .Color(THEME_COLOR))) {
             CVarClear(cvarKey.c_str());
             CVarClear(cvarLockKey.c_str());
-            Ship::Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
+            Ship::Context::GetRawInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
             UpdateCurrentBGM(defaultValue, seqData.category);
         }
         ImGui::SameLine();
@@ -412,7 +412,7 @@ void Draw_SfxTab(const std::string& tabId, SeqType type, const std::string& tabN
                 if (locked) {
                     CVarClear(cvarLockKey.c_str());
                 }
-                Ship::Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
+                Ship::Context::GetRawInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
                 UpdateCurrentBGM(defaultValue, type);
             }
         }
@@ -429,7 +429,7 @@ void Draw_SfxTab(const std::string& tabId, SeqType type, const std::string& tabN
             } else {
                 CVarSetInteger(cvarLockKey.c_str(), 1);
             }
-            Ship::Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
+            Ship::Context::GetRawInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
         }
     }
     ImGui::EndTable();
@@ -816,7 +816,7 @@ void AudioEditor_RandomizeAll() {
         RandomizeGroup(type);
     }
 
-    Ship::Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
+    Ship::Context::GetRawInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
     ReplayCurrentBGM();
 }
 
@@ -825,14 +825,14 @@ void AudioEditor_AutoRandomizeAll() {
         RandomizeGroup(type, false);
     }
 
-    Ship::Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
+    Ship::Context::GetRawInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
     ReplayCurrentBGM();
 }
 
 void AudioEditor_RandomizeGroup(SeqType group) {
     RandomizeGroup(group);
 
-    Ship::Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
+    Ship::Context::GetRawInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
     ReplayCurrentBGM();
 }
 
@@ -841,14 +841,14 @@ void AudioEditor_ResetAll() {
         ResetGroup(AudioCollection::Instance->GetAllSequences(), type);
     }
 
-    Ship::Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
+    Ship::Context::GetRawInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
     ReplayCurrentBGM();
 }
 
 void AudioEditor_ResetGroup(SeqType group) {
     ResetGroup(AudioCollection::Instance->GetAllSequences(), group);
 
-    Ship::Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
+    Ship::Context::GetRawInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
     ReplayCurrentBGM();
 }
 
@@ -857,7 +857,7 @@ void AudioEditor_LockAll() {
         LockGroup(AudioCollection::Instance->GetAllSequences(), type);
     }
 
-    Ship::Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
+    Ship::Context::GetRawInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
 }
 
 void AudioEditor_UnlockAll() {
@@ -865,7 +865,7 @@ void AudioEditor_UnlockAll() {
         UnlockGroup(AudioCollection::Instance->GetAllSequences(), type);
     }
 
-    Ship::Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
+    Ship::Context::GetRawInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
 }
 
 void RegisterAudioWidgets() {

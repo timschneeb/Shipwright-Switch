@@ -41,7 +41,7 @@ void SaveEnabledTricks() {
     } else {
         CVarSetString(CVAR_RANDOMIZER_SETTING("EnabledTricks"), enabledTrickString.c_str());
     }
-    Ship::Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
+    Ship::Context::GetRawInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
     tricksDirty = false;
     return;
 }
@@ -111,7 +111,7 @@ void DrawLocationsMenu(WidgetInfo& info) {
                                 }
                                 CVarSetString(CVAR_RANDOMIZER_SETTING("ExcludedLocations"),
                                               excludedLocationString.c_str());
-                                Ship::Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
+                                Ship::Context::GetRawInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
                                 locationsDirty = true;
                             }
                             UIWidgets::PopStyleButton();
@@ -162,7 +162,7 @@ void DrawLocationsMenu(WidgetInfo& info) {
                                     CVarSetString(CVAR_RANDOMIZER_SETTING("ExcludedLocations"),
                                                   excludedLocationString.c_str());
                                 }
-                                Ship::Context::GetInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
+                                Ship::Context::GetRawInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
                                 locationsDirty = true;
                             }
                             UIWidgets::PopStyleButton();
