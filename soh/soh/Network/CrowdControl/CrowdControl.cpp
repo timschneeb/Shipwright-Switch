@@ -130,6 +130,10 @@ void CrowdControl::EmitMessage(uint32_t eventId, long timeRemaining, EffectResul
 }
 
 CrowdControl::EffectResult CrowdControl::ExecuteEffect(Effect* effect) {
+    if (!GameInteractor::IsPlayerInControl()) {
+        return EffectResult::Retry;
+    }
+
     GameInteractionEffectQueryResult giResult;
     if (effect->category == kEffectCatSpawnEnemy) {
         giResult = GameInteractor::RawAction::SpawnEnemyWithOffset(effect->spawnParams[0], effect->spawnParams[1],
@@ -147,6 +151,10 @@ CrowdControl::EffectResult CrowdControl::ExecuteEffect(Effect* effect) {
 /// Checks if effect can be applied -- should not be used to check for spawn enemy effects.
 CrowdControl::EffectResult CrowdControl::CanApplyEffect(Effect* effect) {
     assert(effect->category != kEffectCatSpawnEnemy || effect->category != kEffectCatSpawnActor);
+    if (!GameInteractor::IsPlayerInControl()) {
+        return EffectResult::Retry;
+    }
+
     GameInteractionEffectQueryResult giResult = GameInteractor::CanApplyEffect(*effect->giEffect.get());
 
     return TranslateGiEnum(giResult);
@@ -275,6 +283,9 @@ std::unique_ptr<CrowdControl::Effect> CrowdControl::ParseMessage(nlohmann::json 
             break;
         case kEffectSpawnWolfos:
             effect->spawnParams[0] = ACTOR_EN_WF;
+            // Match EnEncount1 wolfos spawner (0xFF00): high byte must be 0xFF so EnWf_Init does not treat
+            // switchFlag 0; Flags_GetSwitch(play, 0) is true in many scenes and would instantly kill the actor.
+            effect->spawnParams[1] = (0xFF << 8) | 0x00; // normal Wolfos; high byte 0xFF = no switch (vanilla encount)
             effect->category = kEffectCatSpawnEnemy;
             break;
         case kEffectSpawnWallmaster:
