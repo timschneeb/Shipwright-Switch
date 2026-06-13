@@ -1549,9 +1549,7 @@ extern "C" void InitOTR(int argc, char* argv[]) {
     }
 
     srand(static_cast<unsigned int>(now));
-#ifdef ENABLE_REMOTE_CONTROL
     SDLNet_Init();
-#endif
     if (CVarGetInteger(CVAR_REMOTE_CROWD_CONTROL("Enabled"), 0)) {
         CrowdControl::Instance->Enable();
     }
@@ -1582,9 +1580,7 @@ extern "C" void DeinitOTR() {
     if (CVarGetInteger(CVAR_REMOTE_ANCHOR("Enabled"), 0)) {
         Anchor::Instance->Disable();
     }
-#ifdef ENABLE_REMOTE_CONTROL
     SDLNet_Quit();
-#endif
 
     // Destroying gui here because we have shared ptrs to LUS objects which output to SPDLOG which is destroyed before
     // these shared ptrs.

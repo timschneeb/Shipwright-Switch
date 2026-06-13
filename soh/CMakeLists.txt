@@ -153,11 +153,6 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set_source_files_properties(soh/Enhancements/custom-message/CustomMessageManager.h PROPERTIES COMPILE_FLAGS "/utf-8")
 endif()
 
-# handle Network removals
-if (!BUILD_REMOTE_CONTROL)
-    list(FILTER soh__ EXCLUDE REGEX "soh/Enhancements/crowd-control/")
-endif()
-
 # handle speechsynthesizer removals
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     list(FILTER soh__ EXCLUDE REGEX "soh/Enhancements/speechsynthesizer/Darwin")
@@ -308,49 +303,46 @@ FetchContent_MakeAvailable(dr_libs)
 find_package(SDL2)
 set(SDL2-INCLUDE ${SDL2_INCLUDE_DIRS})
 
-if (BUILD_REMOTE_CONTROL)
-	if(CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch")
-		# On Nintendo Switch portlibs provide only a pkg-config file.
-		# Use PkgConfig to discover include/lib and create IMPORTED targets
-		find_package(PkgConfig QUIET)
-		if(PkgConfig_FOUND)
-			pkg_check_modules(SDL2NET_PKG QUIET SDL2_net)
-			if(SDL2NET_PKG_FOUND)
-				message(STATUS "Found SDL2_net via pkg-config: ${SDL2NET_PKG_VERSION}")
+if(CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch")
+    # On Nintendo Switch portlibs provide only a pkg-config file.
+    # Use PkgConfig to discover include/lib and create IMPORTED targets
+    find_package(PkgConfig QUIET)
+    if(PkgConfig_FOUND)
+        pkg_check_modules(SDL2NET_PKG QUIET SDL2_net)
+        if(SDL2NET_PKG_FOUND)
+            message(STATUS "Found SDL2_net via pkg-config: ${SDL2NET_PKG_VERSION}")
 
-				# expose include dirs similar to Find module
-				set(SDL2-NET-INCLUDE ${SDL2NET_PKG_INCLUDE_DIRS})
+            # expose include dirs similar to Find module
+            set(SDL2-NET-INCLUDE ${SDL2NET_PKG_INCLUDE_DIRS})
 
-				# Create imported interface targets so existing link lines keep working.
-				if(NOT TARGET "SDL2_net::SDL2_net")
-					add_library("SDL2_net::SDL2_net" INTERFACE IMPORTED)
-					set_target_properties("SDL2_net::SDL2_net" PROPERTIES
-						INTERFACE_LINK_LIBRARIES "${SDL2NET_PKG_LIBRARIES}"
-						INTERFACE_INCLUDE_DIRECTORIES "${SDL2NET_PKG_INCLUDE_DIRS}"
-					)
-				endif()
+            # Create imported interface targets so existing link lines keep working.
+            if(NOT TARGET "SDL2_net::SDL2_net")
+                add_library("SDL2_net::SDL2_net" INTERFACE IMPORTED)
+                set_target_properties("SDL2_net::SDL2_net" PROPERTIES
+                    INTERFACE_LINK_LIBRARIES "${SDL2NET_PKG_LIBRARIES}"
+                    INTERFACE_INCLUDE_DIRECTORIES "${SDL2NET_PKG_INCLUDE_DIRS}"
+                )
+            endif()
 
-				if(NOT TARGET "SDL2_net::SDL2_net-static")
-					add_library("SDL2_net::SDL2_net-static" INTERFACE IMPORTED)
-					set_target_properties("SDL2_net::SDL2_net-static" PROPERTIES
-						INTERFACE_LINK_LIBRARIES "${SDL2NET_PKG_LIBRARIES}"
-						INTERFACE_INCLUDE_DIRECTORIES "${SDL2NET_PKG_INCLUDE_DIRS}"
-					)
-				endif()
+            if(NOT TARGET "SDL2_net::SDL2_net-static")
+                add_library("SDL2_net::SDL2_net-static" INTERFACE IMPORTED)
+                set_target_properties("SDL2_net::SDL2_net-static" PROPERTIES
+                    INTERFACE_LINK_LIBRARIES "${SDL2NET_PKG_LIBRARIES}"
+                    INTERFACE_INCLUDE_DIRECTORIES "${SDL2NET_PKG_INCLUDE_DIRS}"
+                )
+            endif()
 
-				set(SDL2_net_FOUND TRUE)
-			endif()
-		endif()
-	else()
-		find_package(SDL2_net)
-	endif()
-
-    if(NOT SDL2_net_FOUND)
-        message(STATUS "SDL2_net not found (it's possible the version installed is too old). Disabling BUILD_REMOTE_CONTROL.")
-        set(BUILD_REMOTE_CONTROL 0)
-    else()
-        set(SDL2-NET-INCLUDE ${SDL_NET_INCLUDE_DIRS})
+            set(SDL2_net_FOUND TRUE)
+        endif()
     endif()
+else()
+    find_package(SDL2_net)
+endif()
+
+if(NOT SDL2_net_FOUND)
+    message(STATUS "SDL2_net not found (it's possible the version installed is too old).")
+else()
+    set(SDL2-NET-INCLUDE ${SDL_NET_INCLUDE_DIRS})
 endif()
 
 if (ESPEAK)
@@ -384,7 +376,6 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
             "$<$<CONFIG:Release>:"
                 "NDEBUG;"
             ">"
-            "$<$<BOOL:${BUILD_REMOTE_CONTROL}>:ENABLE_REMOTE_CONTROL>"
             "INCLUDE_GAME_PRINTF;"
             "F3DEX_GBI_2"
             "UNICODE;"
@@ -441,7 +432,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU|Clang|AppleClang")
             "NDEBUG;"
         ">"
         "F3DEX_GBI_2;"
-        "$<$<BOOL:${BUILD_REMOTE_CONTROL}>:ENABLE_REMOTE_CONTROL>;"
         "_CONSOLE;"
         "_CRT_SECURE_NO_WARNINGS;"
         "ENABLE_OPENGL;"
@@ -707,7 +697,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
             "glu32;"
             "SDL2::SDL2;"
             "SDL2::SDL2main;"
-            "$<$<BOOL:${BUILD_REMOTE_CONTROL}>:SDL2_net::SDL2_net-static>"
+            "SDL2_net::SDL2_net-static"
             "glfw;"
             "winmm;"
             "imm32;"
@@ -740,7 +730,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
     find_package(Threads REQUIRED)
     set(ADDITIONAL_LIBRARY_DEPENDENCIES
         "libultraship;"
-		"$<$<BOOL:${BUILD_REMOTE_CONTROL}>:SDL2_net::SDL2_net-static>"
+		"SDL2_net::SDL2_net-static"
         SDL2::SDL2
         -lglad
         Threads::Threads
@@ -783,7 +773,7 @@ else()
         "Vorbis::vorbisfile"
         "Opus::opus"
         "Opusfile::Opusfile"
-        "$<$<BOOL:${BUILD_REMOTE_CONTROL}>:SDL2_net::SDL2_net>"
+        "SDL2_net::SDL2_net"
         ${CMAKE_DL_LIBS}
         Threads::Threads
     )
