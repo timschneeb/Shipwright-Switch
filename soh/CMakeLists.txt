@@ -236,6 +236,17 @@ set(ALL_FILES
 ################################################################################
 add_executable(${PROJECT_NAME} ${ALL_FILES})
 
+# Precompiled Headers
+# Pre-parses expensive stable headers (STL, spdlog, nlohmann/json, imgui,
+# libultraship) once and reuses the result across all C++ translation units.
+# Disable with -DSOH_USE_PCH=OFF if you encounter build issues.
+option(SOH_USE_PCH "Use precompiled headers to speed up build" ON)
+if (SOH_USE_PCH)
+    target_precompile_headers(${PROJECT_NAME} PRIVATE
+            "$<$<COMPILE_LANGUAGE:CXX>:${CMAKE_CURRENT_SOURCE_DIR}/soh/soh_pch.hpp>"
+    )
+endif()
+
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 use_props(${PROJECT_NAME} "${CMAKE_CONFIGURATION_TYPES}" "${DEFAULT_CXX_PROPS}")
 endif()
