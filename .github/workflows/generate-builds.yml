@@ -274,8 +274,8 @@ jobs:
     - name: Build SoH
       run: |
         export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
-        cmake -H. -Bbuild-switch -GNinja -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake -DCMAKE_BUILD_TYPE:STRING=Release -DBUILD_REMOTE_CONTROL=1 -DDISABLE_SCRIPTING=1
-        cmake --build build-switch --target soh_nro --config Release -j3
+        cmake -H. -Bbuild-switch -GNinja -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DBUILD_REMOTE_CONTROL=1 -DENABLE_SCRIPTING=0 -DDISABLE_SCRIPTING=1
+        cmake --build build-switch --target soh_nro --config Release -j6
 
         mv build-switch/soh/*.nro soh.nro
         mv README.md readme.txt
@@ -293,7 +293,7 @@ jobs:
     - name: Upload build
       uses: actions/upload-artifact@v4
       with:
-        name: soh-switch
+        name: soh-nx
         path: |
           soh.nro
           soh.o2r
@@ -301,7 +301,7 @@ jobs:
     - name: Upload ELF
       uses: actions/upload-artifact@v4
       with:
-        name: soh-elf-debug-symbols
+        name: elf-debug-symbols
         path: |
           build-switch/soh/*.elf
   build-windows:
