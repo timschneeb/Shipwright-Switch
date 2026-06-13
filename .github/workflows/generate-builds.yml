@@ -237,7 +237,7 @@ jobs:
       image: devkitpro/devkita64:20251117
     steps:
     - name: Configure ccache
-      uses: hendrikmuhs/ccache-action@v1.2
+      uses: hendrikmuhs/ccache-action@v1.2.22
       with:
         save: ${{ github.ref_name == github.event.repository.default_branch }}
         key: nx-ccache-${{ github.ref }}-${{ github.sha }}
