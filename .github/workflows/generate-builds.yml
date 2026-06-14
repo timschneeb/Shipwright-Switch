@@ -244,6 +244,7 @@ jobs:
 
   build-switch:
     needs: generate-soh-otr
+    runs-on: "ubuntu-latest"
     strategy:
       matrix:
         variant: [default, lto]
