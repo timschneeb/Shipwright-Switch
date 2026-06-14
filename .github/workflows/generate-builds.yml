@@ -266,6 +266,7 @@ jobs:
         restore-keys: |
           nx-ccache${{ env.ARTIFACT_SUFFIX }}-${{ github.ref }}
           nx-ccache${{ env.ARTIFACT_SUFFIX }}
+        max-size: "2G"
 
     - name: Install dependencies
       run: |
@@ -277,16 +278,19 @@ jobs:
         wget https://github.com/Kitware/CMake/releases/download/v3.28.3/cmake-3.28.3-linux-x86_64.sh -O /tmp/cmake.sh
         sudo sh /tmp/cmake.sh --prefix=/usr/local/ --exclude-subdir
 
-    - name: Restore Cached Switch CMake
-      id: restore-cache-switch-cmake
+    - name: Cache Switch CMake Build
+      id: cache-switch-cmake
       uses: actions/cache/restore@v5
       with:
-        key: nx-cmake-switch${{ env.ARTIFACT_SUFFIX }}-${{ github.ref }}-${{ github.sha }}
+        key: nx-cmake-switch${{ env.ARTIFACT_SUFFIX }}-${{ hashFiles('**/CMakeLists.txt', '**/*.cmake') }}
         restore-keys: |
-          nx-cmake-switch${{ env.ARTIFACT_SUFFIX }}-${{ github.ref }}-
           nx-cmake-switch${{ env.ARTIFACT_SUFFIX }}-
         path: |
           ${{ env.BUILD_DIR }}/
+
+    - name: Touch source files
+      run: |
+        git ls-files '*.c' '*.cpp' '*.cxx' '*.cc' '*.h' '*.hpp' '*.hxx' '*.hh' 2>/dev/null | xargs -r touch
     - name: Build SoH
       run: |
         export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
@@ -302,10 +306,10 @@ jobs:
         mv ${{ env.BUILD_DIR }}/soh/*.nro soh.nro
         mv README.md readme.txt
     - name: Save Cached Switch CMake
-      if: ${{ github.ref_name == github.event.repository.default_branch }}
+      if: ${{ success() && github.ref_name == github.event.repository.default_branch }}
       uses: actions/cache/save@v5
       with:
-        key: ${{ steps.restore-cache-switch-cmake.outputs.cache-primary-key }}
+        key: ${{ steps.cache-switch-cmake.outputs.cache-primary-key }}
         path: |
           ${{ env.BUILD_DIR }}/
     - name: Download soh.o2r
