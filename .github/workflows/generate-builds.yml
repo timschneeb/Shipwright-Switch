@@ -254,6 +254,10 @@ jobs:
       BUILD_DIR: build-switch${{ matrix.variant == 'lto' && '-lto' || '' }}
       ARTIFACT_SUFFIX: ${{ matrix.variant == 'lto' && '-lto' || '' }}
     steps:
+    - name: Git Checkout
+      uses: actions/checkout@v6
+      with:
+        submodules: true
     - name: Configure ccache
       uses: hendrikmuhs/ccache-action@v1.2.22
       with:
