@@ -244,18 +244,23 @@ jobs:
 
   build-switch:
     needs: generate-soh-otr
-    runs-on: ${{ (vars.LINUX_RUNNER && fromJSON(vars.LINUX_RUNNER)) || 'ubuntu-latest' }}
+    strategy:
+      matrix:
+        variant: [default, lto]
     container:
       image: devkitpro/devkita64:20251117
+    env:
+      BUILD_DIR: build-switch${{ matrix.variant == 'lto' && '-lto' || '' }}
+      ARTIFACT_SUFFIX: ${{ matrix.variant == 'lto' && '-lto' || '' }}
     steps:
     - name: Configure ccache
       uses: hendrikmuhs/ccache-action@v1.2.22
       with:
         save: ${{ github.ref_name == github.event.repository.default_branch }}
-        key: nx-ccache-${{ github.ref }}-${{ github.sha }}
+        key: nx-ccache${{ env.ARTIFACT_SUFFIX }}-${{ github.ref }}-${{ github.sha }}
         restore-keys: |
-          nx-ccache-${{ github.ref }}
-          nx-ccache
+          nx-ccache${{ env.ARTIFACT_SUFFIX }}-${{ github.ref }}
+          nx-ccache${{ env.ARTIFACT_SUFFIX }}
 
     - name: Install dependencies
       run: |
@@ -267,29 +272,29 @@ jobs:
         wget https://github.com/Kitware/CMake/releases/download/v3.28.3/cmake-3.28.3-linux-x86_64.sh -O /tmp/cmake.sh
         sudo sh /tmp/cmake.sh --prefix=/usr/local/ --exclude-subdir
 
-    - name: Fix dubious ownership error
-      if: ${{ vars.LINUX_RUNNER }}
-      run: git config --global --add safe.directory '*'
-    - uses: actions/checkout@v4
-      with:
-        submodules: true
     - name: Restore Cached Switch CMake
       id: restore-cache-switch-cmake
       uses: actions/cache/restore@v5
       with:
-        key: nx-cmake-switch-${{ github.ref }}-${{ github.sha }}
+        key: nx-cmake-switch${{ env.ARTIFACT_SUFFIX }}-${{ github.ref }}-${{ github.sha }}
         restore-keys: |
-          nx-cmake-switch-${{ github.ref }}-
-          nx-cmake-switch-
+          nx-cmake-switch${{ env.ARTIFACT_SUFFIX }}-${{ github.ref }}-
+          nx-cmake-switch${{ env.ARTIFACT_SUFFIX }}-
         path: |
-          build-switch/
+          ${{ env.BUILD_DIR }}/
     - name: Build SoH
       run: |
         export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
-        cmake -H. -Bbuild-switch -GNinja -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DENABLE_SCRIPTING=0
-        cmake --build build-switch --target soh_nro --config Release -j6
+        cmake -H. -B${{ env.BUILD_DIR }} -GNinja \
+          -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake \
+          -DCMAKE_BUILD_TYPE:STRING=Release \
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+          -DENABLE_SCRIPTING=0 \
+          ${{ matrix.variant == 'lto' && '-DCMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE=ON' || '' }}
+        cmake --build ${{ env.BUILD_DIR }} --target soh_nro --config Release -j6
 
-        mv build-switch/soh/*.nro soh.nro
+        mv ${{ env.BUILD_DIR }}/soh/*.nro soh.nro
         mv README.md readme.txt
     - name: Save Cached Switch CMake
       if: ${{ github.ref_name == github.event.repository.default_branch }}
@@ -297,7 +302,7 @@ jobs:
       with:
         key: ${{ steps.restore-cache-switch-cmake.outputs.cache-primary-key }}
         path: |
-          build-switch/
+          ${{ env.BUILD_DIR }}/
     - name: Download soh.o2r
       uses: actions/download-artifact@v4
       with:
@@ -305,7 +310,7 @@ jobs:
     - name: Upload build
       uses: actions/upload-artifact@v4
       with:
-        name: soh-nx
+        name: soh-nx${{ env.ARTIFACT_SUFFIX }}
         path: |
           soh.nro
           soh.o2r
@@ -313,9 +318,9 @@ jobs:
     - name: Upload ELF
       uses: actions/upload-artifact@v4
       with:
-        name: elf-debug-symbols
+        name: elf-debug-symbols${{ env.ARTIFACT_SUFFIX }}
         path: |
-          build-switch/soh/*.elf
+          ${{ env.BUILD_DIR }}/soh/*.elf
   build-windows:
     if: 0 # Disable Windows build on fork
     needs: generate-soh-otr
