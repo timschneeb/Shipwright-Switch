@@ -40,7 +40,7 @@ math(EXPR PATCH_INDEX "${PROJECT_VERSION_PATCH}")
 list(GET NATO_PHONETIC_ALPHABET ${PATCH_INDEX} PROJECT_PATCH_WORD)
 
 set(PROJECT_BUILD_NAME "Ackbar ${PROJECT_PATCH_WORD}" CACHE STRING "" FORCE)
-set(PROJECT_TEAM "github.com/harbourmasters" CACHE STRING "" FORCE)
+set(PROJECT_TEAM "HarbourMasters, timschneeb" CACHE STRING "" FORCE)
 
 execute_process(
     COMMAND git branch --show-current
