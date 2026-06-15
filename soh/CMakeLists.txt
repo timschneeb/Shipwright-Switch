@@ -814,7 +814,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch")
 nx_generate_nacp(Ship.nacp
    NAME "Ship of Harkinian"
    AUTHOR "${PROJECT_TEAM}"
-   VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
+   VERSION "${PROJECT_VERSION_CACHE}"
 )
 
 nx_create_nro(soh
