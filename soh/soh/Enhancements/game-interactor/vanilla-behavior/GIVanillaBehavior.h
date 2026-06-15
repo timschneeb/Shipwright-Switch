@@ -622,6 +622,16 @@ typedef enum {
 
     // #### `result`
     // ```c
+    // (gSaveContext.inventory.items[gSaveContext.equips.cButtonSlots[button - 1]] == ITEM_MILK_BOTTLE) &&
+    //     (item == ITEM_BOTTLE)
+    // ```
+    // #### `args`
+    // - `int32_t` (button - promoted from `u8`)
+    // - `int32_t` (item - promoted from `u8`)
+    VB_EMPTY_BOTTLE_TO_HALF_MILK,
+
+    // #### `result`
+    // ```c
     // (Message_GetState(&play->msgCtx) == TEXT_STATE_EVENT) && Message_ShouldAdvance(play)
     // ```
     // #### `args`
@@ -934,6 +944,14 @@ typedef enum {
     // - `*EnGe1`
     // - `*PlayState`
     VB_PLAY_HORSEBACK_ARCHERY,
+
+    // #### `result`
+    // ```c
+    // play->sceneNum == SCENE_KOKIRI_FOREST
+    // ```
+    // #### `args`
+    // - `*EnSa`
+    VB_SARIA_GESTURE,
 
     // #### `result`
     // ```c
@@ -3016,6 +3034,49 @@ typedef enum {
     // - `*EnPeehat`
     // - `*PlayState`
     VB_PEEHAT_SPAWN_LARVAS,
+
+    // #### `result`
+    // ```c
+    // gSaveContext.equips.buttonItems[0] != ITEM_NONE
+    // ```
+    // Whether the B button slot should be treated as holding an item when entering the
+    // horseback/minigame "temporary B" force path. Rando returns `true` for a swordless
+    // player so the swordless-on-Epona item glitch can be blocked.
+    // #### `args`
+    // - `*PlayState`
+    VB_TEMP_B_TREAT_AS_OCCUPIED,
+
+    // #### `result`
+    // ```c
+    // true
+    // ```
+    // Side-effect hook (return value ignored): fired right after the vanilla
+    // `buttonStatus[0] = buttonItems[0]` stash so rando can relocate it to its swordless
+    // sentinel for later restoration.
+    // #### `args`
+    // - `*PlayState`
+    VB_TEMP_B_STASH_SWORDLESS,
+
+    // #### `result`
+    // ```c
+    // (gSaveContext.equips.buttonItems[0] != ITEM_NONE) || (gSaveContext.infTable[29] == 0)
+    // ```
+    // Whether the "temporary B" item should be restored to the B button. Rando also returns
+    // `true` when it had stashed a swordless sentinel.
+    // #### `args`
+    // - None
+    VB_TEMP_B_SHOULD_RESTORE,
+
+    // #### `result`
+    // ```c
+    // true
+    // ```
+    // Side-effect hook (return value ignored): fired right after the vanilla
+    // `buttonItems[0] = buttonStatus[0]` restore so rando can convert its swordless sentinel
+    // back into an empty (swordless) B button.
+    // #### `args`
+    // - None
+    VB_TEMP_B_RESTORE_SWORDLESS,
 } GIVanillaBehavior;
 
 #endif
