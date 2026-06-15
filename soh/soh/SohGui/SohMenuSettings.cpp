@@ -354,36 +354,12 @@ void SohMenu::AddMenuSettings() {
         });
     AddWidget(path, "Audio API (Needs reload)", WIDGET_AUDIO_BACKEND).RaceDisable(false);
 
-    path.column = SECTION_COLUMN_2;
-    AddWidget(path, "Asynchronous audio buffer (Restart required)", WIDGET_CVAR_CHECKBOX)
-        .CVar(CVAR_SETTING("Audio.AsyncBuffer"))
-        .RaceDisable(false)
-        .Options(CheckboxOptions().DefaultValue(true));
-
-    auto bufferSize = CVarGetInteger(CVAR_SETTING("Audio.AsyncBufferSize"), 2000);
-    std::string bufferSizeFormat = std::to_string(bufferSize / 32) + " ms";
-    AddWidget(path, "Audio buffer target size", WIDGET_CVAR_SLIDER_INT)
-        .CVar(CVAR_SETTING("Audio.AsyncBufferSize"))
-        .RaceDisable(false)
-        .Callback([](WidgetInfo& info) {
-            auto options = std::static_pointer_cast<IntSliderOptions>(info.options);
-            int samples = CVarGetInteger(info.cVar, options->defaultValue);
-            static std::string formatStr;
-            formatStr = std::to_string(samples / 32) + " ms"; // assuming 32kHz sample rate
-            options->format = formatStr.c_str();
-        })
-        .PreFunc([](WidgetInfo& info) {
-            info.isHidden = !CVarGetInteger(CVAR_SETTING("Audio.AsyncBuffer"), 1);
-        })
-        .Options(IntSliderOptions().Min(960).Max(3360).DefaultValue(2000).Format(bufferSizeFormat.c_str()));
-
     // Graphics Settings
     static int32_t maxFps = 360;
     const char* tooltip = "Uses Matrix Interpolation to create extra frames, resulting in smoother graphics. This is "
                           "purely visual and does not impact game logic, execution of glitches etc.\n\nA higher target "
                           "FPS than your monitor's refresh rate will waste resources, and might give a worse result.";
     path.sidebarName = "Graphics";
-    path.column = SECTION_COLUMN_1;
     AddSidebarEntry("Settings", "Graphics", 3);
     AddWidget(path, "Graphics Options", WIDGET_SEPARATOR_TEXT);
 #ifndef __SWITCH__

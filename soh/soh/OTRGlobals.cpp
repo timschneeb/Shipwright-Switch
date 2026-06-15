@@ -1028,6 +1028,18 @@ extern "C" int AudioPlayer_GetDesiredBuffered(void);
 std::unordered_map<std::string, ExtensionEntry> ExtensionCache;
 
 void OTRAudio_Thread() {
+    while (audio.running) {
+        {
+            std::unique_lock<std::mutex> Lock(audio.mutex);
+            while (!audio.processing && audio.running) {
+                audio.cv_to_thread.wait(Lock);
+            }
+
+            if (!audio.running) {
+                break;
+            }
+        }
+        std::unique_lock<std::mutex> Lock(audio.mutex);
 // AudioMgr_ThreadEntry(&gAudioMgr);
 //  528 and 544 relate to 60 fps at 32 kHz 32000/60 = 533.333..
 //  in an ideal world, one third of the calls should use num_samples=544 and two thirds num_samples=528
@@ -1037,66 +1049,27 @@ void OTRAudio_Thread() {
 #define AUDIO_FRAMES_PER_UPDATE (R_UPDATE_RATE > 0 ? R_UPDATE_RATE : 1)
 #define NUM_AUDIO_CHANNELS 2
 
-    if (audio.asyncBuffer) {
-        // Wait for the N64 audio subsystem to be fully initialized.
-        while (!audio.initialized.load() && audio.running.load()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        }
-
+        int samples_left = AudioPlayer_Buffered();
+        u32 num_audio_samples = samples_left < AudioPlayer_GetDesiredBuffered() ? SAMPLES_HIGH : SAMPLES_LOW;
 
         // 3 is the maximum authentic frame divisor.
         s16 audio_buffer[SAMPLES_HIGH * NUM_AUDIO_CHANNELS * 3];
-
-        while (audio.running.load()) {
-            int samples_left = AudioPlayer_Buffered();
-
-            int targetBuffered = CVarGetInteger(CVAR_SETTING("Audio.AsyncBufferSize"), 2000);
-            if (samples_left < targetBuffered) {
-                std::unique_lock<std::mutex> Lock(audio.mutex);
-                u32 num_audio_samples = samples_left < AudioPlayer_GetDesiredBuffered() ? SAMPLES_HIGH : SAMPLES_LOW;
-                AudioMgr_CreateNextAudioBuffer(audio_buffer, num_audio_samples);
-                AudioPlayer_Play((u8*)audio_buffer,
-                                 num_audio_samples * (sizeof(int16_t) * NUM_AUDIO_CHANNELS));
-            } else {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            }
+        for (int i = 0; i < AUDIO_FRAMES_PER_UPDATE; i++) {
+            AudioMgr_CreateNextAudioBuffer(audio_buffer + i * (num_audio_samples * NUM_AUDIO_CHANNELS),
+                                           num_audio_samples);
         }
-    } else {
-        while (audio.running) {
-            {
-                std::unique_lock<std::mutex> Lock(audio.mutex);
-                while (!audio.processing && audio.running) {
-                    audio.cv_to_thread.wait(Lock);
-                }
-                if (!audio.running) {
-                    break;
-                }
-            }
-            std::unique_lock<std::mutex> Lock(audio.mutex);
 
-            int samples_left = AudioPlayer_Buffered();
-            u32 num_audio_samples = samples_left < AudioPlayer_GetDesiredBuffered() ? SAMPLES_HIGH : SAMPLES_LOW;
+        AudioPlayer_Play((u8*)audio_buffer,
+                         num_audio_samples * (sizeof(int16_t) * NUM_AUDIO_CHANNELS * AUDIO_FRAMES_PER_UPDATE));
 
-            // 3 is the maximum authentic frame divisor.
-            s16 audio_buffer[SAMPLES_HIGH * NUM_AUDIO_CHANNELS * 3];
-            for (int i = 0; i < AUDIO_FRAMES_PER_UPDATE; i++) {
-                AudioMgr_CreateNextAudioBuffer(audio_buffer + i * (num_audio_samples * NUM_AUDIO_CHANNELS),
-                                               num_audio_samples);
-            }
-
-            AudioPlayer_Play((u8*)audio_buffer,
-                             num_audio_samples * (sizeof(int16_t) * NUM_AUDIO_CHANNELS * AUDIO_FRAMES_PER_UPDATE));
-
-            audio.processing = false;
-            audio.cv_from_thread.notify_one();
-        }
+        audio.processing = false;
+        audio.cv_from_thread.notify_one();
     }
 }
 
 void OTRAudio_Init() {
     // Precache all our samples, sequences, etc...
     ResourceMgr_LoadDirectory("audio");
-    audio.asyncBuffer = CVarGetInteger(CVAR_SETTING("Audio.AsyncBuffer"), 1);
 
     if (!audio.running) {
         audio.running = true;
@@ -1111,17 +1084,16 @@ extern "C" size_t sequenceMapSize;
 extern "C" char** fontMap;
 extern "C" size_t fontMapSize;
 
-extern "C" void OTRAudio_Start(void) {
-    audio.initialized.store(true);
-}
-
 extern "C" void OTRAudio_Exit() {
-    audio.running = false;
-    audio.cv_to_thread.notify_all();
-    if (audio.thread.joinable()) {
-        audio.thread.join();
+    // Tell the audio thread to stop
+    {
+        std::unique_lock<std::mutex> Lock(audio.mutex);
+        audio.running = false;
     }
+    audio.cv_to_thread.notify_all();
 
+    // Wait until the audio thread quit
+    audio.thread.join();
 #if 0
     for (size_t i = 0; i < sequenceMapSize; i++) {
         free(sequenceMap[i]);
@@ -1786,14 +1758,12 @@ void RunCommands(Gfx* Commands, const std::vector<std::unordered_map<Mtx*, MtxF>
 
 // C->C++ Bridge
 extern "C" void Graph_ProcessGfxCommands(Gfx* commands) {
-    if (!audio.asyncBuffer) {
-        {
-            std::unique_lock<std::mutex> Lock(audio.mutex);
-            audio.processing = true;
-        }
-        audio.cv_to_thread.notify_one();
+    {
+        std::unique_lock<std::mutex> Lock(audio.mutex);
+        audio.processing = true;
     }
 
+    audio.cv_to_thread.notify_one();
     std::vector<std::unordered_map<Mtx*, MtxF>> mtx_replacements;
     int target_fps = OTRGlobals::Instance->GetInterpolationFPS();
     static int last_fps;
@@ -1840,7 +1810,7 @@ extern "C" void Graph_ProcessGfxCommands(Gfx* commands) {
     last_fps = fps;
     last_update_rate = R_UPDATE_RATE;
 
-    if (!audio.asyncBuffer) {
+    {
         std::unique_lock<std::mutex> Lock(audio.mutex);
         while (audio.processing) {
             audio.cv_from_thread.wait(Lock);
