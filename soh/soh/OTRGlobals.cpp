@@ -442,12 +442,12 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
     if (!foundVanilla && !foundMq) {
         Ship::Switch::ShowErrorApplet("Missing O2R ROM Archives\n\n"
                   "The oot.o2r or oot-mq.o2r file is missing.\n"
-                  "Please generate a ROM O2R using the PC version, place it on the SD card and relaunch.");
+                  "Please generate a ROM O2R using the PC version, place it in the same folder as soh.nro and relaunch.");
     }
     else if (shouldRegen) {
         Ship::Switch::ShowErrorApplet("Outdated ROM Archives\n\n"
                               "Your oot.o2r or oot-mq.o2r were created with incompatible versions of SoH.\n"
-                              "Please regenerate a new ROM O2R using the PC version, place it on the SD card and relaunch.");
+                              "Please regenerate a new ROM O2R using the PC version, place it in the same folder as soh.nro and relaunch.");
     }
 #else
     if (!std::filesystem::exists(installPath + "/assets")) {
