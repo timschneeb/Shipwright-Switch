@@ -656,7 +656,7 @@ if (CMAKE_GENERATOR MATCHES "Visual Studio")
     COMMAND ${CMAKE_COMMAND} -E copy_directory_if_different ${CMAKE_SOURCE_DIR}/soh/assets/xml ${CMAKE_BINARY_DIR}/soh/assets/xml
     )
 endif()
-if(NOT CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch|CafeOS")
+if(NOT CMAKE_SYSTEM_NAME MATCHES "CafeOS")
     add_custom_command(
         TARGET ${PROJECT_NAME}
         POST_BUILD
@@ -673,7 +673,7 @@ endif()
 add_dependencies(${PROJECT_NAME}
     libultraship
 )
-if(NOT CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch|CafeOS")
+if(NOT CMAKE_SYSTEM_NAME MATCHES "CafeOS")
 add_dependencies(${PROJECT_NAME}
     ZAPDLib
 )
@@ -730,6 +730,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
     find_package(Threads REQUIRED)
     set(ADDITIONAL_LIBRARY_DEPENDENCIES
         "libultraship;"
+        "ZAPDLib;"
 		"SDL2_net::SDL2_net-static"
         SDL2::SDL2
         -lglad
@@ -822,7 +823,17 @@ nx_create_nro(soh
     ICON ${CMAKE_CURRENT_SOURCE_DIR}/icon.jpg
 )
 
+add_custom_command(
+    TARGET ${PROJECT_NAME}
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_BINARY_DIR}/romfs/root"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_BINARY_DIR}/assets" "${CMAKE_CURRENT_BINARY_DIR}/romfs/root/assets"
+    COMMAND "${DEVKITPRO}/tools/bin/build_romfs" "${CMAKE_CURRENT_BINARY_DIR}/romfs/" "${CMAKE_CURRENT_BINARY_DIR}/assets.romfs"
+    COMMENT "Generating assets.romfs..."
+)
+
 INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/soh.nro DESTINATION . COMPONENT ship)
+INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/assets.romfs DESTINATION . COMPONENT ship)
 
 elseif(CMAKE_SYSTEM_NAME MATCHES "CafeOS")
 

@@ -51,9 +51,7 @@
 #include <fast/Fast3dGui.h>
 #include <fast/debug/GfxDebugger.h>
 
-#if not defined(__SWITCH__) && not defined(__WIIU__)
 #include "Extractor/Extract.h"
-#endif
 
 #include <fast/interpreter.h>
 
@@ -418,6 +416,7 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
     bool foundVanilla = std::filesystem::exists(Ship::Context::LocateFileAcrossAppDirs("oot.o2r", appShortName));
     bool foundMq = std::filesystem::exists(Ship::Context::LocateFileAcrossAppDirs("oot-mq.o2r", appShortName));
     bool shouldRegen = VerifyArchiveVersion(vanillaVersion) || VerifyArchiveVersion(mqVersion);
+    bool needsO2r = (!foundVanilla && !foundMq) || shouldRegen;
 
     std::filesystem::path ownPath;
     std::vector<std::string> args;
@@ -427,9 +426,7 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
         }
     }
 
-#if not defined(__SWITCH__) && not defined(__WIIU__)
     Extractor extract;
-#endif
     PromptSteps promptStep = PS_FILE_CHECK;
     bool generatedIsMQ = false;
     std::atomic<size_t> extractCount = 0, totalExtract = 0;
@@ -438,22 +435,17 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
     std::string dataPath = Ship::Context::GetAppDirectoryPath(appShortName);
     std::string file;
 
-#if defined(__SWITCH__)
-    if (!foundVanilla && !foundMq) {
-        Ship::Switch::ShowErrorApplet("Missing O2R ROM Archives\n\n"
-                  "The oot.o2r or oot-mq.o2r file is missing.\n"
-                  "Please generate a ROM O2R using the PC version, place it on the SD card and relaunch.");
-    }
-    else if (shouldRegen) {
-        Ship::Switch::ShowErrorApplet("Outdated ROM Archives\n\n"
-                              "Your oot.o2r or oot-mq.o2r were created with incompatible versions of SoH.\n"
-                              "Please regenerate a new ROM O2R using the PC version, place it on the SD card and relaunch.");
-    }
+#ifdef __SWITCH__
+    if (!std::filesystem::exists(installPath + "/assets.romfs") && needsO2r) {
+        SohGui::RegisterPopup("Extractor assets not found",
+                              "Missing 'assets.romfs' file needed to generate O2R file.\nPlease "
+                              "re-extract them from the download or generate an O2R file using the matching PC version.",
 #else
-    if (!std::filesystem::exists(installPath + "/assets")) {
+    if (!std::filesystem::exists(installPath + "/assets") && needsO2r) {
         SohGui::RegisterPopup("Extractor assets not found",
                               "No O2R files found. Missing 'assets/' folder needed to generate OTR file.\nPlease "
                               "re-extract them from the download or.\n\nExiting...",
+#endif
                               "OK", "", [&]() { exit(1); });
     } else if (shouldRegen) {
         SohGui::RegisterPopup("Outdated ROM Archives",
@@ -462,14 +454,10 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
         std::filesystem::remove("oot.o2r");
         std::filesystem::remove("oot-mq.o2r");
     }
-#endif
-
     std::shared_ptr<BS::thread_pool> threadPool = std::make_shared<BS::thread_pool>(1);
     std::optional<std::future<void>> extractionTask;
 
-#if not defined(__SWITCH__) && not defined(__WIIU__)
     CheckAndCreateModFolder();
-#endif
 
     while (!extractDone) {
         if (SohGui::PopupsQueued() > 0 || extractionTask.has_value()) {
@@ -480,25 +468,12 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
                 if (sohArchiveVersionMatch) {
 #ifdef _WIN32
                     extractStep = ES_WINDOWS;
-#elif (defined(__WIIU__) || defined(__SWITCH__))
-                    extractStep = ES_VERIFY;
 #else
                     extractStep = args.empty() ? ES_EXTRACT : ES_EXTRACT_ARGS;
 #endif
                 } else {
-                    std::string msg;
-
-#if defined(__SWITCH__)
-                    msg = "Please re-extract it from the download.\n"
-                          "Press the Home button to exit...";
-#elif defined(__WIIU__)
-                    msg = "Please extract the soh.o2r from the Ship of Harkinian download\nto your folder.\n\nPress "
-                          "and hold the power\n"
-                          "button to shutdown...";
-#else
-                    msg =
+                    std::string msg =
                         "Please extract the soh.o2r from the Ship of Harkinian download to your folder.\n\nExiting...";
-#endif
                     std::string title =
                         !std::filesystem::exists(portArchivePath) ? "Missing soh.o2r" : "soh.o2r is outdated";
                     SohGui::RegisterPopup(title, msg, "OK", "", [&]() { exit(1); });
@@ -578,7 +553,6 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
                 break;
             }
             case ES_EXTRACT_ARGS: {
-#if !defined(__SWITCH__) && !defined(__WIIU__)
                 if (args.empty()) {
                     SohGui::RegisterPopup(
                         "Run Ship of Harkinian", "All files have been processed. Run SoH?", "Yes", "No",
@@ -623,13 +597,9 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
                     std::string msg = "File\n" + std::string(file) + "\nis not a ROM or does not match supported ROMs.";
                     SohGui::RegisterPopup("SoH ROM Error", msg.c_str());
                 }
-#else
-                extractStep = ES_VERIFY;
-#endif
                 break;
             }
             case ES_EXTRACT: {
-#if not defined(__SWITCH__) && not defined(__WIIU__)
                 switch (promptStep) {
                     case PS_FILE_CHECK: {
                         const bool ootO2RExists =
@@ -664,6 +634,9 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
                         continue;
                     }
                     case PS_FIRST: {
+                        Ship::Switch::ShowErrorApplet("ManuallySearchForRomMatchingType is not implemented on Switch");
+
+                        // TODO: ManuallySearchForRomMatchingType is not implemented on Switch
                         if (!extract.ManuallySearchForRomMatchingType(RomSearchMode::Both)) {
                             promptStep = PS_FILE_CHECK;
                             continue;
@@ -679,6 +652,9 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
                         continue;
                     }
                     case PS_SECOND: {
+                        Ship::Switch::ShowErrorApplet("ManuallySearchForRomMatchingType is not implemented on Switch (2)");
+
+                        // TODO: ManuallySearchForRomMatchingType is not implemented on Switch
                         SohGui::RegisterPopup(
                             "Extraction Complete", "ROM Extracted. Extract another?", "Yes", "No",
                             [&]() {
@@ -701,7 +677,6 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
                     default:
                         break;
                 }
-#endif
                 break;
             }
             case ES_VERIFY: {
@@ -766,7 +741,7 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
                     auto filename = std::filesystem::path(file).filename().string();
                     ImGui::Text("Extracting %s...%s", filename.c_str(),
                                 roundf(progress) == 100.0f ? " Done. Finishing up." : "");
-                    std::string overlay = extractCount > 0 ? fmt::format("{:.0f}%", progress) : "Starting Up";
+                    std::string overlay = extractCount > 0 ? fmt::format("{:.0f}% ({} of {})", progress, extractCount.load(), totalExtract.load()) : "Starting Up";
                     ImGui::ProgressBar(progress / 100.0f, ImVec2(600.0f, 50.0f), overlay.c_str());
                     ImGui::EndPopup();
                 }
@@ -1526,12 +1501,10 @@ OTRVersion DetectOTRVersion(std::string fileName, bool isMQ) {
 }
 
 extern "C" void Messagebox_ShowErrorBox(char* title, char* body) {
-#if not defined(__SWITCH__) && not defined(__WIIU__)
-    Extractor::ShowErrorBox(title, body);
-#elif defined(__SWITCH__)
-    Ship::Switch::ShowErrorApplet((std::string(title) + "\n\n" + std::string(body)).c_str());
-#elif defined(__WIIU__)
+#if defined(__WIIU__)
     OSFatal((std::string(title) + "\n\n" + std::string(body)).c_str());
+#else
+    Extractor::ShowErrorBox(title, body);
 #endif
 }
 

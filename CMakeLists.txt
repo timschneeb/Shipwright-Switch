@@ -195,6 +195,10 @@ target_compile_options(libultraship PRIVATE "${WARNING_OVERRIDE}")
 target_compile_definitions(libultraship PUBLIC INCLUDE_MPQ_SUPPORT)
 add_subdirectory(ZAPDTR/ZAPD ${CMAKE_BINARY_DIR}/ZAPD)
 add_subdirectory(OTRExporter)
+# OTRExporter includes ZAPD headers that need tinyxml2, but it doesn't link
+# against libultraship (which provides tinyxml2::tinyxml2 via FetchContent on
+# Switch). Give it the link dependency so it gets the include path too.
+target_link_libraries(OTRExporter PRIVATE tinyxml2::tinyxml2)
 add_subdirectory(soh)
 
 set_property(TARGET soh PROPERTY APPIMAGE_DESKTOP_FILE_TERMINAL YES)

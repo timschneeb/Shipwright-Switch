@@ -39,6 +39,10 @@
 #define UNREACHABLE __builtin_unreachable();
 #endif
 
+#ifdef __SWITCH__
+#include "ship/port/switch/SwitchImpl.h"
+#endif
+
 #include <stdlib.h>
 
 #include <SDL2/SDL_messagebox.h>
@@ -112,6 +116,8 @@ enum class ButtonId : int {
 void Extractor::ShowErrorBox(const char* title, const char* text) {
 #ifdef _WIN32
     MessageBoxA(nullptr, text, title, MB_OK | MB_ICONERROR);
+#elif __SWITCH__
+    Ship::Switch::ShowErrorApplet("%s\n\n%s", title, text);
 #else
     SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, text, nullptr);
 #endif
@@ -136,6 +142,11 @@ void Extractor::ShowCompressedErrorBox() const {
 }
 
 int Extractor::ShowRomPickBox(uint32_t verCrc) const {
+#ifdef __SWITCH__
+    // unsupported
+    return (int)ButtonId::YES;
+#endif
+
     std::unique_ptr<char[]> boxBuffer = std::make_unique<char[]>(mCurrentRomPath.size() + 100);
     SDL_MessageBoxData boxData = { 0 };
     SDL_MessageBoxButtonData buttons[3] = { { 0 } };
@@ -317,6 +328,9 @@ bool Extractor::GetRomPathFromBox() {
         return false;
     }
     mCurrentRomPath = nameBuffer;
+#elif __SWITCH__
+    // unsupported
+    return false;
 #else
     auto selection = pfd::open_file("Select a file", mSearchPath, { "N64 Roms", "*.z64 *.n64 *.v64" }).result();
 
@@ -495,6 +509,11 @@ bool Extractor::Run(std::string searchPath, RomSearchMode searchMode) {
     FilterRoms(roms, searchMode);
 
     if (roms.empty()) {
+#ifdef __SWITCH__
+        ShowErrorBox("No roms found", "Please place a supported ROM into the same folder as the soh.nro file.");
+        return false;
+#endif
+
         int ret = ShowYesNoBox("No roms found", "No roms found. Look for one?");
 
         switch (ret) {
@@ -619,7 +638,11 @@ const char* Extractor::GetZapdVerStr() const {
 }
 
 std::string Extractor::Mkdtemp() {
+#ifdef __SWITCH__
+    std::string temp_dir = std::filesystem::current_path();
+#else
     std::string temp_dir = std::filesystem::temp_directory_path().string();
+#endif
 
     // create 6 random alphanumeric characters
     static const char charset[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -657,11 +680,22 @@ bool Extractor::CallZapd(std::string installPath, std::string exportdir, std::at
 #ifdef _WIN32
     std::filesystem::copy(installPath + "/assets", tempdir + "/assets",
                           std::filesystem::copy_options::recursive | std::filesystem::copy_options::update_existing);
+
+    std::filesystem::current_path(tempdir);
+#elif __SWITCH__
+    extern bool ExtractFromRomFS(const std::string &romfsFilePath, const std::string &romfsSourcePath, const std::string &sdmcDestPath);
+    if (!ExtractFromRomFS(installPath + "/assets.romfs", "/", tempdir + "/assets")) {
+        ShowErrorBox("Error", "Failed to extract assets from RomFS.");
+        return false;
+    }
+
+    std::filesystem::current_path("romfs:/root");
 #else
     std::filesystem::create_symlink(installPath + "/assets", tempdir + "/assets");
 #endif
 
-    std::filesystem::current_path(tempdir);
+    std::string otrPath = curdir + "/" + otrFile;
+
 
     snprintf(xmlPath, 1024, "assets/xml/%s", version);
     snprintf(confPath, 1024, "assets/Config_%s.xml", version);
@@ -682,17 +716,22 @@ bool Extractor::CallZapd(std::string installPath, std::string exportdir, std::at
     argv[12] = "-se";
     argv[13] = "OTR";
     argv[14] = "--otrfile";
-    argv[15] = otrFile;
+    argv[15] = otrPath.c_str();
     argv[16] = "--portVer";
     argv[17] = portVersion;
     argv[18] = "-o";
-    argv[19] = "placeholder";
+    argv[19] = "sdmc:/out";
     argv[20] = "-osf";
-    argv[21] = "placeholder";
+    argv[21] = "sdmc:/out";
 
     zapd_report(argc, (char**)argv.data(), extractCount, totalExtract);
 
+    Ship::Switch::ShowErrorApplet("ZAPD OK!");
+
+
+#ifndef __SWITCH__
     std::filesystem::copy(otrFile, exportdir + "/" + otrFile, std::filesystem::copy_options::overwrite_existing);
+#endif
 
     // Go back to where this game was executed from
     std::filesystem::current_path(curdir);

@@ -1,6 +1,6 @@
 [submodule "ZAPDTR"]
 	path = ZAPDTR
-	url = https://github.com/harbourmasters/ZAPDTR
+	url = git@github.com:timschneeb/ZAPDTR.git
 [submodule "OTRExporter"]
 	path = OTRExporter
 	url = https://github.com/harbourmasters/OTRExporter
