@@ -465,7 +465,7 @@ void SohMenu::AddMenuSettings() {
     // Controls
     path.sidebarName = "Controls";
     path.column = SECTION_COLUMN_1;
-    AddSidebarEntry("Settings", "Controls", 2);
+    AddSidebarEntry("Settings", "Controls", 1);
     AddWidget(path, "Clear Devices", WIDGET_BUTTON)
         .Callback([](WidgetInfo& info) {
             SohGui::mModalWindow->RegisterPopup(
