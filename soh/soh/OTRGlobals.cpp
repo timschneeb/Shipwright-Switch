@@ -489,7 +489,7 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
                     std::string msg;
 
 #if defined(__SWITCH__)
-                    msg = "Please re-extract it from the download.\n"
+                    msg = "Please re-extract the soh.o2r from the Ship of Harkinian download to your folder\n"
                           "Press the Home button to exit...";
 #elif defined(__WIIU__)
                     msg = "Please extract the soh.o2r from the Ship of Harkinian download\nto your folder.\n\nPress "

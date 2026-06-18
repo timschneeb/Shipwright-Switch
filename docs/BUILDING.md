@@ -313,7 +313,7 @@ cmake -H. -Bbuild-cmake -GNinja
 # Extract assets & generate OTR (run this anytime you need to regenerate OTR)
 cmake --build build-cmake --target ExtractAssets
 # Setup cmake project for building for Switch
-cmake -H. -Bbuild-switch -GNinja -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake -DCMAKE_BUILD_TYPE:STRING=Release -DBUILD_REMOTE_CONTROL=1 -DDISABLE_SCRIPTING=1
+cmake -H. -Bbuild-switch -GNinja -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake -DCMAKE_BUILD_TYPE:STRING=Release -DENABLE_SCRIPTING=0
 # Build project and generate nro
 cmake --build build-switch --target soh_nro
 
