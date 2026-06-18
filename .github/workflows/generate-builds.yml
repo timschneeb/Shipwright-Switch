@@ -249,7 +249,7 @@ jobs:
       matrix:
         variant: [default, lto]
     container:
-      image: devkitpro/devkita64:20260217
+      image: devkitpro/devkita64:20260219
     env:
       BUILD_DIR: build-switch${{ matrix.variant == 'lto' && '-lto' || '' }}
       ARTIFACT_SUFFIX: ${{ matrix.variant == 'lto' && '-lto' || '' }}
