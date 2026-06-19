@@ -795,6 +795,20 @@ bool InputString(const char* label, std::string* value, const InputOptions& opti
     if (ImGui::InputText(label, (char*)value->c_str(), value->capacity() + 1, flags, InputTextResizeCallback, value)) {
         dirty = true;
     }
+#ifdef __SWITCH__
+    const auto inputId = ImGui::GetItemID();
+
+    // Open the inline software keyboard when the field is activated and apply what the player types.  Scoped by the
+    // field's ID so concurrent text inputs don't capture each other's text.
+    if (ImGui::IsItemActivated() || ImGui::GetCurrentContext()->NavActivateId == inputId) {
+        Ship::Switch::ShowKeyboard(inputId, *value);
+    }
+
+    if (std::string text; Ship::Switch::ConsumeKeyboardText(inputId, text)) {
+        *value = text;
+        dirty = true;
+    }
+#endif
     if (value->empty() && !options.placeholder.empty()) {
         ImGui::SameLine(17.0f);
         ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 0.4f), "%s", options.placeholder.c_str());

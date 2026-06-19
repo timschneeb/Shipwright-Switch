@@ -547,11 +547,17 @@ void Menu::MenuDrawItem(WidgetInfo& widget, uint32_t width, UIWidgets::Colors me
                 ImGui::PushStyleColor(ImGuiCol_Border, UIWidgets::ColorValues.at(menuThemeIndex));
                 menuSearch.Draw();
 #ifdef __SWITCH__
-                if (ImGui::IsItemActivated() || ImGui::GetCurrentContext()->NavActivateId == ImGui::GetItemID()) {
-                    Switch::ShowKeyboard(menuSearch.InputBuf);
+                const auto searchId = ImGui::GetItemID();
+
+                // Open the inline software keyboard when the player activates the search box (NavActivateId catches a
+                // controller press, which never enters edit mode; IsItemActivated catches a mouse/touch click).
+                if (ImGui::IsItemActivated() || ImGui::GetCurrentContext()->NavActivateId == searchId) {
+                    Switch::ShowKeyboard(searchId, menuSearch.InputBuf);
                 }
 
-                if (std::string text; Switch::ConsumeKeyboardText(text)) {
+                // Apply the inline keyboard's text (live keystrokes, enter, or cancel-revert) only when it actually
+                // changed.
+                if (std::string text; Switch::ConsumeKeyboardText(searchId, text)) {
                     std::snprintf(menuSearch.InputBuf, IM_ARRAYSIZE(menuSearch.InputBuf), "%s", text.c_str());
                     menuSearch.Build();
                 }
@@ -769,11 +775,16 @@ void Menu::DrawElement() {
         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
         menuSearch.Draw("##search", 200.0f);
 #ifdef __SWITCH__
-        if (ImGui::IsItemActivated() || ImGui::GetCurrentContext()->NavActivateId == ImGui::GetItemID()) {
-            Switch::ShowKeyboard(menuSearch.InputBuf);
+        const auto searchId = ImGui::GetItemID();
+
+        // Open the inline software keyboard when the player activates the search box (NavActivateId catches a
+        // controller press, which never enters edit mode; IsItemActivated catches a mouse/touch click).
+        if (ImGui::IsItemActivated() || ImGui::GetCurrentContext()->NavActivateId == searchId) {
+            Switch::ShowKeyboard(searchId, menuSearch.InputBuf);
         }
 
-        if (std::string text; Switch::ConsumeKeyboardText(text)) {
+        // Apply the inline keyboard's text (live keystrokes, enter, or cancel-revert) only when it actually changed.
+        if (std::string text; Switch::ConsumeKeyboardText(searchId, text)) {
             std::snprintf(menuSearch.InputBuf, IM_ARRAYSIZE(menuSearch.InputBuf), "%s", text.c_str());
             menuSearch.Build();
         }
