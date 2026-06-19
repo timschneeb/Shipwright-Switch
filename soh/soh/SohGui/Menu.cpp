@@ -8,6 +8,11 @@
 #include <spdlog/fmt/fmt.h>
 #include <tuple>
 
+#ifdef __SWITCH__
+#include <ship/port/switch/SwitchImpl.h>
+#include <imgui_internal.h>
+#endif
+
 extern "C" {
 #include "z64.h"
 extern PlayState* gPlayState;
@@ -541,6 +546,16 @@ void Menu::MenuDrawItem(WidgetInfo& widget, uint32_t width, UIWidgets::Colors me
                 UIWidgets::PushStyleCombobox(menuThemeIndex);
                 ImGui::PushStyleColor(ImGuiCol_Border, UIWidgets::ColorValues.at(menuThemeIndex));
                 menuSearch.Draw();
+#ifdef __SWITCH__
+                if (ImGui::IsItemActivated() || ImGui::GetCurrentContext()->NavActivateId == ImGui::GetItemID()) {
+                    Switch::ShowKeyboard(menuSearch.InputBuf);
+                }
+
+                if (std::string text; Switch::ConsumeKeyboardText(text)) {
+                    std::snprintf(menuSearch.InputBuf, IM_ARRAYSIZE(menuSearch.InputBuf), "%s", text.c_str());
+                    menuSearch.Build();
+                }
+#endif
                 ImGui::PopStyleColor();
                 UIWidgets::PopStyleCombobox();
                 UIWidgets::PopStyleButton();
@@ -753,6 +768,16 @@ void Menu::DrawElement() {
         ImGui::PushStyleColor(ImGuiCol_FrameBg, color);
         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
         menuSearch.Draw("##search", 200.0f);
+#ifdef __SWITCH__
+        if (ImGui::IsItemActivated() || ImGui::GetCurrentContext()->NavActivateId == ImGui::GetItemID()) {
+            Switch::ShowKeyboard(menuSearch.InputBuf);
+        }
+
+        if (std::string text; Switch::ConsumeKeyboardText(text)) {
+            std::snprintf(menuSearch.InputBuf, IM_ARRAYSIZE(menuSearch.InputBuf), "%s", text.c_str());
+            menuSearch.Build();
+        }
+#endif
         menuSearchText = menuSearch.InputBuf;
         menuSearchText.erase(std::remove(menuSearchText.begin(), menuSearchText.end(), ' '), menuSearchText.end());
         if (menuSearchText.length() < 1) {
