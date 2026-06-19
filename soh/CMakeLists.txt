@@ -300,6 +300,15 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(dr_libs)
 
+if (TRACY_ENABLE)
+    FetchContent_Declare(
+        Tracy
+        GIT_REPOSITORY https://github.com/wolfpld/tracy.git
+        GIT_TAG v0.13.0
+    )
+    FetchContent_MakeAvailable(Tracy)
+endif()
+
 find_package(SDL2)
 set(SDL2-INCLUDE ${SDL2_INCLUDE_DIRS})
 
@@ -364,6 +373,10 @@ target_include_directories(${PROJECT_NAME} PRIVATE assets
     ${dr_libs_SOURCE_DIR}
     .
 )
+
+if (TRACY_ENABLE)
+    target_include_directories(${PROJECT_NAME} PRIVATE ${tracy_SOURCE_DIR}/public)
+endif()
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     if(SOH_WINDOWS_64BIT)
@@ -441,6 +454,12 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU|Clang|AppleClang")
         LOG_LEVEL_GAME_PRINTS=${SPDLOG_LEVEL_OFF}
     )
 endif()
+
+if (TRACY_ENABLE)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE TRACY_ENABLE)
+    target_sources(${PROJECT_NAME} PRIVATE ${tracy_SOURCE_DIR}/public/TracyClient.cpp)
+endif()
+
 ################################################################################
 # Anchor client version (fetched from upstream Shipwright tags at configure time for Switch/PC cross-play compat)
 ################################################################################

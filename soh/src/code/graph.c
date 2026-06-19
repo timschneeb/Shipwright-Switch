@@ -6,6 +6,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef TRACY_ENABLE
+#include <tracy/TracyC.h>
+#else
+#define TracyCZoneN(ctx,name,active)
+#define TracyCZoneEnd(ctx)
+#define TracyCFrameMark
+#endif
+
 #include "soh/Enhancements/gameconsole.h"
 #include "soh/OTRGlobals.h"
 #include "libultraship/bridge.h"
@@ -273,11 +281,13 @@ void Graph_TaskSet00(GraphicsContext* gfxCtx) {
 }
 
 void Graph_Update(GraphicsContext* gfxCtx, GameState* gameState) {
+    TracyCZoneN(graphUpdateZone, "Graph_Update", 1);
     u32 problem;
 
     // Skip game frame updates while gfx debugger is active, and execute with the last frame's DL buffer
     if (GfxDebuggerIsDebugging()) {
         Graph_ProcessGfxCommands(runFrameContext.gfxCtx.workBuffer);
+        TracyCZoneEnd(graphUpdateZone);
         return;
     }
 
@@ -294,7 +304,11 @@ void Graph_Update(GraphicsContext* gfxCtx, GameState* gameState) {
     CLOSE_DISPS(gfxCtx);
 
     GameState_ReqPadData(gameState);
-    GameState_Update(gameState);
+    {
+        TracyCZoneN(gsUpdateZone, "GameState_Update", 1);
+        GameState_Update(gameState);
+        TracyCZoneEnd(gsUpdateZone);
+    }
 
     OPEN_DISPS(gfxCtx);
 
@@ -425,6 +439,7 @@ void Graph_Update(GraphicsContext* gfxCtx, GameState* gameState) {
         SET_NEXT_GAMESTATE(gameState, PreNMI_Init, PreNMIContext);
         gameState->running = false;
     }
+    TracyCZoneEnd(graphUpdateZone);
 }
 
 uint64_t GetFrequency();
@@ -435,6 +450,7 @@ extern AudioMgr gAudioMgr;
 extern void ProcessSaveStateRequests(void);
 
 static void RunFrame() {
+    TracyCZoneN(runFrameZone, "RunFrame", 1);
     u32 size;
     char faultMsg[0x50];
     static bool hasSetupSkybox = false;
@@ -499,8 +515,10 @@ static void RunFrame() {
             // printf("Frame simulated in %ims\n", diff);
             runFrameContext.state = 1;
             ProcessSaveStateRequests();
+            TracyCZoneEnd(runFrameZone);
             return;
-        nextFrame:;
+        nextFrame:
+            TracyCFrameMark;
         }
 
         runFrameContext.nextOvl = Graph_GetNextGameState(gGameState);
@@ -512,13 +530,16 @@ static void RunFrame() {
     osSyncPrintf("グラフィックスレッド実行終了\n"); // "End of graphic thread execution"
 
     // Graph_Update(gfxCtxTest, gameStateTest);
+    TracyCZoneEnd(runFrameZone);
     exit(0);
 }
 
 void Graph_ThreadEntry(void* arg0) {
+    TracyCZoneN(graphThreadZone, "Graph_ThreadEntry", 1);
     while (WindowIsRunning()) {
         RunFrame();
     }
+    TracyCZoneEnd(graphThreadZone);
 }
 
 void* Graph_Alloc(GraphicsContext* gfxCtx, size_t size) {

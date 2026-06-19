@@ -14,6 +14,8 @@ set(SPDLOG_LEVEL_TRACE 0)
 set(SPDLOG_LEVEL_OFF 6)
 set(SPDLOG_MIN_CUTOFF SPDLOG_LEVEL_TRACE CACHE STRING "cutoff at trace")
 
+option(TRACY_ENABLE "Enable Tracy Profiler" OFF)
+
 option(SUPPRESS_WARNINGS "Suppress warnings in LUS and src (decomp)" ON)
 if(SUPPRESS_WARNINGS)
     MESSAGE("Suppressing warnings in LUS and src")

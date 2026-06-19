@@ -9,6 +9,12 @@
 #include <optional>
 #include <imgui.h>
 
+#ifdef TRACY_ENABLE
+#include <tracy/Tracy.hpp>
+#else
+#define ZoneScopedN(name)
+#endif
+
 #include "ResourceManagerHelpers.h"
 #include <fast/Fast3dWindow.h>
 #include <ship/Context.h>
@@ -1688,6 +1694,7 @@ extern "C" uint64_t GetUnixTimestamp() {
 }
 
 extern "C" void Graph_StartFrame() {
+    ZoneScopedN("Graph_StartFrame");
 #ifndef __WIIU__
     using Ship::KbScancode;
     int32_t dwScancode = OTRGlobals::Instance->context->GetWindow()->GetLastScancode();
@@ -1817,6 +1824,7 @@ void RunCommands(Gfx* Commands, const std::vector<std::unordered_map<Mtx*, MtxF>
 
 // C->C++ Bridge
 extern "C" void Graph_ProcessGfxCommands(Gfx* commands) {
+    ZoneScopedN("Graph_ProcessGfxCommands");
     {
         std::unique_lock<std::mutex> Lock(audio.mutex);
         audio.processing = true;
