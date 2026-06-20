@@ -757,7 +757,10 @@ void CreateStaticItemHint(RandomizerHint hintKey, std::vector<RandomizerHintText
     // RANDOTODO choose area in case there are multiple
     auto ctx = Rando::Context::GetInstance();
     std::vector<RandomizerCheck> locations = FindItemsAndMarkHinted(items, hintChecks);
-    std::vector<RandomizerArea> areas = {};
+    locations.erase(
+        std::remove_if(locations.begin(), locations.end(), [](const auto rc) { return rc == RC_UNKNOWN_CHECK; }));
+    std::vector<RandomizerArea> areas;
+    areas.reserve(locations.size());
     for (auto loc : locations) {
         areas.push_back(ctx->GetItemLocation(loc)->GetRandomArea());
     }
