@@ -129,6 +129,10 @@
 #include "soh/config/ConfigUpdaters.h"
 #include "soh/ShipInit.hpp"
 
+#ifdef _MSC_VER
+#define strdup _strdup
+#endif
+
 #ifdef __WIIU__
 const uint32_t defaultImGuiScale = 3;
 #elseif __SWITCH__
@@ -380,7 +384,7 @@ bool PathTestCleanup(FILE* tfile) {
             std::filesystem::remove("./text.txt");
         if (std::filesystem::exists("./test/"))
             std::filesystem::remove("./test/");
-    } catch (std::filesystem::filesystem_error const& ex) { return false; }
+    } catch ([[maybe_unused]] std::filesystem::filesystem_error const& ex) { return false; }
     return true;
 }
 
@@ -395,7 +399,7 @@ void CheckAndCreateModFolder() {
                 std::ofstream(filePath).close();
             }
         }
-    } catch (std::filesystem::filesystem_error const& ex) {
+    } catch ([[maybe_unused]] std::filesystem::filesystem_error const& ex) {
         // Couldn't make the folder, continue silently
         return;
     }
@@ -513,7 +517,7 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
                         std::filesystem::path tempPath;
                         try {
                             tempPath = std::filesystem::canonical(tempVar);
-                        } catch (std::filesystem::filesystem_error const& ex) {
+                        } catch ([[maybe_unused]] std::filesystem::filesystem_error const& ex) {
                             std::string userPath = getenv("USERPROFILE");
                             userPath.append("\\AppData\\Local\\Temp");
                             tempPath = std::filesystem::canonical(userPath);
@@ -537,7 +541,7 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
                         bool error = false;
                         try {
                             create_directories(tfolder);
-                        } catch (std::filesystem::filesystem_error const& ex) { error = true; }
+                        } catch ([[maybe_unused]] std::filesystem::filesystem_error const& ex) { error = true; }
                         if (tfile == NULL || error) {
                             SohGui::RegisterPopup("SoH Permissions Error",
                                                   "SoH does not have proper file permissions.\nPlease move it to a "
@@ -2539,5 +2543,5 @@ bool SoH_HandleConfigDrop(char* filePath) {
 
 // Number of interpolated frames
 extern "C" uint32_t Ship_GetInterpolationFrameCount() {
-    return ceil((float)OTRGlobals::Instance->GetInterpolationFPS() / 20.0f);
+    return static_cast<uint32_t>(ceil((float)OTRGlobals::Instance->GetInterpolationFPS() / 20.0f));
 }
