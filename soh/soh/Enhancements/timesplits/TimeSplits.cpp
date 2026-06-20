@@ -824,6 +824,9 @@ void TimeSplitsDrawOptionsMenu() {
     ImGui::PushItemWidth(150.0f);
     PushStyleInput(THEME_COLOR);
     ImGui::InputText("##listName", listNameBuf, 25);
+#if defined(__SWITCH__)
+    ApplySwitchKeyboard(listNameBuf, 25);
+#endif
     PopStyleInput();
     ImGui::PopItemWidth();
     ImGui::SameLine();

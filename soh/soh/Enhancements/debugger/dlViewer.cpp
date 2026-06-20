@@ -99,6 +99,14 @@ void DLViewerWindow::DrawElement() {
         doSearch = true;
         searchDebounceFrames = 30;
     }
+
+#if defined(__SWITCH__)
+    if (UIWidgets::ApplySwitchKeyboard(searchString, ARRAY_COUNT(searchString))) {
+        doSearch = true;
+        searchDebounceFrames = 30;
+    }
+#endif
+
     UIWidgets::PopStyleInput();
 
     if (doSearch) {

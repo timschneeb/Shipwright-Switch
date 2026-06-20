@@ -78,6 +78,9 @@ void DrawLocationsMenu(WidgetInfo& info) {
         static ImGuiTextFilter locationSearch;
         UIWidgets::PushStyleInput(THEME_COLOR);
         locationSearch.Draw();
+#if defined(__SWITCH__)
+        ApplySwitchKeyboard(locationSearch);
+#endif
         UIWidgets::PopStyleInput();
 
         ImGui::BeginChild("ChildIncludedLocations", ImVec2(0, -8));
@@ -318,6 +321,9 @@ void DrawTricksMenu(WidgetInfo& info) {
     static ImGuiTextFilter trickSearch;
     UIWidgets::PushStyleInput(THEME_COLOR);
     trickSearch.Draw("Filter (inc,-exc)", 490.0f);
+#if defined(__SWITCH__)
+    ApplySwitchKeyboard(trickSearch);
+#endif
     UIWidgets::PopStyleInput();
     if (CVarGetInteger(CVAR_RANDOMIZER_SETTING("LogicRules"), RO_LOGIC_GLITCHLESS) != RO_LOGIC_NO_LOGIC) {
         ImGui::SameLine();
@@ -555,6 +561,9 @@ void SohMenu::AddMenuRandomizer() {
             UIWidgets::PushStyleInput(THEME_COLOR);
             ImGui::InputText("##RandomizerSeed", seedString, MAX_SEED_STRING_SIZE,
                              ImGuiInputTextFlags_CallbackCharFilter, UIWidgets::TextFilters::FilterAlphaNum);
+#if defined(__SWITCH__)
+            ApplySwitchKeyboard(seedString, MAX_SEED_STRING_SIZE);
+#endif
             UIWidgets::Tooltip("Characters from a-z, A-Z, and 0-9 are supported.\n"
                                "Character limit is 1023, after which the seed will be truncated.");
             ImGui::SameLine();

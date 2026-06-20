@@ -546,6 +546,7 @@ void Menu::MenuDrawItem(WidgetInfo& widget, uint32_t width, UIWidgets::Colors me
                 UIWidgets::PushStyleCombobox(menuThemeIndex);
                 ImGui::PushStyleColor(ImGuiCol_Border, UIWidgets::ColorValues.at(menuThemeIndex));
                 menuSearch.Draw();
+
 #ifdef __SWITCH__
                 const auto searchId = ImGui::GetItemID();
 
@@ -562,6 +563,7 @@ void Menu::MenuDrawItem(WidgetInfo& widget, uint32_t width, UIWidgets::Colors me
                     menuSearch.Build();
                 }
 #endif
+
                 ImGui::PopStyleColor();
                 UIWidgets::PopStyleCombobox();
                 UIWidgets::PopStyleButton();
@@ -774,6 +776,7 @@ void Menu::DrawElement() {
         ImGui::PushStyleColor(ImGuiCol_FrameBg, color);
         ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 3.0f);
         menuSearch.Draw("##search", 200.0f);
+
 #ifdef __SWITCH__
         const auto searchId = ImGui::GetItemID();
 
@@ -789,6 +792,7 @@ void Menu::DrawElement() {
             menuSearch.Build();
         }
 #endif
+
         menuSearchText = menuSearch.InputBuf;
         menuSearchText.erase(std::remove(menuSearchText.begin(), menuSearchText.end(), ' '), menuSearchText.end());
         if (menuSearchText.length() < 1) {

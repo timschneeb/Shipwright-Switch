@@ -302,6 +302,14 @@ void ValueViewerWindow::DrawElement() {
                     setting.prefix = prefix;
                     SaveValueConfig();
                 }
+
+#if defined(__SWITCH__)
+                if (UIWidgets::ApplySwitchKeyboard(prefix, 10)) {
+                    setting.prefix = prefix;
+                    SaveValueConfig();
+                }
+#endif
+
                 UIWidgets::PopStyleInput();
                 ImGui::SameLine();
                 if (ImGui::ColorEdit3(("##color" + std::string(element.name)).c_str(), (float*)&setting.color,

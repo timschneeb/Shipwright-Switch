@@ -1132,6 +1132,9 @@ void DrawFlagsTab() {
             ImGui::SetNextItemWidth(ImGui::GetFontSize() * 16);
             PushStyleInput(THEME_COLOR);
             flagFilter.Draw();
+#if defined(__SWITCH__)
+            ApplySwitchKeyboard(flagFilter);
+#endif
             PopStyleInput();
             ImGui::Spacing();
 

@@ -1121,6 +1121,13 @@ void CheckTrackerWindow::DrawElement() {
             if (checkSearch.Draw("", ImGui::GetContentRegionAvail().x - 42)) {
                 UpdateFilters();
             }
+
+#if defined(__SWITCH__)
+            if (ApplySwitchKeyboard(checkSearch)) {
+                UpdateFilters();
+            }
+#endif
+
             std::string checkSearchText = checkSearch.InputBuf;
             checkSearchText.erase(std::remove(checkSearchText.begin(), checkSearchText.end(), ' '),
                                   checkSearchText.end());

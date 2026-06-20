@@ -1069,6 +1069,10 @@ bool CVarSliderInt(const char* label, const char* cvarName, const IntSliderOptio
 bool SliderFloat(const char* label, float* value, const FloatSliderOptions& options = {});
 bool CVarSliderFloat(const char* label, const char* cvarName, const FloatSliderOptions& options = {});
 bool InputString(const char* label, std::string* value, const InputOptions& options = {});
+#if defined(__SWITCH__)
+bool ApplySwitchKeyboard(char* buffer, std::size_t bufferSize);
+bool ApplySwitchKeyboard(ImGuiTextFilter& filter);
+#endif
 bool CVarInputString(const char* label, const char* cvarName, const InputOptions& options = {});
 bool InputInt(const char* label, int32_t* value, const InputOptions& options = {});
 bool CVarInputInt(const char* label, const char* cvarName, const InputOptions& options = {});

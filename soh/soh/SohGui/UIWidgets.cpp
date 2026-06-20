@@ -762,6 +762,32 @@ int InputTextResizeCallback(ImGuiInputTextCallbackData* data) {
     return 0;
 }
 
+#ifdef __SWITCH__
+bool ApplySwitchKeyboard(char* buffer, std::size_t bufferSize) {
+    const auto id = ImGui::GetItemID();
+    if (ImGui::IsItemActivated() || ImGui::GetCurrentContext()->NavActivateId == id) {
+        Ship::Switch::ShowKeyboard(id, buffer);
+    }
+
+    std::string out;
+    if (Ship::Switch::ConsumeKeyboardText(id, out)) {
+        std::snprintf(buffer, bufferSize, "%s", out.c_str());
+        return true;
+    }
+
+    return false;
+}
+
+bool ApplySwitchKeyboard(ImGuiTextFilter& filter) {
+    if (ApplySwitchKeyboard(filter.InputBuf, IM_ARRAYSIZE(filter.InputBuf))) {
+        filter.Build();
+        return true;
+    }
+
+    return false;
+}
+#endif
+
 bool InputString(const char* label, std::string* value, const InputOptions& options) {
     bool dirty = false;
     ImGui::PushID(label);

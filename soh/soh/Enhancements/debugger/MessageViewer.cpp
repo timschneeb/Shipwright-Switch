@@ -39,17 +39,26 @@ void MessageViewer::DrawElement() {
     PushStyleInput(THEME_COLOR);
     ImGui::InputText("##TableID", mTableIdBuf, MAX_STRING_SIZE, ImGuiInputTextFlags_CallbackCharFilter,
                      UIWidgets::TextFilters::FilterAlphaNum);
+#if defined(__SWITCH__)
+    ApplySwitchKeyboard(mTableIdBuf, MAX_STRING_SIZE);
+#endif
     UIWidgets::InsertHelpHoverText("Leave blank for vanilla table");
     ImGui::Text("Text ID");
     ImGui::SameLine();
     switch (mTextIdBase) {
         case DECIMAL:
             ImGui::InputText("##TextID", mTextIdBuf, MAX_STRING_SIZE, ImGuiInputTextFlags_CharsDecimal);
+#if defined(__SWITCH__)
+            ApplySwitchKeyboard(mTextIdBuf, MAX_STRING_SIZE);
+#endif
             UIWidgets::InsertHelpHoverText("Decimal Text ID of the message to load. Decimal digits only (0-9).");
             break;
         case HEXADECIMAL:
         default:
             ImGui::InputText("##TextID", mTextIdBuf, MAX_STRING_SIZE, ImGuiInputTextFlags_CharsHexadecimal);
+#if defined(__SWITCH__)
+            ApplySwitchKeyboard(mTextIdBuf, MAX_STRING_SIZE);
+#endif
             UIWidgets::InsertHelpHoverText(
                 "Hexadecimal Text ID of the message to load. Hexadecimal digits only (0-9/A-F).");
             break;
@@ -80,6 +89,9 @@ void MessageViewer::DrawElement() {
                                    "from the output.");
     PushStyleInput(THEME_COLOR);
     ImGui::InputTextMultiline("##CustomMessage", mCustomMessageBuf, MAX_STRING_SIZE);
+#if defined(__SWITCH__)
+    ApplySwitchKeyboard(mCustomMessageBuf, MAX_STRING_SIZE);
+#endif
     PopStyleInput();
     if (ImGui::Button("Display Message##CustomMessage")) {
         mDisplayCustomMessageClicked = true;
