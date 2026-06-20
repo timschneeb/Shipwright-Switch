@@ -876,6 +876,13 @@ void EntranceTrackerWindow::DrawElement() {
         if (locationSearch.Draw()) {
             nextTreeState = 2;
         }
+
+#if defined(__SWITCH__)
+        if (ApplySwitchKeyboard(locationSearch)) {
+            nextTreeState = 2;
+        }
+#endif
+
         PopStyleCombobox();
 
         uint8_t destToggle = CVarGetInteger(CVAR_TRACKER_ENTRANCE("SortBy"), 0);

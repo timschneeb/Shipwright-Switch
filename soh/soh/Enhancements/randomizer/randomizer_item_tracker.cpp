@@ -1409,6 +1409,14 @@ void DrawNotes(bool resizeable = false) {
             notesNeedSave = true;
             notesIdleFrames = 0;
         }
+
+#if defined(__SWITCH__)
+        if (ApplySwitchKeyboard(itemTrackerNotes)) {
+            notesNeedSave = true;
+            notesIdleFrames = 0;
+        }
+#endif
+
         if ((ImGui::IsItemDeactivatedAfterEdit() || (notesNeedSave && notesIdleFrames > notesMaxIdleFrames)) &&
             IsValidSaveFile()) {
             notesNeedSave = false;

@@ -558,7 +558,7 @@ void Menu::MenuDrawItem(WidgetInfo& widget, uint32_t width, UIWidgets::Colors me
 
                 // Apply the inline keyboard's text (live keystrokes, enter, or cancel-revert) only when it actually
                 // changed.
-                if (std::string text; Switch::ConsumeKeyboardText(searchId, text)) {
+                if (std::string text; Switch::ConsumeKeyboardText(searchId, text, nullptr)) {
                     std::snprintf(menuSearch.InputBuf, IM_ARRAYSIZE(menuSearch.InputBuf), "%s", text.c_str());
                     menuSearch.Build();
                 }
@@ -787,7 +787,7 @@ void Menu::DrawElement() {
         }
 
         // Apply the inline keyboard's text (live keystrokes, enter, or cancel-revert) only when it actually changed.
-        if (std::string text; Switch::ConsumeKeyboardText(searchId, text)) {
+        if (std::string text; Switch::ConsumeKeyboardText(searchId, text, nullptr)) {
             std::snprintf(menuSearch.InputBuf, IM_ARRAYSIZE(menuSearch.InputBuf), "%s", text.c_str());
             menuSearch.Build();
         }

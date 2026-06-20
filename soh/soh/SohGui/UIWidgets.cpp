@@ -775,12 +775,28 @@ bool ApplySwitchKeyboard(char* buffer, std::size_t bufferSize) {
         return true;
     }
 
-    return false;
+    return false; 
 }
 
 bool ApplySwitchKeyboard(ImGuiTextFilter& filter) {
     if (ApplySwitchKeyboard(filter.InputBuf, IM_ARRAYSIZE(filter.InputBuf))) {
         filter.Build();
+        return true;
+    }
+
+    return false;
+}
+
+bool ApplySwitchKeyboard(ImVector<char>& buffer) {
+    const auto id = ImGui::GetItemID();
+    if (ImGui::IsItemActivated() || ImGui::GetCurrentContext()->NavActivateId == id) {
+        Ship::Switch::ShowKeyboard(id, buffer.empty() ? "" : buffer.begin());
+    }
+
+    std::string out;
+    if (Ship::Switch::ConsumeKeyboardText(id, out)) {
+        buffer.resize(static_cast<int>(out.size()) + 1);
+        std::snprintf(buffer.begin(), buffer.size(), "%s", out.c_str());
         return true;
     }
 

@@ -1070,8 +1070,12 @@ bool SliderFloat(const char* label, float* value, const FloatSliderOptions& opti
 bool CVarSliderFloat(const char* label, const char* cvarName, const FloatSliderOptions& options = {});
 bool InputString(const char* label, std::string* value, const InputOptions& options = {});
 #if defined(__SWITCH__)
+// Opens the inline software keyboard for the most recently drawn ImGui text item when it's activated, applying the
+// typed text.  Called immediately after the text widget.  Returns true when new text was written back.
 bool ApplySwitchKeyboard(char* buffer, std::size_t bufferSize);
 bool ApplySwitchKeyboard(ImGuiTextFilter& filter);
+// For dynamically-sized buffers (i.e., multiline notes); resizes the vector to fit.
+bool ApplySwitchKeyboard(ImVector<char>& buffer);
 #endif
 bool CVarInputString(const char* label, const char* cvarName, const InputOptions& options = {});
 bool InputInt(const char* label, int32_t* value, const InputOptions& options = {});
