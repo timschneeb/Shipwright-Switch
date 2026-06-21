@@ -11,11 +11,11 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - name: Git Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         submodules: true
     - name: Configure ccache
-      uses: hendrikmuhs/ccache-action@v1.2.22
+      uses: hendrikmuhs/ccache-action@v1.2.23
       with:
         save: ${{ github.ref_name == github.event.repository.default_branch }}
         key: ${{ runner.os }}-otr-ccache-${{ github.ref }}-${{ github.sha }}
@@ -69,12 +69,12 @@ jobs:
         retention-days: 3
 
   build-macos:
-    if: 0 # Disable Windows build on fork
+    if: 0 # Disable mac build on fork
     needs: generate-soh-otr
     runs-on: macos-14
     steps:
     - name: Git Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         submodules: true
     - name: Setup Macports
@@ -82,14 +82,14 @@ jobs:
       with:
         parameters: '.github/macports.yml'
     - name: Configure ccache
-      uses: hendrikmuhs/ccache-action@v1.2.22
+      uses: hendrikmuhs/ccache-action@v1.2.23
       with:
         key: ${{ runner.os }} # ccache-macos-{{ timestamp }}
         max-size: "2G"
         evict-old-files: job
         save: ${{ github.ref_name == github.event.repository.default_branch }}
     - name: Download soh.o2r
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@v8
       with:
         name: soh.o2r
         path: build-cmake/soh
@@ -111,14 +111,10 @@ jobs:
 
   build-linux:
     needs: generate-soh-otr
-    name: build-linux${{ matrix.variant == 'clean' && ' (clean)' || '' }}
     runs-on: ubuntu-22.04
-    strategy:
-      matrix:
-        variant: [default, clean]
     steps:
     - name: Git Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         submodules: true
     - name: Install dependencies
@@ -126,8 +122,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y $(cat linux-build-deps/apt.txt)
     - name: Configure ccache
-      if: matrix.variant != 'clean'
-      uses: hendrikmuhs/ccache-action@v1.2.22
+      uses: hendrikmuhs/ccache-action@v1.2.23
       with:
         save: ${{ github.ref_name == github.event.repository.default_branch }}
         key: ${{ runner.os }}-ccache-${{ github.ref }}-${{ github.sha }}
@@ -135,7 +130,6 @@ jobs:
           ${{ runner.os }}-ccache-${{ github.ref }}
           ${{ runner.os }}-ccache
     - name: Restore Cached deps folder
-      if: matrix.variant != 'clean'
       id: restore-cache-deps
       uses: actions/cache/restore@v5
       with:
@@ -182,7 +176,7 @@ jobs:
         sudo make install
         sudo cp -av /usr/local/lib/libzip* /lib/x86_64-linux-gnu/
     - name: Download soh.o2r
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@v8
       with:
         name: soh.o2r
         path: build-cmake/soh
@@ -198,7 +192,6 @@ jobs:
         CC: gcc-12
         CXX: g++-12
     - name: Upload build
-      if: matrix.variant != 'clean'
       uses: actions/upload-artifact@v7
       with:
         name: soh-linux
@@ -206,7 +199,7 @@ jobs:
           soh.appimage
           readme.txt
     - name: Save Cache deps folder
-      if: ${{ matrix.variant != 'clean' && github.ref_name == github.event.repository.default_branch }}
+      if: ${{ github.ref_name == github.event.repository.default_branch }}
       uses: actions/cache/save@v5
       with:
         key: ${{ steps.restore-cache-deps.outputs.cache-primary-key }}
@@ -217,7 +210,7 @@ jobs:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        variant: [default, lto, clean]
+        variant: [default, lto]
     container:
       image: devkitpro/devkita64:20260219
     env:
@@ -225,12 +218,11 @@ jobs:
       ARTIFACT_SUFFIX: ${{ matrix.variant == 'lto' && '-lto' || '' }}
     steps:
     - name: Git Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         submodules: true
     - name: Configure ccache
-      if: matrix.variant != 'clean'
-      uses: hendrikmuhs/ccache-action@v1.2.22
+      uses: hendrikmuhs/ccache-action@v1.2.23
       with:
         save: ${{ github.ref_name == github.event.repository.default_branch }}
         key: nx-ccache${{ env.ARTIFACT_SUFFIX }}-${{ github.ref }}-${{ github.sha }}
@@ -250,7 +242,6 @@ jobs:
         sudo sh /tmp/cmake.sh --prefix=/usr/local/ --exclude-subdir
 
     - name: Build SoH
-      if: matrix.variant != 'clean'
       run: |
         export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
         cmake -H. -B${{ env.BUILD_DIR }} -GNinja \
@@ -265,23 +256,11 @@ jobs:
         mv ${{ env.BUILD_DIR }}/soh/*.nro soh.nro
         mv README.md readme.txt
 
-        
-    - name: Build SoH (clean)
-      if: matrix.variant == 'clean'
-      run: |
-        cmake -H. -B${{ env.BUILD_DIR }} -GNinja \
-          -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake \
-          -DCMAKE_BUILD_TYPE:STRING=Release \
-          -DENABLE_SCRIPTING=0 
-        cmake --build ${{ env.BUILD_DIR }} --target soh_nro --config Release -j6
-
     - name: Download soh.o2r
-      if: matrix.variant != 'clean'
       uses: actions/download-artifact@v4
       with:
         name: soh.o2r
     - name: Upload build
-      if: matrix.variant != 'clean'
       uses: actions/upload-artifact@v4
       with:
         name: soh-nx${{ env.ARTIFACT_SUFFIX }}
@@ -290,7 +269,6 @@ jobs:
           soh.o2r
           readme.txt
     - name: Upload ELF
-      if: matrix.variant != 'clean'
       uses: actions/upload-artifact@v4
       with:
         name: debug-symbols${{ env.ARTIFACT_SUFFIX }}
@@ -306,11 +284,11 @@ jobs:
         choco install ninja -y
         Remove-Item -Path "C:\ProgramData\Chocolatey\bin\ccache.exe" -Force -ErrorAction SilentlyContinue
     - name: Git Checkout
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         submodules: true
     - name: Configure sccache
-      uses: hendrikmuhs/ccache-action@v1.2.22
+      uses: hendrikmuhs/ccache-action@v1.2.23
       with:
         variant: sccache
         max-size: "2G"
@@ -332,7 +310,7 @@ jobs:
     - name: Configure Developer Command Prompt
       uses: ilammy/msvc-dev-cmd@v1
     - name: Download soh.o2r
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@v8
       with:
         name: soh.o2r
         path: build-windows/soh
