@@ -734,6 +734,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
         "libultraship;"
 		"SDL2_net::SDL2_net-static"
         SDL2::SDL2
+        -ldeko3d
         -lglad
         Threads::Threads
         -lvorbisfile

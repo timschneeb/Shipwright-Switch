@@ -276,6 +276,17 @@ static bool VerifyArchiveVersion(OTRVersion version);
 std::string portArchivePath = "";
 static bool sohArchiveVersionMatch = false;
 
+namespace {
+void BootTrace(const char* message) {
+    static const auto sPath = Ship::Context::GetPathRelativeToAppDirectory("logs/deko_trace.log");
+    if (const auto file = std::fopen(sPath.c_str(), "a")) {
+        std::fputs(message, file);
+        std::fputc('\n', file);
+        std::fclose(file);
+    }
+}
+} // namespace
+
 OTRGlobals::OTRGlobals() {
     context = Ship::Context::CreateUninitializedInstance("Ship of Harkinian", appShortName, "shipofharkinian.json");
 
@@ -309,8 +320,10 @@ OTRGlobals::OTRGlobals() {
     sohFast3dWindow =
         std::make_shared<Fast::Fast3dWindow>(std::vector<std::shared_ptr<Ship::GuiWindow>>({ sohInputEditorWindow }));
     context->InitWindow(sohFast3dWindow);
+    BootTrace("ctor: post-InitWindow");
 
     SohGui::SetupMenu();
+    BootTrace("ctor: post-SetupMenu");
 
     if (sohArchiveVersionMatch) {
 
@@ -330,9 +343,13 @@ OTRGlobals::OTRGlobals() {
         ImGui::GetIO().FontDefault = fontStandardLarger;
     }
 
+    BootTrace("ctor: post fonts");
+
     previousImGuiScaleIndex = -1;
     previousImGuiScale = defaultImGuiScale;
     ScaleImGui();
+
+    BootTrace("ctor: end");
 }
 
 typedef enum ExtractSteps {
@@ -397,6 +414,8 @@ extern std::shared_ptr<SohGui::SohMenu> mSohMenu;
 }
 
 void OTRGlobals::RunExtract(int argc, char* argv[]) {
+    BootTrace("RunExtract: enter");
+
     bool extractDone = false;
     ExtractSteps extractStep = ES_PORT_ARCHIVE;
     WindowsSteps windowsStep = WS_TEMP;
@@ -461,6 +480,8 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
 #if not defined(__SWITCH__) && not defined(__WIIU__)
     CheckAndCreateModFolder();
 #endif
+
+    BootTrace("RunExtract: pre-loop");
 
     while (!extractDone) {
         if (SohGui::PopupsQueued() > 0 || extractionTask.has_value()) {
@@ -1528,12 +1549,16 @@ extern "C" void InitOTR(int argc, char* argv[]) {
     OTRGlobals::Instance = new OTRGlobals();
 #ifdef __SWITCH__
     Ship::Switch::Init(Ship::PreInitPhase);
+    BootTrace("InitOTR: post-Switch::Init");
 #elif defined(__WIIU__)
     Ship::WiiU::Init(appShortName);
 #endif
+    BootTrace("InitOTR: pre-RunExtract");
     OTRGlobals::Instance->RunExtract(argc, argv);
 
     OTRGlobals::Instance->Initialize();
+    BootTrace("InitOTR: post-Initialize");
+
     CustomMessageManager::Instance = new CustomMessageManager();
     ItemTableManager::Instance = new ItemTableManager();
     GameInteractor::Instance = new GameInteractor();
@@ -1550,6 +1575,7 @@ extern "C" void InitOTR(int argc, char* argv[]) {
 
     SohGui::SetupGuiElements();
     SohGui::SetupMenuElements();
+    BootTrace("InitOTR: post GUI setup");
 
     AudioCollection::Instance = new AudioCollection();
     ActorDB::Instance = new ActorDB();
@@ -1606,6 +1632,8 @@ extern "C" void InitOTR(int argc, char* argv[]) {
     ShipInit::InitAll();
     Rando::StaticData::InitHashMaps();
     OTRGlobals::Instance->gRandoContext->AddExcludedOptions();
+
+    BootTrace("InitOTR: end");
 }
 
 extern "C" void SaveManager_ThreadPoolWait() {
@@ -1794,7 +1822,18 @@ void RunCommands(Gfx* Commands, const std::vector<std::unordered_map<Mtx*, MtxF>
         static_cast<UIWidgets::Colors>(CVarGetInteger(CVAR_SETTING("Menu.Theme"), UIWidgets::Colors::LightBlue));
     ImGui::PushStyleColor(ImGuiCol_TitleBgActive, UIWidgets::ColorValues.at(themeColor));
     for (const auto& m : mtx_replacements) {
+        static bool sIsFirst = true;
+        if (sIsFirst) {
+            BootTrace("RunCommands: pre-DrawAndRunGraphicsCommands");
+        }
+
         wnd->DrawAndRunGraphicsCommands(Commands, m);
+
+        if (sIsFirst) {
+            BootTrace("RunCommands: post-DrawAndRunGraphicsCommands");
+            sIsFirst = false;
+        }
+
         intp->mInterpolationIndex++;
     }
     ImGui::PopStyleColor();
