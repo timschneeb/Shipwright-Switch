@@ -778,12 +778,6 @@ void OTRGlobals::RunExtract(int argc, char* argv[]) {
         sohFast3dWindow->EndFrame();
         ImGui::PopStyleColor(2);
     }
-
-#ifdef __SWITCH__
-    Ship::Switch::Init(Ship::PreInitPhase);
-#elif defined(__WIIU__)
-    Ship::WiiU::Init(appShortName);
-#endif
 }
 
 void InitGfxDebugger() {
