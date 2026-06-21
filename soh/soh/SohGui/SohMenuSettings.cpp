@@ -466,7 +466,14 @@ void SohMenu::AddMenuSettings() {
     path.sidebarName = "Controls";
     path.column = SECTION_COLUMN_1;
     AddSidebarEntry("Settings", "Controls", 1);
+    AddWidget(path, "Refresh Devices", WIDGET_BUTTON)
+        .Callback([](WidgetInfo& info) {
+            Ship::Context::GetRawInstance()->GetControlDeck()->GetConnectedPhysicalDeviceManager()
+                ->RefreshConnectedSDLGamepads();
+        })
+        .Options(ButtonOptions().Size(Sizes::Inline));
     AddWidget(path, "Clear Devices", WIDGET_BUTTON)
+        .SameLine(true)
         .Callback([](WidgetInfo& info) {
             SohGui::mModalWindow->RegisterPopup(
                 "Clear Config",
