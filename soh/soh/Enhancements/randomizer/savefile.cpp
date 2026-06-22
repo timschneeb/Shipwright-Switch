@@ -5,6 +5,8 @@
 #include "soh/Enhancements/randomizer/logic.h"
 #include "soh/Enhancements/randomizer/randomizer.h"
 
+#include <spdlog/spdlog.h>
+
 extern "C" {
 #include <z64.h>
 #include "variables.h"

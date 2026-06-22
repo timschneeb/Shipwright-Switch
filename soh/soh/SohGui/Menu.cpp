@@ -1,4 +1,5 @@
 #include "Menu.h"
+#include "BackendTypes.h"
 #include "UIWidgets.hpp"
 #include "soh/OTRGlobals.h"
 #include <ship/window/gui/GuiMenuBar.h>

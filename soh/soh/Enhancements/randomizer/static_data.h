@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include "randomizerTypes.h"
 #include "item.h"
+#include "item_location.h"
 #include "location.h"
 
 namespace Rando {
