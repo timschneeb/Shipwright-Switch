@@ -34,9 +34,6 @@ extern "C" {
 extern PlayState* gPlayState;
 }
 
-#include <libultraship/bridge.h>
-#include <libultraship/libultraship.h>
-
 #define CMD_REGISTER Ship::Context::GetRawInstance()->GetConsole()->AddCommand
 // TODO: Commands should be using the output passed in.
 #define ERROR_MESSAGE                                                                    \
