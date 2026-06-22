@@ -129,8 +129,11 @@ jobs:
 
   build-linux:
     needs: generate-soh-otr
+    name: build-linux${{ matrix.variant == 'clean' && ' (clean)' || '' }}
     runs-on: ubuntu-22.04
-    if: 0 # Disable Linux build on fork
+    strategy:
+      matrix:
+        variant: [default, clean]
     steps:
     - name: Git Checkout
       uses: actions/checkout@v6
@@ -141,6 +144,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y $(cat .github/workflows/apt-deps.txt)
     - name: Configure ccache
+      if: matrix.variant != 'clean'
       uses: hendrikmuhs/ccache-action@v1.2.22
       with:
         save: ${{ github.ref_name == github.event.repository.default_branch }}
@@ -149,6 +153,7 @@ jobs:
           ${{ runner.os }}-ccache-${{ github.ref }}
           ${{ runner.os }}-ccache
     - name: Restore Cached deps folder
+      if: matrix.variant != 'clean'
       id: restore-cache-deps
       uses: actions/cache/restore@v5
       with:
@@ -229,6 +234,7 @@ jobs:
         CC: gcc-12
         CXX: g++-12
     - name: Upload build
+      if: matrix.variant != 'clean'
       uses: actions/upload-artifact@v7
       with:
         name: soh-linux
@@ -236,7 +242,7 @@ jobs:
           soh.appimage
           readme.txt
     - name: Save Cache deps folder
-      if: ${{ github.ref_name == github.event.repository.default_branch }}
+      if: ${{ matrix.variant != 'clean' && github.ref_name == github.event.repository.default_branch }}
       uses: actions/cache/save@v5
       with:
         key: ${{ steps.restore-cache-deps.outputs.cache-primary-key }}
@@ -247,7 +253,7 @@ jobs:
     runs-on: "ubuntu-latest"
     strategy:
       matrix:
-        variant: [default, lto]
+        variant: [default, lto, clean]
     container:
       image: devkitpro/devkita64:20260219
     env:
@@ -259,6 +265,7 @@ jobs:
       with:
         submodules: true
     - name: Configure ccache
+      if: matrix.variant != 'clean'
       uses: hendrikmuhs/ccache-action@v1.2.22
       with:
         save: ${{ github.ref_name == github.event.repository.default_branch }}
@@ -279,6 +286,7 @@ jobs:
         sudo sh /tmp/cmake.sh --prefix=/usr/local/ --exclude-subdir
 
     - name: Build SoH
+      if: matrix.variant != 'clean'
       run: |
         export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
         cmake -H. -B${{ env.BUILD_DIR }} -GNinja \
@@ -293,11 +301,23 @@ jobs:
         mv ${{ env.BUILD_DIR }}/soh/*.nro soh.nro
         mv README.md readme.txt
 
+        
+    - name: Build SoH (clean)
+      if: matrix.variant != 'clean'
+      run: |
+        cmake -H. -B${{ env.BUILD_DIR }} -GNinja \
+          -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake \
+          -DCMAKE_BUILD_TYPE:STRING=Release \
+          -DENABLE_SCRIPTING=0 
+        cmake --build ${{ env.BUILD_DIR }} --target soh_nro --config Release -j6
+
     - name: Download soh.o2r
+      if: matrix.variant != 'clean'
       uses: actions/download-artifact@v4
       with:
         name: soh.o2r
     - name: Upload build
+      if: matrix.variant != 'clean'
       uses: actions/upload-artifact@v4
       with:
         name: soh-nx${{ env.ARTIFACT_SUFFIX }}
@@ -306,6 +326,7 @@ jobs:
           soh.o2r
           readme.txt
     - name: Upload ELF
+      if: matrix.variant != 'clean'
       uses: actions/upload-artifact@v4
       with:
         name: debug-symbols${{ env.ARTIFACT_SUFFIX }}
