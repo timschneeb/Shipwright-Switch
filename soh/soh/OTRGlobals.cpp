@@ -278,7 +278,7 @@ static bool sohArchiveVersionMatch = false;
 
 namespace {
 void BootTrace(const char* message) {
-    static const auto sPath = Ship::Context::GetPathRelativeToAppDirectory("logs/deko_trace.log");
+    static const auto sPath = Ship::Context::GetPathRelativeToAppDirectory("logs/deko3d_trace.log");
     if (const auto file = std::fopen(sPath.c_str(), "a")) {
         std::fputs(message, file);
         std::fputc('\n', file);

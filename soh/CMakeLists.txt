@@ -814,6 +814,36 @@ endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch")
 
+find_program(UAM_EXE uam HINTS ${DEVKITPRO}/tools/bin REQUIRED)
+set(DEKO3D_SHADER_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/src/fast/shaders/deko3d)
+set(DEKO3D_ROMFS ${CMAKE_CURRENT_BINARY_DIR}/romfs)
+set(DEKO3D_SHADER_OUT ${DEKO3D_ROMFS}/shaders/deko3d)
+file(MAKE_DIRECTORY ${DEKO3D_SHADER_OUT})
+
+set(DEKO3D_DKSH "")
+file(GLOB DEKO3D_VERT ${DEKO3D_SHADER_SRC}/*.vert.glsl)
+file(GLOB DEKO3D_FRAG ${DEKO3D_SHADER_SRC}/*.frag.glsl)
+foreach(SH ${DEKO3D_VERT} ${DEKO3D_FRAG})
+    get_filename_component(SH_NAME ${SH} NAME)
+    string(REPLACE ".glsl" ".dksh" OUT_NAME ${SH_NAME})
+    if (SH_NAME MATCHES "\\.vert\\.glsl$")
+        set(STAGE vert)
+    else()
+        set(STAGE frag)
+    endif()
+    add_custom_command(
+        OUTPUT ${DEKO3D_SHADER_OUT}/${OUT_NAME}
+        COMMAND ${UAM_EXE} -s ${STAGE} -o ${DEKO3D_SHADER_OUT}/${OUT_NAME} ${SH}
+        DEPENDS ${SH}
+        COMMENT "uam ${STAGE}: ${SH_NAME}"
+        VERBATIM
+    )
+    list(APPEND DEKO3D_DKSH ${DEKO3D_SHADER_OUT}/${OUT_NAME})
+endforeach()
+
+add_custom_target(deko3d_shaders DEPENDS ${DEKO3D_DKSH})
+add_dependencies(soh deko3d_shaders)
+
 nx_generate_nacp(Ship.nacp
    NAME "Ship of Harkinian"
    AUTHOR "${PROJECT_TEAM}"
@@ -823,6 +853,7 @@ nx_generate_nacp(Ship.nacp
 nx_create_nro(soh
     NACP Ship.nacp
     ICON ${CMAKE_CURRENT_SOURCE_DIR}/icon.jpg
+    ROMFS ${DEKO3D_ROMFS}
 )
 
 INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/soh.nro DESTINATION . COMPONENT ship)
