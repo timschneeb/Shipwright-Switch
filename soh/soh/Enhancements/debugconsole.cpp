@@ -13,6 +13,7 @@
 #include "soh/Enhancements/audio/AudioEditor.h"
 #include "soh/Enhancements/randomizer/logic.h"
 #include "soh/Enhancements/randomizer/randomizer.h"
+#include "soh/Enhancements/randomizer/randomizer_check_tracker.h"
 
 #define Path _Path
 #define PATH_HACK
