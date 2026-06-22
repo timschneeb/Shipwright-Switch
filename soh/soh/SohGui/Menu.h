@@ -1,7 +1,9 @@
 #ifndef MENU_H
 #define MENU_H
 
-#include <libultraship/libultraship.h>
+#include <libultraship/libultra.h>
+#include <ship/audio/Audio.h>
+#include <ship/window/gui/GuiWindow.h>
 #include <fast/Fast3dWindow.h>
 #include "MenuTypes.h"
 

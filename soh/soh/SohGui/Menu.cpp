@@ -2,7 +2,7 @@
 #include "BackendTypes.h"
 #include "UIWidgets.hpp"
 #include "soh/OTRGlobals.h"
-#include <ship/window/gui/GuiMenuBar.h>
+#include <ship/config/Config.h>
 #include <ship/window/gui/GuiElement.h>
 #include "SohModals.h"
 #include <variant>

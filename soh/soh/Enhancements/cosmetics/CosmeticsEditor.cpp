@@ -4,8 +4,7 @@
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
 
 #include <string>
-#include <libultraship/bridge.h>
-#include <math.h>
+#include <libultraship/libultraship.h>
 
 #include "soh/SohGui/UIWidgets.hpp"
 #include "soh/SohGui/SohMenu.h"
