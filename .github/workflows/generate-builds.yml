@@ -303,7 +303,7 @@ jobs:
 
         
     - name: Build SoH (clean)
-      if: matrix.variant != 'clean'
+      if: matrix.variant == 'clean'
       run: |
         cmake -H. -B${{ env.BUILD_DIR }} -GNinja \
           -DCMAKE_TOOLCHAIN_FILE=/opt/devkitpro/cmake/Switch.cmake \
