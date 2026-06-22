@@ -4,6 +4,7 @@
 #include <libultraship/libultra.h>
 
 #ifdef __cplusplus
+#include <array>
 #include <set>
 #include <vector>
 
