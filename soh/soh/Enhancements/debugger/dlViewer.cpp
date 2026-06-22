@@ -11,7 +11,6 @@
 #include <bit>
 #include <map>
 #include <string>
-#include <libultraship/libultraship.h>
 #include "dlViewer.h"
 
 extern "C" {

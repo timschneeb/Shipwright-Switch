@@ -3,7 +3,6 @@
 #include <string>
 #include <vector>
 
-#include <libultraship/libultraship.h>
 #include <libultraship/controller/controldeck/ControlDeck.h>
 
 #include "randomizer_check_tracker.h"
