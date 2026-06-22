@@ -24,6 +24,8 @@
 #include <time.h>
 #endif
 #include <ship/audio/AudioPlayer.h>
+#include <ship/resource/archive/O2rArchive.h>
+#include <ship/utils/binarytools/MemoryStream.h>
 #include "Enhancements/speechsynthesizer/SpeechSynthesizer.h"
 #include "Enhancements/controls/SohInputEditorWindow.h"
 #include "Enhancements/audio/AudioCollection.h"
