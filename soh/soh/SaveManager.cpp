@@ -16,7 +16,6 @@
 #include "functions.h"
 #include "macros.h"
 #include <variables.h>
-#include <libultraship/libultraship.h>
 #include "soh/SohGui/SohGui.hpp"
 
 #define NOGDI // avoid various windows defines that conflict with things in z64.h

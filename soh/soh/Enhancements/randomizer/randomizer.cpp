@@ -5,7 +5,6 @@
 #include <macros.h>
 #include <objects/gameplay_keep/gameplay_keep.h>
 #include <functions.h>
-#include <libultraship/libultraship.h>
 #include <textures/icon_item_static/icon_item_static.h>
 #include <textures/icon_item_24_static/icon_item_24_static.h>
 #include "3drando/menu.hpp"

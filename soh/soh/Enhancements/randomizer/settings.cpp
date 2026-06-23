@@ -7,7 +7,7 @@
 
 #include <spdlog/spdlog.h>
 #include <libultraship/bridge/consolevariablebridge.h>
-#include <libultraship/libultraship.h>
+#include <libultraship/classes.h>
 
 namespace Rando {
 std::shared_ptr<Settings> Settings::mInstance;

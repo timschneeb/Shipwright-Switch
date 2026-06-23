@@ -6,6 +6,7 @@
 #include <soh/Enhancements/cosmetics/authenticGfxPatches.h>
 #include <soh/Enhancements/TimeDisplay/TimeDisplay.h>
 #include "soh/Enhancements/randomizer/randomizer.h"
+#include <ship/Context.h>
 
 extern "C" {
 #include "functions.h"

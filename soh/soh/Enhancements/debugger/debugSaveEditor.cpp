@@ -13,8 +13,6 @@
 #include <bit>
 #include <map>
 #include <string>
-#include <libultraship/bridge.h>
-#include <libultraship/libultraship.h>
 #include <soh_assets.h>
 
 #include <fast/Fast3dGui.h>

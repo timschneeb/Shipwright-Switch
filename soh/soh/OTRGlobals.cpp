@@ -1,4 +1,4 @@
-#include "OTRGlobals.h"
+﻿#include "OTRGlobals.h"
 #include "OTRAudio.h"
 #include <algorithm>
 #include <atomic>
@@ -24,6 +24,8 @@
 #include <time.h>
 #endif
 #include <ship/audio/AudioPlayer.h>
+#include <ship/resource/archive/O2rArchive.h>
+#include <ship/utils/binarytools/MemoryStream.h>
 #include "Enhancements/speechsynthesizer/SpeechSynthesizer.h"
 #include "Enhancements/controls/SohInputEditorWindow.h"
 #include "Enhancements/audio/AudioCollection.h"
@@ -82,7 +84,6 @@
 #include "soh/Network/Anchor/Anchor.h"
 #include "Enhancements/game-interactor/GameInteractor.h"
 #include "Enhancements/randomizer/draw.h"
-#include <libultraship/libultraship.h>
 #include <libultraship/controller/controldeck/ControlDeck.h>
 #include <fast/resource/ResourceType.h>
 

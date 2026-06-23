@@ -9,7 +9,6 @@
 
 #include <vector>
 #include <fast/Fast3dGui.h>
-#include <libultraship/libultraship.h>
 
 extern "C" {
 #include "variables.h"

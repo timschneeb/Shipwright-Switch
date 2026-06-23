@@ -11,7 +11,6 @@
 #include <vector>
 #include <string>
 #include <libultraship/bridge.h>
-#include <libultraship/libultraship.h>
 #include "soh/Enhancements/enhancementTypes.h"
 #include "soh/OTRGlobals.h"
 

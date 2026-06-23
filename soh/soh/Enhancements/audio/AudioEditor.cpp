@@ -4,7 +4,6 @@
 #include <map>
 #include <set>
 #include <string>
-#include <libultraship/libultraship.h>
 #include <functions.h>
 #include "soh/ShipUtils.h"
 #include "soh/OTRGlobals.h"
