@@ -1,6 +1,5 @@
 #include "Traps.h"
 #include "soh/Enhancements/randomizer/SeedContext.h"
-#include "soh/Enhancements/randomizer/randomizerTypes.h"
 #include "soh/Enhancements/randomizer/static_data.h"
 #include "soh/ShipUtils.h"
 

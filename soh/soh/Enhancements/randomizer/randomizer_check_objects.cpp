@@ -4,8 +4,6 @@
 #include <map>
 #include <string>
 #include <libultraship/bridge.h>
-#include "z64.h"
-#include "soh/OTRGlobals.h"
 #include "soh/cvar_prefixes.h"
 #include "fishsanity.h"
 

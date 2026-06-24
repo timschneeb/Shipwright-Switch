@@ -3,7 +3,6 @@
 #include "randomizerTypes.h"
 #include "z64save.h"
 #include "item_override.h"
-#include "soh/Enhancements/custom-message/text.h"
 #include "hint.h"
 #include "fishsanity.h"
 #include "trial.h"

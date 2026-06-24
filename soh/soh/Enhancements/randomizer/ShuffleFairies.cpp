@@ -1,7 +1,6 @@
 #include "soh/OTRGlobals.h"
 #include "randomizer_grotto.h"
 #include "draw.h"
-#include "soh/cvar_prefixes.h"
 #include "static_data.h"
 #include "soh/Enhancements/item-tables/ItemTableTypes.h"
 #include "soh/ObjectExtension/ObjectExtension.h"

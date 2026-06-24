@@ -3,7 +3,6 @@
 #include <ship/Context.h>
 #include <imgui.h>
 #include "soh/Enhancements/randomizer/settings.h"
-#include "soh/SohGui/SohGui.hpp"
 #include "soh/SohGui/SohMenu.h"
 #include "soh/SohGui/UIWidgets.hpp"
 #include "soh/Enhancements/Lang/Lang.h"

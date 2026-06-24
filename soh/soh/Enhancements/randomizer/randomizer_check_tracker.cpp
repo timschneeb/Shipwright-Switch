@@ -3,7 +3,6 @@
 #include "randomizer_item_tracker.h"
 #include "randomizerTypes.h"
 #include "soh/OTRGlobals.h"
-#include "soh/cvar_prefixes.h"
 #include "soh/SaveManager.h"
 #include "soh/ResourceManagerHelpers.h"
 #include "soh/SohGui/UIWidgets.hpp"
@@ -25,6 +24,7 @@
 #include <libultraship/controller/controldeck/ControlDeck.h>
 #include "location.h"
 #include "item_location.h"
+#include "randomizer_check_objects.h"
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include "z64item.h"
 

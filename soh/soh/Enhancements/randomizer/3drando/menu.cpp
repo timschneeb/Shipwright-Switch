@@ -3,7 +3,6 @@
 #include "soh/Enhancements/debugger/performanceTimer.h"
 #include "soh/ShipUtils.h"
 #include <spdlog/spdlog.h>
-#include "../../randomizer/randomizerTypes.h"
 
 namespace {
 bool seedChanged;

@@ -4,11 +4,8 @@
 #include "fill.hpp"
 #include "../static_data.h"
 #include "../SeedContext.h"
-#include "pool_functions.hpp"
 #include "random.hpp"
-#include "spoiler_log.hpp"
 #include "soh/Enhancements/randomizer/Traps.h"
-#include "z64item.h"
 #include <algorithm>
 #include <spdlog/spdlog.h>
 
