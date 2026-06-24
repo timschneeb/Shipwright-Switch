@@ -3071,6 +3071,14 @@ typedef enum {
     // true
     // ```
     // #### `args`
+    // - none
+    VB_ITEMSHIELD_DRAW,
+
+    // #### `result`
+    // ```c
+    // true
+    // ```
+    // #### `args`
     // - `*Player`
     VB_INIT_HOOKSHOT_IA,
 
