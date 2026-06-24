@@ -7,9 +7,7 @@
 
 #include "SohGui.hpp"
 
-#include <spdlog/spdlog.h>
 #include <imgui.h>
-#include <imgui_internal.h>
 #include <libultraship/libultraship.h>
 
 #ifdef __APPLE__

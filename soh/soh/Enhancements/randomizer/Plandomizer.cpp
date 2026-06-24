@@ -22,6 +22,8 @@
 extern "C" {
 #include "include/z64item.h"
 #include "objects/gameplay_keep/gameplay_keep.h"
+#include "textures/icon_item_static/icon_item_static.h"
+#include "textures/parameter_static/parameter_static.h"
 extern SaveContext gSaveContext;
 extern PlayState* gPlayState;
 }

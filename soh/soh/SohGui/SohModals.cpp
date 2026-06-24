@@ -7,7 +7,6 @@
 #include "UIWidgets.hpp"
 #include "SohGui.hpp"
 #include "soh/OTRGlobals.h"
-#include "z64.h"
 
 extern "C" PlayState* gPlayState;
 struct SohModal {
