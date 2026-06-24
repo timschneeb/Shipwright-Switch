@@ -12,7 +12,6 @@ extern "C" {
 #include "functions.h"
 #include "macros.h"
 #include "variables.h"
-#include <textures/message_static/message_static.h>
 #include <textures/parameter_static/parameter_static.h>
 extern PlayState* gPlayState;
 }

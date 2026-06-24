@@ -1,7 +1,5 @@
 #include "savestates.h"
 
-#include <soh/GameVersions.h>
-
 #include <spdlog/spdlog.h>
 
 #include <soh/OTRGlobals.h>

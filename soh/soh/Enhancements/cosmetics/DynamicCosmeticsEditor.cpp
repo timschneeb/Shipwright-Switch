@@ -7,7 +7,6 @@
 #include <vector>
 #include <cctype>
 #include <cstdlib>
-#include <math.h>
 #include <tinyxml2.h>
 #include <fast/resource/type/DisplayList.h>
 #include <ship/resource/archive/Archive.h>
@@ -17,7 +16,6 @@
 #include "soh/OTRGlobals.h"
 
 extern "C" {
-#include "macros.h"
 #include "soh/cvar_prefixes.h"
 }
 

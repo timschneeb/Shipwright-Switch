@@ -1,4 +1,3 @@
-#include <stddef.h>
 #include <stdbool.h>
 #include <libultraship/bridge.h>
 #include "bootcommands.h"
