@@ -2,14 +2,10 @@
 #include "ResourceManagerHelpers.h"
 #include <libultraship/libultraship.h>
 #include "soh/resource/type/Scene.h"
-#include <ship/utils/StringHelper.h>
 #include "global.h"
 #include "vt.h"
 #include "soh/resource/type/CollisionHeader.h"
-#include <fast/resource/type/DisplayList.h>
 #include "soh/resource/type/Cutscene.h"
-#include "soh/resource/type/Path.h"
-#include "soh/resource/type/Text.h"
 #include <ship/resource/type/Blob.h>
 #include <memory>
 #include <cassert>

@@ -12,7 +12,6 @@
 #include "ResourceManagerHelpers.h"
 
 #include "z64.h"
-#include "cvar_prefixes.h"
 #include "functions.h"
 #include "macros.h"
 #include <variables.h>
