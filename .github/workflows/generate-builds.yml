@@ -234,7 +234,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y python3-pip lsb-release $(cat .github/workflows/apt-deps.txt)
+        sudo apt-get install -y python3-pip $(cat linux-build-deps/apt.txt)
         sudo apt-get remove -y cmake
         sudo dkp-pacman -R --noconfirm switch-tinyxml2 # devkitPro's tinyxml2 is too old and causes build issues
         pip install --break-system-packages cryptography # needed for libultraship
