@@ -4,7 +4,6 @@
 #include <set>
 #include <vector>
 
-#include <libultraship/classes.h>
 #include <ship/utils/StringHelper.h>
 
 #include "mod_menu.h"

@@ -2,6 +2,9 @@
 
 #include <spdlog/spdlog.h>
 
+#include <ship/Context.h>
+#include <ship/window/Window.h>
+#include <ship/window/gui/GameOverlay.h>
 #include <soh/OTRGlobals.h>
 #include <soh/OTRAudio.h>
 
@@ -15,8 +18,6 @@
 #include "../../src/overlays/actors/ovl_Boss_Tw/z_boss_tw.h"
 #include "../../src/overlays/actors/ovl_En_Clear_Tag/z_en_clear_tag.h"
 #include "../../src/overlays/actors/ovl_En_Fr/z_en_fr.h"
-
-#include <libultraship/libultraship.h>
 
 extern "C" PlayState* gPlayState;
 

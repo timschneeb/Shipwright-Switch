@@ -1,7 +1,9 @@
 #include "ResourceManagerHelpers.h"
-#include <libultraship/libultraship.h>
 #include "soh/resource/type/Scene.h"
+#include <ship/Context.h>
+#include <ship/resource/ResourceManager.h>
 #include <ship/utils/StringHelper.h>
+#include <spdlog/spdlog.h>
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include "global.h"
 

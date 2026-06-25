@@ -8,7 +8,6 @@
 #include "SohGui.hpp"
 
 #include <imgui.h>
-#include <libultraship/libultraship.h>
 
 #ifdef __APPLE__
 #include <fast/backends/gfx_metal.h>

@@ -1,7 +1,7 @@
 
 #include "Notification.h"
-#include <libultraship/libultraship.h>
-#include "soh/OTRGlobals.h"
+#include <libultraship/bridge/consolevariablebridge.h>
+#include <ship/Context.h>
 
 extern "C" {
 #include "functions.h"

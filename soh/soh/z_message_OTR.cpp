@@ -1,5 +1,5 @@
-#include <libultraship/libultraship.h>
-#include "soh/resource/type/Scene.h"
+#include <ship/Context.h>
+#include <ship/resource/ResourceManager.h>
 #include <ship/utils/StringHelper.h>
 #include "global.h"
 #include "soh/resource/type/Text.h"
