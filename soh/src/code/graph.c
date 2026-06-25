@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <libultraship/bridge/gfxdebuggerbridge.h>
+#include <libultraship/bridge/windowbridge.h>
 #include "soh/Enhancements/gameconsole.h"
 #include "soh/OTRGlobals.h"
 
