@@ -14,7 +14,7 @@
 #include <memory>
 
 namespace Ship {
-    class IResource;
+class IResource;
 } // namespace Ship
 
 std::shared_ptr<Ship::IResource> ResourceMgr_GetResourceByNameHandlingMQ(const char* path);
