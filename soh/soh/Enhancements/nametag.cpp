@@ -1,5 +1,4 @@
 #include "nametag.h"
-#include <libultraship/bridge.h>
 #include <vector>
 #include <algorithm>
 #include "soh/frame_interpolation.h"

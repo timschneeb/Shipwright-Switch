@@ -3,7 +3,6 @@
 #include "SeedContext.h"
 #include <map>
 #include <string>
-#include <libultraship/bridge.h>
 #include "soh/cvar_prefixes.h"
 #include "fishsanity.h"
 

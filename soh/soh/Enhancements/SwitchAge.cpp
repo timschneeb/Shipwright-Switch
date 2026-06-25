@@ -1,5 +1,4 @@
 #include "soh/Enhancements/SwitchAge.h"
-#include <libultraship/bridge.h>
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
 
 extern "C" {

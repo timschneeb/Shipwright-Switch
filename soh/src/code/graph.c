@@ -8,7 +8,6 @@
 
 #include "soh/Enhancements/gameconsole.h"
 #include "soh/OTRGlobals.h"
-#include "libultraship/bridge.h"
 
 #define GFXPOOL_HEAD_MAGIC 0x1234
 #define GFXPOOL_TAIL_MAGIC 0x5678

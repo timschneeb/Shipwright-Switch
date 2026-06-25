@@ -1,5 +1,4 @@
 #include "GameInteractor.h"
-#include <libultraship/bridge.h>
 #include "soh/ShipUtils.h"
 #include <math.h>
 #include "soh/Enhancements/debugger/colViewer.h"

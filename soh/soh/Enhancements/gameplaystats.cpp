@@ -9,7 +9,6 @@
 #include "soh/util.h"
 
 #include <string>
-#include <libultraship/bridge.h>
 #include "soh/Enhancements/enhancementTypes.h"
 #include "soh/OTRGlobals.h"
 
