@@ -1,4 +1,3 @@
-#include <stdint.h>
 #include "item_category_adj.h"
 #include "z64item.h"
 #include "variables.h"

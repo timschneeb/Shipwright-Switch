@@ -1,4 +1,5 @@
 #include <initializer_list>
+#include <libultraship/bridge/resourcebridge.h>
 #include "objects/object_link_boy/object_link_boy.h"
 #include "objects/object_link_child/object_link_child.h"
 #include "objects/object_custom_equip/object_custom_equip.h"
@@ -201,6 +202,22 @@ static bool IsScalingAdultItemAsChild() {
     return CVarGetInteger(CVAR_ENHANCEMENT("EquipmentAlwaysVisible"), 0) &&
            CVarGetInteger(CVAR_ENHANCEMENT("ScaleAdultEquipmentAsChild"), 0) && !LINK_IS_ADULT;
 }
+
+const char* bottleContentDLs[] = {
+    nullptr,                    // 0: PLAYER_IA_BOTTLE (empty - no custom content needed)
+    gCustomBottleFishDL,        // 1: PLAYER_IA_BOTTLE_FISH
+    gCustomBottleBlueFireDL,    // 2: PLAYER_IA_BOTTLE_FIRE
+    gCustomBottleBugDL,         // 3: PLAYER_IA_BOTTLE_BUG
+    gCustomBottlePoeDL,         // 4: PLAYER_IA_BOTTLE_POE
+    gCustomBottleBigPoeDL,      // 5: PLAYER_IA_BOTTLE_BIG_POE
+    gCustomBottleLetterDL,      // 6: PLAYER_IA_BOTTLE_RUTOS_LETTER
+    gCustomBottleRedPotionDL,   // 7: PLAYER_IA_BOTTLE_POTION_RED
+    gCustomBottleBluePotionDL,  // 8: PLAYER_IA_BOTTLE_POTION_BLUE
+    gCustomBottleGreenPotionDL, // 9: PLAYER_IA_BOTTLE_POTION_GREEN
+    gCustomBottleMilkDL,        // 10: PLAYER_IA_BOTTLE_MILK_FULL
+    gCustomBottleMilkHalfDL,    // 11: PLAYER_IA_BOTTLE_MILK_HALF
+    gCustomBottleFairyDL,       // 12: PLAYER_IA_BOTTLE_FAIRY
+};
 
 static void RegisterCustomEquipment() {
     // World (gameplay) character
@@ -601,6 +618,40 @@ static void RegisterCustomEquipment() {
         if (resolvedChain) {
             *should = false;
             gSPDisplayList(play->state.gfxCtx->polyOpa.p++, resolvedChain);
+        }
+    });
+
+    COND_VB_SHOULD(VB_PLAYER_DRAW_BOTTLE, CVarGetInteger(CVAR_SETTING("AltAssets"), 1), {
+        Player* player = va_arg(args, Player*);
+        PlayState* play = va_arg(args, PlayState*);
+        const char* contentDL = nullptr;
+        Gfx* resolvedContent = nullptr;
+        Gfx* resolvedBottle = LoadCustomGfx(gCustomBottleDL);
+        if (resolvedBottle) {
+            *should = false;
+            gSPDisplayList(play->state.gfxCtx->polyXlu.p++, resolvedBottle);
+
+            if (player->itemAction >= PLAYER_IA_BOTTLE &&
+                player->itemAction < PLAYER_IA_BOTTLE + std::size(bottleContentDLs)) {
+                contentDL = bottleContentDLs[player->itemAction - PLAYER_IA_BOTTLE];
+            }
+
+            if (contentDL) {
+                resolvedContent = LoadCustomGfx(contentDL);
+            }
+
+            if (resolvedContent) {
+                gSPDisplayList(play->state.gfxCtx->polyOpa.p++, resolvedContent);
+            }
+        }
+    });
+
+    COND_VB_SHOULD(VB_PLAYER_UPDATE_BOTTLE_HELD, CVarGetInteger(CVAR_SETTING("AltAssets"), 1), {
+        Player* player = va_arg(args, Player*);
+        const bool isFullMilk = player->itemAction == PLAYER_IA_BOTTLE_MILK_FULL;
+        if (isFullMilk) {
+            *should = false;
+            player->itemAction = PLAYER_IA_BOTTLE_MILK_HALF;
         }
     });
 }

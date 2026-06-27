@@ -5,6 +5,7 @@
 #include "objects/object_link_child/object_link_child.h"
 #include "overlays/actors/ovl_Demo_Effect/z_demo_effect.h"
 
+#include <libultraship/bridge/resourcebridge.h>
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include "soh/Enhancements/randomizer/draw.h"
@@ -693,7 +694,9 @@ void Player_UpdateBottleHeld(PlayState* play, Player* this, s32 item, s32 action
         this->heldItemAction = actionParam;
     }
 
-    this->itemAction = actionParam;
+    if (GameInteractor_Should(VB_PLAYER_UPDATE_BOTTLE_HELD, true, this)) {
+        this->itemAction = actionParam;
+    }
 }
 
 void Player_ReleaseLockOn(Player* this) {
@@ -1833,8 +1836,10 @@ void Player_PostLimbDrawGameplay(PlayState* play, s32 limbIndex, Gfx** dList, Ve
             OPEN_DISPS(play->state.gfxCtx);
 
             gSPMatrix(POLY_XLU_DISP++, MATRIX_NEWMTX(play->state.gfxCtx), G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW);
-            gDPSetEnvColor(POLY_XLU_DISP++, bottleColor->r, bottleColor->g, bottleColor->b, 0);
-            gSPDisplayList(POLY_XLU_DISP++, sBottleDLists[(gSaveContext.linkAge)]);
+            if (GameInteractor_Should(VB_PLAYER_DRAW_BOTTLE, true, this, play)) {
+                gDPSetEnvColor(POLY_XLU_DISP++, bottleColor->r, bottleColor->g, bottleColor->b, 0);
+                gSPDisplayList(POLY_XLU_DISP++, sBottleDLists[gSaveContext.linkAge]);
+            }
 
             CLOSE_DISPS(play->state.gfxCtx);
         }

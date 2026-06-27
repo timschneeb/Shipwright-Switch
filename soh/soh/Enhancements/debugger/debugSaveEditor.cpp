@@ -13,8 +13,6 @@
 #include <bit>
 #include <map>
 #include <string>
-#include <libultraship/bridge.h>
-#include <libultraship/libultraship.h>
 #include <soh_assets.h>
 
 #include <fast/Fast3dGui.h>
@@ -24,7 +22,6 @@ extern "C" {
 #include "variables.h"
 #include "functions.h"
 #include "macros.h"
-#include "soh/cvar_prefixes.h"
 extern PlayState* gPlayState;
 }
 

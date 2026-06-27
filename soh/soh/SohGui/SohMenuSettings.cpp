@@ -6,7 +6,7 @@
 #include <soh/GameVersions.h>
 #include "soh/ResourceManagerHelpers.h"
 #include "UIWidgets.hpp"
-#include <spdlog/fmt/fmt.h>
+#include <ship/controller/controldeck/ControlDeck.h>
 
 #ifdef __SWITCH__
 #include <ship/port/switch/SwitchImpl.h>

@@ -5,6 +5,8 @@
 #include "soh/Enhancements/randomizer/logic.h"
 #include "soh/Enhancements/randomizer/randomizer.h"
 
+#include <spdlog/spdlog.h>
+
 extern "C" {
 #include <z64.h>
 #include "variables.h"
@@ -396,8 +398,10 @@ void SetStartingItems() {
         // We can resolve this by starting with some extra keys.
         if (ResourceMgr_IsSceneMasterQuest(SCENE_SPIRIT_TEMPLE)) {
             // MQ Spirit needs 3 keys.
-            gSaveContext.inventory.dungeonKeys[SCENE_SPIRIT_TEMPLE] = 3;
-            gSaveContext.ship.stats.dungeonKeys[SCENE_SPIRIT_TEMPLE] = 3;
+            if (gSaveContext.inventory.dungeonKeys[SCENE_SPIRIT_TEMPLE] < 3) {
+                gSaveContext.inventory.dungeonKeys[SCENE_SPIRIT_TEMPLE] = 3;
+                gSaveContext.ship.stats.dungeonKeys[SCENE_SPIRIT_TEMPLE] = 3;
+            }
         }
     }
 

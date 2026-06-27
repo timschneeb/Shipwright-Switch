@@ -3,7 +3,6 @@
 #include "randomizer_item_tracker.h"
 #include "randomizerTypes.h"
 #include "soh/OTRGlobals.h"
-#include "soh/cvar_prefixes.h"
 #include "soh/SaveManager.h"
 #include "soh/ResourceManagerHelpers.h"
 #include "soh/SohGui/UIWidgets.hpp"
@@ -22,10 +21,10 @@
 #include <sstream>
 #include <vector>
 #include <set>
-#include <libultraship/libultraship.h>
 #include <libultraship/controller/controldeck/ControlDeck.h>
 #include "location.h"
 #include "item_location.h"
+#include "randomizer_check_objects.h"
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include "z64item.h"
 
@@ -2074,7 +2073,7 @@ void DrawLocation(RandomizerCheck rc) {
                     } else if (revealItemName) {
                         txt = itemLoc->GetPlacedItem().GetName().GetForLanguage(gSaveContext.language);
                     }
-                    if (IsVisibleInCheckTracker(rc) && status == RCSHOW_IDENTIFIED) {
+                    if (itemLoc->CanBePurchased() && IsVisibleInCheckTracker(rc) && status == RCSHOW_IDENTIFIED) {
                         auto price = OTRGlobals::Instance->gRandoContext->GetItemLocation(rc)->GetPrice();
                         txt = !txt.empty() ? fmt::format("{} - {}", txt, price) : fmt::format("{}", price);
                     }

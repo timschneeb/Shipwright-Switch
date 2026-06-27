@@ -4,7 +4,6 @@
 #include <map>
 #include <set>
 #include <string>
-#include <libultraship/libultraship.h>
 #include <functions.h>
 #include "soh/ShipUtils.h"
 #include "soh/OTRGlobals.h"
@@ -14,7 +13,6 @@
 #include "soh/SohGui/SohGui.hpp"
 #include "AudioCollection.h"
 #include "soh/Enhancements/enhancementTypes.h"
-#include "soh/ShipUtils.h"
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include "soh/Enhancements/randomizer/SeedContext.h"
 

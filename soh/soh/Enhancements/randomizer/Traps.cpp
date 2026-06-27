@@ -1,6 +1,5 @@
 #include "Traps.h"
 #include "soh/Enhancements/randomizer/SeedContext.h"
-#include "soh/Enhancements/randomizer/randomizerTypes.h"
 #include "soh/Enhancements/randomizer/static_data.h"
 #include "soh/ShipUtils.h"
 
@@ -1056,7 +1055,7 @@ static void InitTrickNames() {
     trickNameTable[RG_SPEAK_HYLIAN] = {
         // TODO_TRANSLATE
         Text{ "Human Jingle Nut" },
-        Text{ "Sheikah Jabber nut" },
+        Text{ "Sheikah Jabber Nut" },
         Text{ "Lorulean Blabber Nut" },
     };
     trickNameTable[RG_SPEAK_KOKIRI] = {

@@ -1,5 +1,4 @@
-﻿#include <libultraship/bridge.h>
-#include "soh/OTRGlobals.h"
+﻿#include "soh/OTRGlobals.h"
 #include "soh/ResourceManagerHelpers.h"
 #include "soh/Enhancements/enhancementTypes.h"
 #include "soh/Enhancements/custom-message/CustomMessageTypes.h"
@@ -15,6 +14,7 @@
 #include "soh/ObjectExtension/ObjectExtension.h"
 #include "item_category_adj.h"
 #include "soh/Enhancements/randomizer/randomizer.h"
+#include "soh/Enhancements/randomizer/randomizer_check_tracker.h"
 #include "soh/Enhancements/randomizer/RCToRandInf.h"
 
 extern "C" {

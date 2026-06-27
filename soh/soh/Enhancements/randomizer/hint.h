@@ -1,6 +1,5 @@
 #pragma once
 
-#include "soh/Enhancements/custom-message/text.h"
 #include "3drando/hints.hpp"
 #include "../custom-message/CustomMessageManager.h"
 #include "randomizerTypes.h"
