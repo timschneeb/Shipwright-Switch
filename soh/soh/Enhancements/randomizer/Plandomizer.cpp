@@ -13,18 +13,17 @@
 #include "soh/OTRGlobals.h"
 #include "soh/SohGui/ImGuiUtils.h"
 #include "soh/Enhancements/randomizer/logic.h"
-#include "soh/Enhancements/randomizer/randomizer_check_objects.h"
 #include "soh/Enhancements/randomizer/rando_hash.h"
 #include "soh/Enhancements/randomizer/Traps.h"
 #include "soh/Enhancements/randomizer/3drando/shops.hpp"
 
 #include <fast/Fast3dGui.h>
 
-#include <fast/Fast3dGui.h>
-
 extern "C" {
 #include "include/z64item.h"
 #include "objects/gameplay_keep/gameplay_keep.h"
+#include "textures/icon_item_static/icon_item_static.h"
+#include "textures/parameter_static/parameter_static.h"
 extern SaveContext gSaveContext;
 extern PlayState* gPlayState;
 }

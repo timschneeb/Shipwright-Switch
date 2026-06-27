@@ -22,6 +22,7 @@
 #include <spdlog/spdlog.h>
 extern "C" {
 #include <functions.h>
+#include <variables.h>
 }
 
 namespace Rando {

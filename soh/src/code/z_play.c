@@ -14,8 +14,6 @@
 #include "soh/SaveManager.h"
 #include "soh/framebuffer_effects.h"
 
-#include <libultraship/libultraship.h>
-
 #include <time.h>
 #include <assert.h>
 

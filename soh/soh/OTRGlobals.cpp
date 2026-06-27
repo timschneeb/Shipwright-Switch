@@ -11,6 +11,9 @@
 
 #include "ResourceManagerHelpers.h"
 #include <fast/Fast3dWindow.h>
+#include <libultraship/bridge/audiobridge.h>
+#include <libultraship/bridge/gfxdebuggerbridge.h>
+#include <libultraship/bridge/windowbridge.h>
 #include <ship/Context.h>
 #include <ship/resource/File.h>
 #include <ship/window/Window.h>
@@ -35,7 +38,6 @@
 #include "Enhancements/randomizer/randomizer_check_tracker.h"
 #include "Enhancements/randomizer/static_data.h"
 #include "soh/Enhancements/randomizer/settings.h"
-#include "Enhancements/gameplaystats.h"
 #include "soh/Enhancements/savestates.h"
 #include "frame_interpolation.h"
 #include "SohGui/SohMenu.h"
@@ -75,7 +77,6 @@
 #include <functions.h>
 #include "Enhancements/item-tables/ItemTableManager.h"
 #include "Enhancements/Lang/Lang.h"
-#include "soh/SohGui/SohGui.hpp"
 #include "soh/SohGui/ImGuiUtils.h"
 #include "ActorDB.h"
 #include "SaveManager.h"
@@ -88,25 +89,10 @@
 #include <fast/resource/ResourceType.h>
 
 // Resource Types/Factories
-#include "soh/resource/type/Array.h"
-#include <ship/resource/type/Blob.h>
-#include <fast/resource/type/DisplayList.h>
 #include <fast/resource/type/Matrix.h>
-#include <fast/resource/type/Texture.h>
-#include <fast/resource/type/Vertex.h>
 #include "soh/resource/type/SohResourceType.h"
 #include "soh/resource/type/Animation.h"
-#include "soh/resource/type/AudioSample.h"
-#include "soh/resource/type/AudioSequence.h"
-#include "soh/resource/type/AudioSoundFont.h"
-#include "soh/resource/type/CollisionHeader.h"
-#include "soh/resource/type/Cutscene.h"
-#include "soh/resource/type/Path.h"
-#include "soh/resource/type/PlayerAnimation.h"
-#include "soh/resource/type/Scene.h"
 #include "soh/resource/type/Skeleton.h"
-#include "soh/resource/type/SkeletonLimb.h"
-#include "soh/resource/type/Text.h"
 #include <ship/resource/factory/BlobFactory.h>
 #include <fast/resource/factory/DisplayListFactory.h>
 #include <fast/resource/factory/MatrixFactory.h>

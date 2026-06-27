@@ -22,7 +22,6 @@ extern "C" {
 #include "variables.h"
 #include "functions.h"
 #include "macros.h"
-#include "soh/cvar_prefixes.h"
 extern PlayState* gPlayState;
 }
 

@@ -5,7 +5,6 @@
 #include "../trial.h"
 #include "../entrance.h"
 #include <spdlog/spdlog.h>
-#include "../randomizerTypes.h"
 #include "pool_functions.hpp"
 #include "../hint.h"
 #include "../static_data.h"

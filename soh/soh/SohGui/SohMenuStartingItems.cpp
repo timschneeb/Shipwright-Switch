@@ -1,4 +1,3 @@
-#include "SohMenu.h"
 #include "soh/SohGui/SohGui.hpp"
 #include "soh/SohGui/UIWidgets.hpp"
 #include "soh/SohGui/ImGuiUtils.h"
@@ -11,7 +10,6 @@
 #include <fast/Fast3dGui.h>
 
 extern "C" {
-#include "variables.h"
 #include "z64.h"
 }
 

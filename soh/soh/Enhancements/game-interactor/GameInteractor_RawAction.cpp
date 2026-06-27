@@ -1,15 +1,12 @@
 #include "GameInteractor.h"
-#include <libultraship/bridge.h>
 #include "soh/ShipUtils.h"
 #include <math.h>
 #include "soh/Enhancements/debugger/colViewer.h"
 #include "soh/Enhancements/nametag.h"
-#include "soh/ShipUtils.h"
 
 extern "C" {
 #include "variables.h"
 #include "macros.h"
-#include "soh/cvar_prefixes.h"
 #include "functions.h"
 extern PlayState* gPlayState;
 }

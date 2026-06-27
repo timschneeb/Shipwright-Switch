@@ -8,7 +8,6 @@
 extern "C" {
 #include "functions.h"
 #include "overlays/actors/ovl_Bg_Ice_Shelter/z_bg_ice_shelter.h"
-#include "objects/object_ice_objects/object_ice_objects.h"
 extern PlayState* gPlayState;
 }
 

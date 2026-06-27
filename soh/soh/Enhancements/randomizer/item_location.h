@@ -1,6 +1,5 @@
 #pragma once
 
-#include "randomizerTypes.h"
 #include "soh/Enhancements/custom-message/text.h"
 #include "static_data.h"
 #include "option.h"

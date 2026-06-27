@@ -6,7 +6,6 @@
 #include "3drando/item_pool.hpp"
 #include "z64item.h"
 #include "variables.h"
-#include "macros.h"
 #include "functions.h"
 #include "../../OTRGlobals.h"
 #include "soh/Enhancements/randomizer/randomizer.h"
