@@ -817,7 +817,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "NintendoSwitch")
 find_program(UAM_EXE uam HINTS ${DEVKITPRO}/tools/bin REQUIRED)
 set(DEKO3D_SHADER_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../libultraship/src/fast/shaders/deko3d)
 set(DEKO3D_ROMFS ${CMAKE_CURRENT_BINARY_DIR}/romfs)
-set(DEKO3D_SHADER_OUT ${DEKO3D_ROMFS}/shaders/deko3d)
+set(DEKO3D_SHADER_OUT ${DEKO3D_ROMFS}/shaders)
 file(MAKE_DIRECTORY ${DEKO3D_SHADER_OUT})
 
 set(DEKO3D_DKSH "")
