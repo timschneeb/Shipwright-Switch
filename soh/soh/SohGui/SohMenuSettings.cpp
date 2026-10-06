@@ -7,6 +7,7 @@
 #include "soh/ResourceManagerHelpers.h"
 #include "UIWidgets.hpp"
 #include <ship/controller/controldeck/ControlDeck.h>
+#include <ship/Context.h>
 
 #ifdef __SWITCH__
 #include <ship/port/switch/SwitchImpl.h>
@@ -267,7 +268,7 @@ void SohMenu::AddMenuSettings() {
     AddWidget(path, "Text to Speech", WIDGET_CVAR_CHECKBOX)
         .CVar(CVAR_SETTING("A11yTTS"))
         .RaceDisable(false)
-        .Options(CheckboxOptions().Tooltip("Enables text to speech for in game dialog"));
+        .Options(CheckboxOptions().Tooltip("Enables text to speech for in-game dialogue"));
 #endif
     AddWidget(path, "Disable Idle Camera Re-Centering", WIDGET_CVAR_CHECKBOX)
         .CVar(CVAR_SETTING("A11yDisableIdleCam"))
@@ -356,9 +357,10 @@ void SohMenu::AddMenuSettings() {
 
     // Graphics Settings
     static int32_t maxFps = 360;
-    const char* tooltip = "Uses Matrix Interpolation to create extra frames, resulting in smoother graphics. This is "
-                          "purely visual and does not impact game logic, execution of glitches etc.\n\nA higher target "
-                          "FPS than your monitor's refresh rate will waste resources, and might give a worse result.";
+    const char* tooltip =
+        "Uses Matrix Interpolation to create extra frames, resulting in smoother graphics. This is "
+        "purely visual and does not impact game logic, execution of glitches, etc.\n\nA higher target "
+        "FPS than your monitor's refresh rate will waste resources, and might give a worse result.";
     path.sidebarName = "Graphics";
     AddSidebarEntry("Settings", "Graphics", 3);
     AddWidget(path, "Graphics Options", WIDGET_SEPARATOR_TEXT);
@@ -437,7 +439,7 @@ void SohMenu::AddMenuSettings() {
         .RaceDisable(false)
         .PreFunc([](WidgetInfo& info) { info.isHidden = mSohMenu->disabledMap.at(DISABLE_FOR_NO_VSYNC).active; })
         .Options(CheckboxOptions()
-                     .Tooltip("Removes tearing, but clamps your max FPS to your displays refresh rate.")
+                     .Tooltip("Removes tearing, but clamps your max FPS to your display's refresh rate.")
                      .DefaultValue(true));
     AddWidget(path, "Windowed Fullscreen", WIDGET_CVAR_CHECKBOX)
         .CVar(CVAR_SDL_WINDOWED_FULLSCREEN)

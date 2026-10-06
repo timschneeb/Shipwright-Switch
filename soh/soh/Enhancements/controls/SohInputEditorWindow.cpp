@@ -1,13 +1,19 @@
-#include "SohInputEditorWindow.h"
 #include <ship/controller/controldeck/ControlDeck.h>
 #include <ship/utils/StringHelper.h>
-#include <libultraship/libultra.h>
 #include <fast/Fast3dWindow.h>
+#include <ship/Context.h>
+
+#include "SohInputEditorWindow.h"
 #include "soh/OTRGlobals.h"
 #include "soh/SohGui/SohMenu.h"
 #include "soh/SohGui/SohGui.hpp"
-#include "z64.h"
 #include "soh/cvar_prefixes.h"
+#include "soh/SohGui/UIWidgets.hpp"
+
+extern "C" {
+#include "z64.h"
+}
+
 #ifndef __WIIU__
 #include <ship/controller/controldevice/controller/mapping/sdl/SDLAxisDirectionToButtonMapping.h>
 #endif
@@ -19,6 +25,7 @@ using namespace UIWidgets;
 static WidgetInfo freeLook;
 static WidgetInfo mouseControl;
 static WidgetInfo mouseAutoCapture;
+static WidgetInfo mouseDisableThirdPerson;
 static WidgetInfo rightStickOcarina;
 static WidgetInfo dpadOcarina;
 static WidgetInfo dpadPause;
@@ -1275,7 +1282,7 @@ void InitHeader(bool has_header = true) {
     }
     ImGui::TableNextRow();
     ImGui::TableNextColumn();
-    ImGui::AlignTextToFramePadding(); // This is to adjust Vertical pos of item in a cell to be normlized.
+    ImGui::AlignTextToFramePadding(); // This is to adjust Vertical pos of item in a cell to be normalized.
     ImGui::PushItemWidth(ImGui::GetContentRegionAvail().x);
 }
 
@@ -1338,9 +1345,8 @@ void SohInputEditorWindow::DrawOcarinaControlPanel() {
     ImGui::SetCursorPos(ImVec2(cursor.x, cursor.y + 5));
 
     CheckboxOptions checkOpt = CheckboxOptions().Color(THEME_COLOR);
-    SohGui::mSohMenu->MenuDrawItem(dpadOcarina, static_cast<uint32_t>(ImGui::GetContentRegionAvail().x), THEME_COLOR);
-    SohGui::mSohMenu->MenuDrawItem(rightStickOcarina, static_cast<uint32_t>(ImGui::GetContentRegionAvail().x),
-                                   THEME_COLOR);
+    SohGui::mSohMenu->MenuDrawItem(dpadOcarina, THEME_COLOR);
+    SohGui::mSohMenu->MenuDrawItem(rightStickOcarina, THEME_COLOR);
     CVarCheckbox("Customize Ocarina Controls", CVAR_SETTING("CustomOcarina.Enabled"), checkOpt);
 
     if (!CVarGetInteger(CVAR_SETTING("CustomOcarina.Enabled"), 0)) {
@@ -1372,11 +1378,13 @@ void SohInputEditorWindow::DrawOcarinaControlPanel() {
 void SohInputEditorWindow::DrawCameraControlPanel() {
     ImVec2 cursor = ImGui::GetCursorPos();
     ImGui::SetCursorPos(ImVec2(cursor.x + 5, cursor.y + 5));
-    SohGui::mSohMenu->MenuDrawItem(mouseControl, static_cast<uint32_t>(ImGui::GetContentRegionAvail().x), THEME_COLOR);
+    SohGui::mSohMenu->MenuDrawItem(mouseControl, THEME_COLOR);
     cursor = ImGui::GetCursorPos();
     ImGui::SetCursorPos(ImVec2(cursor.x + 5, cursor.y + 5));
-    SohGui::mSohMenu->MenuDrawItem(mouseAutoCapture, static_cast<uint32_t>(ImGui::GetContentRegionAvail().x),
-                                   THEME_COLOR);
+    SohGui::mSohMenu->MenuDrawItem(mouseAutoCapture, THEME_COLOR);
+    cursor = ImGui::GetCursorPos();
+    ImGui::SetCursorPos(ImVec2(cursor.x + 5, cursor.y + 5));
+    SohGui::mSohMenu->MenuDrawItem(mouseDisableThirdPerson, THEME_COLOR);
 
     Ship::GuiWindow::BeginGroupPanel("Aiming/First-Person Camera", ImGui::GetContentRegionAvail());
     CVarCheckbox("Right Stick Aiming", CVAR_SETTING("Controls.RightStickAim"),
@@ -1444,7 +1452,7 @@ void SohInputEditorWindow::DrawCameraControlPanel() {
     ImGui::SetCursorPos(ImVec2(cursor.x + 5, cursor.y + 5));
     Ship::GuiWindow::BeginGroupPanel("Third-Person Camera", ImGui::GetContentRegionAvail());
 
-    SohGui::mSohMenu->MenuDrawItem(freeLook, static_cast<uint32_t>(ImGui::GetContentRegionAvail().x), THEME_COLOR);
+    SohGui::mSohMenu->MenuDrawItem(freeLook, THEME_COLOR);
     CVarCheckbox("Invert Camera X Axis", CVAR_SETTING("FreeLook.InvertXAxis"),
                  CheckboxOptions().Color(THEME_COLOR).Tooltip("Inverts the Camera X Axis in:\n-Free look"));
     CVarCheckbox(
@@ -1484,8 +1492,8 @@ void SohInputEditorWindow::DrawDpadControlPanel() {
     ImVec2 cursor = ImGui::GetCursorPos();
     ImGui::SetCursorPos(ImVec2(cursor.x + 5, cursor.y + 5));
     Ship::GuiWindow::BeginGroupPanel("D-Pad Options", ImGui::GetContentRegionAvail());
-    SohGui::mSohMenu->MenuDrawItem(dpadPause, static_cast<uint32_t>(ImGui::GetContentRegionAvail().x), THEME_COLOR);
-    SohGui::mSohMenu->MenuDrawItem(dpadText, static_cast<uint32_t>(ImGui::GetContentRegionAvail().x), THEME_COLOR);
+    SohGui::mSohMenu->MenuDrawItem(dpadPause, THEME_COLOR);
+    SohGui::mSohMenu->MenuDrawItem(dpadText, THEME_COLOR);
 
     if (!CVarGetInteger(CVAR_SETTING("DPadOnPause"), 0) && !CVarGetInteger(CVAR_SETTING("DpadInText"), 0)) {
         ImGui::BeginDisabled();
@@ -1908,6 +1916,19 @@ void RegisterInputEditorWidgets() {
                               "hide the cursor "
                               "and capture mouse input when closing the menu."));
     SohGui::mSohMenu->AddSearchWidget({ mouseAutoCapture, "Settings", "Controls", "Camera Controls" });
+
+    mouseDisableThirdPerson = { .name = "Disable Third-Person Mouse Controls",
+                                .type = WidgetType::WIDGET_CVAR_CHECKBOX };
+    mouseDisableThirdPerson.CVar(CVAR_SETTING("DisableThirdPersonMouse"))
+        .PreFunc([](WidgetInfo& info) {
+            info.options->disabled = !CVarGetInteger(CVAR_SETTING("EnableMouse"), 0);
+            info.options->disabledTooltip = "Forced off because Mouse Controls are disabled.";
+        })
+        .Options(CheckboxOptions()
+                     .Color(THEME_COLOR)
+                     .Tooltip("Stops the mouse from moving the third-person camera and from triggering quickspins, "
+                              "while still allowing mouse control for first-person aiming and the shield."));
+    SohGui::mSohMenu->AddSearchWidget({ mouseDisableThirdPerson, "Settings", "Controls", "Camera Controls" });
 
     rightStickOcarina = { .name = "Right Stick Ocarina Playback", .type = WidgetType::WIDGET_CVAR_CHECKBOX };
     rightStickOcarina.CVar(CVAR_SETTING("CustomOcarina.RightStick")).Options(CheckboxOptions().Color(THEME_COLOR));

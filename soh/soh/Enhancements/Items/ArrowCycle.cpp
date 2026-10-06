@@ -1,15 +1,16 @@
-#include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
+#include <libultraship/bridge/consolevariablebridge.h>
+
+#include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include "soh/ShipInit.hpp"
 
 extern "C" {
+#include "z64.h"
 #include "macros.h"
 #include "variables.h"
 #include "functions.h"
 #include "overlays/actors/ovl_En_Arrow/z_en_arrow.h"
-
 s32 func_808351D4(Player* thisx, PlayState* play); // Arrow nocked
 void EnArrow_Init(Actor* thisx, PlayState* play);
-
 extern PlayState* gPlayState;
 }
 
@@ -143,8 +144,8 @@ bool ArrowCycleMain() {
     Player* player = GET_PLAYER(gPlayState);
     if (player->heldActor != NULL && player->heldActor->id == ACTOR_EN_ARROW) {
         if (IsHoldingMagicBow(player) && gSaveContext.magicState != MAGIC_STATE_IDLE && player->heldActor == NULL) {
-            Audio_PlaySoundGeneral(NA_SE_SY_ERROR, &gSfxDefaultPos, 4, &gSfxDefaultFreqAndVolScale,
-                                   &gSfxDefaultFreqAndVolScale, &gSfxDefaultReverb);
+            Audio_PlaySfxGeneral(NA_SE_SY_ERROR, &gSfxDefaultPos, 4, &gSfxDefaultFreqAndVolScale,
+                                 &gSfxDefaultFreqAndVolScale, &gSfxDefaultReverb);
             return true;
         }
 

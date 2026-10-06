@@ -297,18 +297,19 @@ void AudioLoad_InitSampleDmaBuffers(s32 arg0) {
     gAudioContext.sampleDmaReuseQueue2WrPos = gAudioContext.sampleDmaCount - gAudioContext.sampleDmaListSize1;
 }
 
+// SOH [Port] Completely reworked from decomp: SAF custom fontIds can exceed the native table; bounds-check against
+// fontMapSize to avoid OOB reads.
 s32 AudioLoad_IsFontLoadComplete(s32 fontId) {
-    return true;
-    if (fontId == 0xFF) {
+    if (fontId == FONT_ID_NONE) {
         return true;
-
-    } else if (gAudioContext.fontLoadStatus[fontId] >= 2) {
-        return true;
-    } else if (gAudioContext.fontLoadStatus[AudioLoad_GetRealTableIndex(FONT_TABLE, fontId)] >= 2) {
-        return true;
-    } else {
-        return false;
     }
+    // Resolve indirection (identity for FONT_TABLE today, but kept for parity with other tables).
+    fontId = (s32)AudioLoad_GetRealTableIndex(FONT_TABLE, (u32)fontId);
+    if ((size_t)fontId >= fontMapSize) {
+        // No entry in the font map — SAF sequence with no associated soundfont, treat as ready.
+        return true;
+    }
+    return gAudioContext.fontLoadStatus[fontId] >= 2;
 }
 
 s32 AudioLoad_IsSeqLoadComplete(s32 seqId) {
@@ -336,7 +337,7 @@ s32 AudioLoad_IsSampleLoadComplete(s32 sampleBankId) {
 }
 
 void AudioLoad_SetFontLoadStatus(s32 fontId, s32 status) {
-    if ((fontId != 0xFF) && (gAudioContext.fontLoadStatus[fontId] != 5)) {
+    if ((fontId != FONT_ID_NONE) && ((size_t)fontId < fontMapSize) && (gAudioContext.fontLoadStatus[fontId] != 5)) {
         gAudioContext.fontLoadStatus[fontId] = status;
     }
 }
@@ -394,7 +395,7 @@ SoundFontData* AudioLoad_SyncLoadSeqFonts(s32 seqId, u32* outDefaultFontId) {
         return NULL;
     }
 
-    fontId = 0xFF;
+    fontId = FONT_ID_NONE;
     index = ((u16*)gAudioContext.sequenceFontTable)[seqId];
     numFonts = gAudioContext.sequenceFontTable[index++];
 
@@ -489,7 +490,7 @@ void AudioLoad_AsyncLoadFont(s32 fontId, s32 arg1, s32 retData, OSMesgQueue* ret
     AudioLoad_AsyncLoad(FONT_TABLE, fontId, 0, retData, retQueue);
 }
 
-u8* AudioLoad_GetFontsForSequence(s32 seqId, u32* outNumFonts) {
+u16* AudioLoad_GetFontsForSequence(s32 seqId, u32* outNumFonts) {
     s32 index;
 
     // Check for NA_BGM_DISABLED and account for seqId that are stripped with `& 0xFF` by the caller
@@ -584,7 +585,7 @@ s32 AudioLoad_SyncInitSeqPlayerInternal(s32 playerIdx, s32 seqId, s32 arg2) {
 
     AudioSeq_SequencePlayerDisable(seqPlayer);
 
-    fontId = 0xFF;
+    fontId = FONT_ID_NONE;
 
     // seqId is the resolved 16-bit id from func_800F9280(). Reject ids with no loaded sequence; the
     // map has sequenceMapSize + 0xF slots (custom ids skip the reserved 129-135 range).
@@ -1005,6 +1006,7 @@ void* AudioLoad_AsyncLoadInner(s32 tableType, s32 id, s32 nChunks, s32 retData, 
     u32 temp_v0;
     u32 realId;
 
+    realId = AudioLoad_GetRealTableIndex(tableType, id);
     switch (tableType) {
         case SEQUENCE_TABLE:
             if (gAudioContext.seqLoadStatus[realId] == 1) {
@@ -1343,8 +1345,9 @@ void AudioLoad_Init(void* heap, size_t heapSize) {
     // calloc: unassigned slots stay NULL for the guard in AudioLoad_SyncInitSeqPlayerInternal().
     sequenceMap = calloc(sequenceMapSize + 0xF, sizeof(char*));
 
-    gAudioContext.seqLoadStatus = malloc(sequenceMapSize);
-    memset(gAudioContext.seqLoadStatus, 5, sequenceMapSize);
+    // SOH [Bugfix] Size to match sequenceMap (+ 0xF); custom ids can exceed sequenceMapSize.
+    gAudioContext.seqLoadStatus = malloc(sequenceMapSize + 0xF);
+    memset(gAudioContext.seqLoadStatus, 5, sequenceMapSize + 0xF);
     for (size_t i = 0; i < seqListSize; i++) {
         SequenceData sDat = ResourceMgr_LoadSeqByName(seqList[i]);
         sequenceMap[sDat.seqNumber] = strdup(seqList[i]);
@@ -1404,9 +1407,13 @@ void AudioLoad_Init(void* heap, size_t heapSize) {
         SequenceData* sDat = ResourceMgr_LoadSeqPtrByName(customSeqList[j]);
 
         if (sDat->numFonts == -1) {
+            uint8_t crcBytes[sizeof(uint64_t)];
             uint64_t crc;
 
-            memcpy(&crc, sDat->fonts, sizeof(uint64_t));
+            for (size_t b = 0; b < sizeof(crcBytes); b++) {
+                crcBytes[b] = (uint8_t)sDat->fonts[b];
+            }
+            memcpy(&crc, crcBytes, sizeof(crc));
             const char* res = ResourceGetNameByCrc(crc);
             if (res == NULL) {
                 // Passing a null buffer and length of 0 to snprintf will return the required numbers of characters the
@@ -1423,6 +1430,10 @@ void AudioLoad_Init(void* heap, size_t heapSize) {
                 continue;
             }
             SoundFont* sf = ResourceMgr_LoadAudioSoundFontByName(res);
+            if (sf->fntIndex >= FONT_ID_NONE) {
+                LUSLOG_ERROR("Font limit (0xFFFF) exceeded; sequence \"%s\" skipped.", customSeqList[j]);
+                continue;
+            }
             memset(&sDat->fonts[0], 0, sizeof(sDat->fonts));
             sDat->fonts[0] = sf->fntIndex;
             sDat->numFonts = 1;

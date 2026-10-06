@@ -1,11 +1,13 @@
 #include <ship/Context.h>
 #include <ship/window/Window.h>
 #include <ship/window/gui/ConsoleWindow.h>
+#include <libultraship/bridge/consolevariablebridge.h>
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include "soh/ShipInit.hpp"
 #include "soh/OTRGlobals.h"
 
 extern "C" {
+#include "z64.h"
 #include "macros.h"
 #include "variables.h"
 }

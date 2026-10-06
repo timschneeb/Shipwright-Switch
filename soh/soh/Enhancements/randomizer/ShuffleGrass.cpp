@@ -1,10 +1,14 @@
+#include <libultraship/bridge/consolevariablebridge.h>
+
 #include <soh/OTRGlobals.h>
+#include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include "soh_assets.h"
 #include "static_data.h"
 #include "item_category_adj.h"
 #include "soh/ObjectExtension/ObjectExtension.h"
 #include "soh/Enhancements/randomizer/randomizer.h"
 #include "soh/Enhancements/randomizer/RCToRandInf.h"
+#include "soh/ShipInit.hpp"
 
 extern "C" {
 #include "variables.h"
@@ -171,10 +175,7 @@ static CheckIdentity IdentifyGrass(s32 sceneNum, s32 posX, s32 posZ, s32 respawn
     Rando::Location* location =
         OTRGlobals::Instance->gRandomizer->GetCheckObjectFromActor(ACTOR_EN_KUSA, sceneNum, respawnData);
 
-    if (location->GetRandomizerCheck() != RC_UNKNOWN_CHECK) {
-        grassIdentity.randomizerInf = rcToRandomizerInf[location->GetRandomizerCheck()];
-        grassIdentity.randomizerCheck = location->GetRandomizerCheck();
-    }
+    IdentifyCheck(&grassIdentity, location);
 
     return grassIdentity;
 }
@@ -230,7 +231,7 @@ void Rando::StaticData::RegisterGrassLocations() {
     registered = true;
     // clang-format off
     // Overworld Grass
-    //            Randomizer Check                                 	       Randomizer Check                                           Quest         Area                          Scene ID                           Params                          Short Name                    	Hint Text Key                     Vanilla             Spoiler Collection Check
+    //            Randomizer Check                                         Randomizer Check                                           Quest         Area                          Scene ID                           Params                          Short Name                     Hint Text Key                     Vanilla             Spoiler Collection Check
     locationTable[RC_KF_CHILD_GRASS_1]                                 =   Location::Grass(RC_KF_CHILD_GRASS_1,                       RCQUEST_BOTH, RCAREA_KOKIRI_FOREST,         SCENE_KOKIRI_FOREST,    TWO_ACTOR_PARAMS(678, 596),     "Child Grass 1",               RHT_KF_GRASS,                     RG_GREEN_RUPEE,     SpoilerCollectionCheck::RandomizerInf(RAND_INF_KF_CHILD_GRASS_1));
     locationTable[RC_KF_CHILD_GRASS_2]                                 =   Location::Grass(RC_KF_CHILD_GRASS_2,                       RCQUEST_BOTH, RCAREA_KOKIRI_FOREST,         SCENE_KOKIRI_FOREST,    TWO_ACTOR_PARAMS(594, 542),     "Child Grass 2",               RHT_KF_GRASS,                     RG_GREEN_RUPEE,     SpoilerCollectionCheck::RandomizerInf(RAND_INF_KF_CHILD_GRASS_2));
     locationTable[RC_KF_CHILD_GRASS_3]                                 =   Location::Grass(RC_KF_CHILD_GRASS_3,                       RCQUEST_BOTH, RCAREA_KOKIRI_FOREST,         SCENE_KOKIRI_FOREST,    TWO_ACTOR_PARAMS(572, 603),     "Child Grass 3",               RHT_KF_GRASS,                     RG_GREEN_RUPEE,     SpoilerCollectionCheck::RandomizerInf(RAND_INF_KF_CHILD_GRASS_3));

@@ -1,9 +1,13 @@
 #include <soh/OTRGlobals.h>
+#include <spdlog/spdlog.h>
+#include <libultraship/bridge/consolevariablebridge.h>
+#include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include "soh/ObjectExtension/ObjectExtension.h"
 #include "item_category_adj.h"
 #include "particle_cmc.h"
 #include "soh/Enhancements/randomizer/randomizer.h"
 #include "soh/Enhancements/randomizer/RCToRandInf.h"
+#include "soh/ShipInit.hpp"
 
 extern "C" {
 extern PlayState* gPlayState;
@@ -94,20 +98,34 @@ static CheckIdentity IdentifySign(s32 sceneNum, s32 posX, s32 posZ, s32 id) {
     uint32_t signSceneNum = sceneNum;
     Rando::Location* location = nullptr;
 
-    // align child/adult signs
+    // align child/adult and day/night signs
     if (sceneNum == SCENE_KAKARIKO_VILLAGE && LINK_IS_ADULT && posX == 1165 && posZ == 1545) {
         posZ = 1550;
     } else if (sceneNum == SCENE_GRAVEYARD && LINK_IS_ADULT) {
-        if (id == ACTOR_EN_WONDER_TALK2 && posX == -807 && posZ == 266) {
+        if (id == ACTOR_EN_WONDER_TALK2 && ((posX == -807 && posZ == 266) || (posX == -806 && posZ == 266))) {
             posX = -805;
         } else if (id == ACTOR_EN_WONDER_TALK) {
-            if (posX == 634 && posZ == 260) {
+            if ((posX == 634 && posZ == 260) || (posX == 638 && posZ == 260)) {
                 posX = 654;
                 posZ = 258;
-            } else if (posX == 634 && posZ == -100) {
+            } else if ((posX == 634 && posZ == -100) || (posX == 638 && posZ == -100)) {
                 posX = 654;
                 posZ = -102;
-            } else if (posX == 753 && posZ == 85) {
+            } else if ((posX == 753 && posZ == 85) || (posX == 758 && posZ == 85)) {
+                posX = 752;
+            }
+        }
+    } else if (sceneNum == SCENE_GRAVEYARD && LINK_IS_CHILD) {
+        if (id == ACTOR_EN_WONDER_TALK2 && posX == -805 && posZ == 264) {
+            posZ = 266;
+        } else if (id == ACTOR_EN_WONDER_TALK) {
+            if (posX == 630 && posZ == 260) {
+                posX = 654;
+                posZ = 258;
+            } else if (posX == 630 && posZ == -100) {
+                posX = 654;
+                posZ = -102;
+            } else if (posX == 758 && posZ == 85) {
                 posX = 752;
             }
         }
@@ -142,12 +160,7 @@ static CheckIdentity IdentifySign(s32 sceneNum, s32 posX, s32 posZ, s32 id) {
             return signIdentity;
     }
 
-    if (location == nullptr || location->GetRandomizerCheck() == RC_UNKNOWN_CHECK) {
-        LUSLOG_WARN("IdentifySign did not receive a valid RC value (%d).", location->GetRandomizerCheck());
-    } else {
-        signIdentity.randomizerInf = rcToRandomizerInf[location->GetRandomizerCheck()];
-        signIdentity.randomizerCheck = location->GetRandomizerCheck();
-    }
+    IdentifyCheck(&signIdentity, location);
 
     return signIdentity;
 }
@@ -295,6 +308,8 @@ locationTable[RC_LH_NORTH_EXIT_ARROW_SIGN]                              = Locati
 locationTable[RC_LH_FISHING_SIGN]                                       = Location::Sign(RC_LH_FISHING_SIGN,                                        RCQUEST_BOTH,       RCAREA_LAKE_HYLIA,              SCENE_LAKE_HYLIA,               TWO_ACTOR_PARAMS(1341, 3779),       "Fishing Sign",                                     RHT_SIGN_LAKE_HYLIA,            ACTOR_EN_WONDER_TALK2,      SpoilerCollectionCheck::RandomizerInf(RAND_INF_LH_FISHING_SIGN));
 locationTable[RC_LH_ISLAND_PEDESTAL]                                    = Location::Sign(RC_LH_ISLAND_PEDESTAL,                                     RCQUEST_BOTH,       RCAREA_LAKE_HYLIA,              SCENE_LAKE_HYLIA,               TWO_ACTOR_PARAMS(-491, 7259),       "Island Pedestal",                                  RHT_SIGN_LAKE_HYLIA,            ACTOR_EN_WONDER_TALK2,      SpoilerCollectionCheck::RandomizerInf(RAND_INF_LH_ISLAND_PEDESTAL));
 locationTable[RC_LH_FISHING_POND_RECTANGLE_SIGN]                        = Location::Sign(RC_LH_FISHING_POND_RECTANGLE_SIGN,                         RCQUEST_BOTH,       RCAREA_LAKE_HYLIA,              SCENE_FISHING_POND,             TWO_ACTOR_PARAMS(53, 982),          "Fishing Pond Rectangle Sign",                      RHT_SIGN_FISHING_POND,          ACTOR_EN_KANBAN,            SpoilerCollectionCheck::RandomizerInf(RAND_INF_LH_FISHING_POND_RECTANGLE_SIGN));
+locationTable[RC_LH_WATER_SWITCH_SIGN]                                  = Location::Sign(RC_LH_WATER_SWITCH_SIGN,                                   RCQUEST_BOTH,       RCAREA_LAKE_HYLIA,              SCENE_LAKE_HYLIA,               TWO_ACTOR_PARAMS(-970, 6954),       "Water Switch Rectangle Sign",                                RHT_SIGN_LAKE_HYLIA,            ACTOR_EN_KANBAN,            SpoilerCollectionCheck::RandomizerInf(RAND_INF_LH_WATER_SWITCH_SIGN));
+locationTable[RC_LH_FISHING_ISLAND_WATER_SWITCH_SIGN]                   = Location::Sign(RC_LH_FISHING_ISLAND_WATER_SWITCH_SIGN,                    RCQUEST_BOTH,       RCAREA_LAKE_HYLIA,              SCENE_LAKE_HYLIA,               TWO_ACTOR_PARAMS(1320, 3951),       "Fishing Island Water Switch Rectangle Sign",                 RHT_SIGN_LAKE_HYLIA,            ACTOR_EN_KANBAN,            SpoilerCollectionCheck::RandomizerInf(RAND_INF_LH_FISHING_ISLAND_WATER_SWITCH_SIGN));
 locationTable[RC_GV_BRIDGE_RECTANGLE_SIGN]                              = Location::Sign(RC_GV_BRIDGE_RECTANGLE_SIGN,                               RCQUEST_BOTH,       RCAREA_GERUDO_VALLEY,           SCENE_GERUDO_VALLEY,            TWO_ACTOR_PARAMS(359, 254),         "Bridge Rectangle Sign",                            RHT_SIGN_GERUDO_VALLEY,         ACTOR_EN_KANBAN,            SpoilerCollectionCheck::RandomizerInf(RAND_INF_GV_BRIDGE_RECTANGLE_SIGN));
 locationTable[RC_GV_EAST_EXIT_ARROW_SIGN]                               = Location::Sign(RC_GV_EAST_EXIT_ARROW_SIGN,                                RCQUEST_BOTH,       RCAREA_GERUDO_VALLEY,           SCENE_GERUDO_VALLEY,            TWO_ACTOR_PARAMS(2778, 593),        "East Exit Arrow Sign",                             RHT_SIGN_GERUDO_VALLEY,         ACTOR_EN_A_OBJ,             SpoilerCollectionCheck::RandomizerInf(RAND_INF_GV_EAST_EXIT_ARROW_SIGN));
 locationTable[RC_GF_EAST_EXIT_ARROW_SIGN]                               = Location::Sign(RC_GF_EAST_EXIT_ARROW_SIGN,                                RCQUEST_BOTH,       RCAREA_GERUDO_FORTRESS,         SCENE_GERUDOS_FORTRESS,         TWO_ACTOR_PARAMS(-730, -70),        "East Exit Arrow Sign",                             RHT_SIGN_GERUDO_FORTRESS,       ACTOR_EN_A_OBJ,             SpoilerCollectionCheck::RandomizerInf(RAND_INF_GF_EAST_EXIT_ARROW_SIGN));

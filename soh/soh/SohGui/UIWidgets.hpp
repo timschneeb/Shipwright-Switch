@@ -1,13 +1,10 @@
-#ifndef UIWidgets2_hpp
-#define UIWidgets2_hpp
+#pragma once
 
 #include "UIWidgetOptions.hpp"
 
 #include <libultraship/bridge/consolevariablebridge.h>
-#include <ship/Context.h>
 #include <ship/window/gui/GuiWindow.h>
-#include <ship/window/Window.h>
-#include "soh/ShipInit.hpp"
+#include <spdlog/spdlog.h>
 
 namespace UIWidgets {
 
@@ -77,7 +74,7 @@ bool WindowButton(const char* label, const char* cvarName, std::shared_ptr<Ship:
 void PushStyleCheckbox(const ImVec4& color, ImVec2 padding = ImVec2(10.0f, 6.0f));
 void PushStyleCheckbox(Colors color = Colors::LightBlue, ImVec2 padding = ImVec2(10.0f, 6.0f));
 void PopStyleCheckbox();
-void RenderText(ImVec2 pos, const char* text, const char* text_end, bool hide_text_after_hash);
+void RenderText(ImVec2 pos, const char* text, const char* text_end, bool hide_text_after_hash, float wrap_width = 0.0f);
 bool Checkbox(const char* label, bool* v, const CheckboxOptions& options = {});
 bool CVarCheckbox(const char* label, const char* cvarName, const CheckboxOptions& options = {});
 
@@ -107,6 +104,18 @@ template <typename T>
 bool Combobox(std::string label, T* value, const std::map<T, const char*>& comboMap,
               const ComboboxOptions& options = {}) {
     bool dirty = false;
+
+    if (comboMap.empty()) {
+        return dirty;
+    }
+    // A value with no entry (a stale config, a map that has since changed) must not throw out of at() below.
+    if (!comboMap.contains(*value)) {
+        SPDLOG_WARN("Combobox \"{}\" holds unlisted value {}, showing the default instead", label,
+                    static_cast<int32_t>(*value));
+        T fallback = static_cast<T>(options.defaultIndex);
+        *value = comboMap.contains(fallback) ? fallback : comboMap.begin()->first;
+    }
+
     float startX = ImGui::GetCursorPosX();
     std::string invisibleLabelStr = "##" + std::string(label);
     const char* invisibleLabel = invisibleLabelStr.c_str();
@@ -116,7 +125,7 @@ bool Combobox(std::string label, T* value, const std::map<T, const char*>& combo
     ImGui::BeginDisabled(options.disabled);
     PushStyleCombobox(options.color);
 
-    const char* longest;
+    const char* longest = "";
     size_t length = 0;
     for (auto& [index, string] : comboMap) {
         size_t len = strlen(string);
@@ -199,7 +208,7 @@ bool Combobox(std::string label, T* value, const std::vector<const char*>& combo
     ImGui::BeginDisabled(options.disabled);
     PushStyleCombobox(options.color);
 
-    const char* longest;
+    const char* longest = "";
     size_t length = 0;
     for (auto& string : comboVector) {
         size_t len = strlen(string);
@@ -372,7 +381,7 @@ bool Combobox(std::string label, T* value, const char* (&comboArray)[N], const C
     ImGui::BeginDisabled(options.disabled);
     PushStyleCombobox(options.color);
 
-    const char* longest;
+    const char* longest = "";
     size_t length = 0;
     for (size_t i = 0; i < N; i++) {
         size_t len = strlen(comboArray[i]);
@@ -443,6 +452,8 @@ bool Combobox(std::string label, T* value, const char* (&comboArray)[N], const C
     return dirty;
 }
 
+void CVarChanged(const char* cvarName);
+
 template <typename T = int32_t>
 bool CVarCombobox(const char* label, const char* cvarName, const std::map<T, const char*>& comboMap,
                   const ComboboxOptions& options = {}) {
@@ -450,8 +461,7 @@ bool CVarCombobox(const char* label, const char* cvarName, const std::map<T, con
     int32_t value = CVarGetInteger(cvarName, options.defaultIndex);
     if (Combobox<T>(label, &value, comboMap, options)) {
         CVarSetInteger(cvarName, value);
-        Ship::Context::GetRawInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
-        ShipInit::Init(cvarName);
+        CVarChanged(cvarName);
         dirty = true;
     }
     return dirty;
@@ -464,8 +474,7 @@ bool CVarCombobox(const char* label, const char* cvarName, const std::vector<con
     int32_t value = CVarGetInteger(cvarName, options.defaultIndex);
     if (Combobox<T>(label, &value, comboVector, options)) {
         CVarSetInteger(cvarName, value);
-        Ship::Context::GetRawInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
-        ShipInit::Init(cvarName);
+        CVarChanged(cvarName);
         dirty = true;
     }
     return dirty;
@@ -478,8 +487,7 @@ bool CVarCombobox(const char* label, const char* cvarName, const char* (&comboAr
     int32_t value = CVarGetInteger(cvarName, options.defaultIndex);
     if (Combobox<T>(label, &value, comboArray, options)) {
         CVarSetInteger(cvarName, value);
-        Ship::Context::GetRawInstance()->GetWindow()->GetGui()->SaveConsoleVariablesNextFrame();
-        ShipInit::Init(cvarName);
+        CVarChanged(cvarName);
         dirty = true;
     }
     return dirty;
@@ -508,6 +516,30 @@ void DrawFlagArray8Mask(const std::string& name, uint8_t& flags, Colors color = 
 bool BtnSelector(const char* label, int32_t* value, const BtnSelectorOptions& options);
 bool CVarBtnSelector(const char* label, const char* cvarName, const BtnSelectorOptions& options);
 
+// Card Layout System - creates a responsive grid of card containers
+// Example usage:
+//   BeginCardLayout({ .columnsPerRow = 2 });
+//   BeginCard("cardId");
+//     // ... card content ...
+//   EndCard();
+//   EndCardLayout();
+struct CardLayoutOptions {
+    int32_t columnsPerRow = 2;
+    float spacing = 8.0f;
+    float minColumnWidth = 0.0f;
+    bool autoItemWidth = true;
+    ImGuiChildFlags childFlags = ImGuiChildFlags_Border | ImGuiChildFlags_AutoResizeY;
+    bool syncLastColumnToMax = false; // Keep last column height synced to max of others (keeps it empty)
+    // Per-column fixed widths (0 = auto-size). Example: { 400.0f, 0.0f, 300.0f }
+    // means column 0 is 400px, column 1 auto-sizes, column 2 is 300px
+    std::vector<float> fixedColumnWidths;
+};
+
+void BeginCardLayout(const CardLayoutOptions& options = {});
+void BeginCard(const char* id, int32_t forceColumn = -1); // -1 = auto (shortest column), 0+ = force to column
+void EndCard();
+void EndCardLayout();
+
 void InsertHelpHoverText(const std::string& text);
 void InsertHelpHoverText(const char* text);
 } // namespace UIWidgets
@@ -516,5 +548,3 @@ ImVec4 GetRandomValue(uint64_t* state = nullptr);
 
 Color_RGBA8 RGBA8FromVec(ImVec4 vec);
 ImVec4 VecFromRGBA8(Color_RGBA8 color);
-
-#endif /* UIWidgets_hpp */

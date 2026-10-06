@@ -1,9 +1,11 @@
 #include <libultraship/bridge/resourcebridge.h>
+#include <libultraship/bridge/consolevariablebridge.h>
 #include "soh/Enhancements/game-interactor/GameInteractor.h"
 #include "soh/ShipInit.hpp"
 #include "soh/ResourceManagerHelpers.h"
 
 extern "C" {
+#include "z64.h"
 #include "macros.h"
 #include "functions.h"
 #include "objects/object_link_boy/object_link_boy.h"

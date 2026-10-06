@@ -16,6 +16,7 @@ bool GenerateRandomizer(std::set<RandomizerCheck> excludedLocations, std::set<Ra
     const auto ctx = Rando::Context::GetInstance();
     ResetPerformanceTimers();
     StartPerformanceTimer(PT_WHOLE_SEED);
+    ctx->SetSpoilerLoaded(false);
 
     // if a blank seed was entered, make a random one
     if (seedInput.empty()) {
@@ -43,7 +44,7 @@ bool GenerateRandomizer(std::set<RandomizerCheck> excludedLocations, std::set<Ra
     ctx->ClearItemLocations();
     int ret = Playthrough::Playthrough_Init(ctx->GetSeed(), excludedLocations, enabledTricks);
     if (ret < 0) {
-        if (ret == -1) { // Failed to generate after 5 tries
+        if (ret == -1) {
             SPDLOG_ERROR("Failed to generate after 5 tries.");
             return false;
         } else {

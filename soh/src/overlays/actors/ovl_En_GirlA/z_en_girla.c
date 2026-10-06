@@ -10,6 +10,7 @@
 #include "soh/Enhancements/game-interactor/GameInteractor_Hooks.h"
 #include "soh/OTRGlobals.h"
 #include <assert.h>
+#include <libultraship/bridge/consolevariablebridge.h>
 
 #define FLAGS (ACTOR_FLAG_ATTENTION_ENABLED | ACTOR_FLAG_FRIENDLY | ACTOR_FLAG_UPDATE_CULLING_DISABLED)
 
@@ -702,8 +703,7 @@ s32 EnGirlA_CanBuy_GoronTunic(PlayState* play, EnGirlA* this) {
     if (GameInteractor_Should(VB_CAN_BUY_SHOP_SHIELD_OR_TUNIC, false, &canBuy, RAND_INF_HAS_FOUND_GORON_TUNIC)) {
         return canBuy;
     }
-    if (LINK_AGE_IN_YEARS == YEARS_CHILD &&
-        (!IS_RANDO || Randomizer_GetSettingValue(RSK_SHOPSANITY) == RO_SHOPSANITY_OFF)) {
+    if (LINK_AGE_IN_YEARS == YEARS_CHILD && !IS_RANDO) {
         return CANBUY_RESULT_CANT_GET_NOW;
     }
     if (CHECK_OWNED_EQUIP_ALT(EQUIP_TYPE_TUNIC, EQUIP_INV_TUNIC_GORON)) {
@@ -723,8 +723,7 @@ s32 EnGirlA_CanBuy_ZoraTunic(PlayState* play, EnGirlA* this) {
     if (GameInteractor_Should(VB_CAN_BUY_SHOP_SHIELD_OR_TUNIC, false, &canBuy, RAND_INF_HAS_FOUND_ZORA_TUNIC)) {
         return canBuy;
     }
-    if (LINK_AGE_IN_YEARS == YEARS_CHILD &&
-        (!IS_RANDO || Randomizer_GetSettingValue(RSK_SHOPSANITY) == RO_SHOPSANITY_OFF)) {
+    if (LINK_AGE_IN_YEARS == YEARS_CHILD && !IS_RANDO) {
         return CANBUY_RESULT_CANT_GET_NOW;
     }
     if (CHECK_OWNED_EQUIP_ALT(EQUIP_TYPE_TUNIC, EQUIP_INV_TUNIC_ZORA)) {

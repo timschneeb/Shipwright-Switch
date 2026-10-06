@@ -54,11 +54,34 @@ gives you a 14.x binary:
 - **Homebrew (macOS or Linux)**: `brew install llvm@14` and use its
   `clang-format`, or use one of the cross-platform options above.
 
+## JSON assets
+
+JSON in `soh/assets/custom` checked by CI with:
+
+```sh
+./scripts/lint-json.sh          # check
+./scripts/lint-json.sh --fix    # reformat in place
+```
+
+## Whitespace
+
+C/C++ outside soh/include is indented with spaces and has no trailing
+whitespace, checked by CI with:
+
+```sh
+./scripts/check-whitespace.sh        # check, prints file:line for each problem
+./scripts/check-whitespace.sh --fix  # strip trailing whitespace in place
+```
+
+The repo's `.editorconfig` sets this up for editors that support
+[EditorConfig](https://editorconfig.org/).
+
 ## Optional: format on commit
 
 The repo ships a [pre-commit](https://pre-commit.com/) config
 (`.pre-commit-config.yaml`) that auto-formats staged C/C++ with a pinned 14.x
-before each commit, so you never get caught by the CI check. With pre-commit
+and runs the whitespace and JSON lints on staged files before each commit, so you
+never get caught by the CI checks. With pre-commit
 [installed](https://pre-commit.com/#install), enable it once:
 
 ```bash

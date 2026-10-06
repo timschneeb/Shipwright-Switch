@@ -1,17 +1,15 @@
+#include <vector>
+
+#include <fast/Fast3dGui.h>
+#include <ship/Context.h>
+
 #include "soh/SohGui/SohGui.hpp"
 #include "soh/SohGui/UIWidgets.hpp"
 #include "soh/SohGui/ImGuiUtils.h"
 #include "soh/OTRGlobals.h"
 #include "soh/cvar_prefixes.h"
-#include "soh/Enhancements/game-interactor/GameInteractor.h"
+#include "soh/Enhancements/randomizer/randomizer.h"
 #include "soh/Enhancements/randomizer/settings.h"
-
-#include <vector>
-#include <fast/Fast3dGui.h>
-
-extern "C" {
-#include "z64.h"
-}
 
 namespace SohGui {
 
@@ -95,22 +93,26 @@ static void StartingItemTiered(RandomizerSettingKey rsk, const std::vector<uint3
 }
 
 // Toggleable 32x48 song icon, mirroring the songMapping loop in DrawQuestStatusTab.
-static void StartingSongToggle(RandomizerSettingKey rsk, QuestItem song) {
+static void StartingSongToggle(RandomizerSettingKey rsk, const std::string& name, const std::string& nameFaded) {
     Rando::Option& option = Rando::Settings::GetInstance()->GetOption(rsk);
     const char* cvar = option.GetCVarName().c_str();
-    const SongMapEntry& entry = songMapping[song];
     bool on = CVarGetInteger(cvar, 0) != 0;
 
     ImGui::PushID(static_cast<int32_t>(rsk));
     PushStyleButton(Colors::DarkGray);
-    if (ImGui::ImageButton(entry.name.c_str(), GetFast3dGui()->GetTextureByName(on ? entry.name : entry.nameFaded),
-                           kSongSize, ImVec2(0, 0), ImVec2(1, 1))) {
+    if (ImGui::ImageButton(name.c_str(), GetFast3dGui()->GetTextureByName(on ? name : nameFaded), kSongSize,
+                           ImVec2(0, 0), ImVec2(1, 1))) {
         CVarSetInteger(cvar, on ? 0 : 1);
         SaveStartingItemCVars();
     }
     PopStyleButton();
     Tooltip(option.GetName().c_str());
     ImGui::PopID();
+}
+
+static void StartingSongToggle(RandomizerSettingKey rsk, QuestItem song) {
+    const SongMapEntry& entry = songMapping[song];
+    StartingSongToggle(rsk, entry.name, entry.nameFaded);
 }
 
 // Item icon followed by a count slider, like the ammo rows in DrawInventoryTab. The slider
@@ -148,7 +150,7 @@ static void StartingItemCombobox(RandomizerSettingKey rsk) {
 }
 
 void DrawStartingItemsMenu(WidgetInfo& info) {
-    bool generating = CVarGetInteger(CVAR_GENERAL("RandoGenerating"), 0);
+    bool generating = IsRandoGenerating();
     bool disableEditingRandoSettings = generating || CVarGetInteger(CVAR_GENERAL("OnFileSelectNameEntry"), 0);
     ImGui::BeginDisabled(CVarGetInteger(CVAR_SETTING("DisableChanges"), 0) || disableEditingRandoSettings);
 
@@ -177,7 +179,7 @@ void DrawStartingItemsMenu(WidgetInfo& info) {
     ImGui::SameLine();
     StartingItemToggle(RSK_STARTING_GERUDO_CARD, ITEM_GERUDO_CARD);
 
-    // Starting Strength/Scale have no effect when Grab/Swim are shuffled; the generator
+    // Starting Strength/Scale/Wallet have no effect when Grab/Swim/Child's Wallet are shuffled; the generator
     // force-disables them (settings.cpp), so gray them out to match.
     bool grabShuffled =
         CVarGetInteger(Rando::Settings::GetInstance()->GetOption(RSK_SHUFFLE_GRAB).GetCVarName().c_str(), 0) != 0;
@@ -199,7 +201,15 @@ void DrawStartingItemsMenu(WidgetInfo& info) {
     ImGui::SameLine();
     StartingItemTiered(RSK_STARTING_MAGIC_METER, { ITEM_MAGIC_SMALL, ITEM_MAGIC_LARGE });
     ImGui::SameLine();
+    bool childsWalletShuffled =
+        CVarGetInteger(Rando::Settings::GetInstance()->GetOption(RSK_SHUFFLE_CHILD_WALLET).GetCVarName().c_str(), 0) !=
+        0;
+    ImGui::BeginDisabled(childsWalletShuffled);
     StartingItemTiered(RSK_STARTING_WALLET, { ITEM_WALLET_ADULT, ITEM_WALLET_GIANT });
+    ImGui::EndDisabled();
+    if (childsWalletShuffled && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled)) {
+        ImGui::SetTooltip("Disabled because Shuffle Child's Wallet is on.");
+    }
 
     ImGui::SeparatorText("Items");
     bool stickBagShuffled =
@@ -282,7 +292,8 @@ void DrawStartingItemsMenu(WidgetInfo& info) {
     StartingItemToggle(RSK_STARTING_CLAIM_CHECK, ITEM_CLAIM_CHECK);
     ImGui::SameLine();
     bool weirdEggShuffled =
-        CVarGetInteger(Rando::Settings::GetInstance()->GetOption(RSK_SHUFFLE_WEIRD_EGG).GetCVarName().c_str(), 0) != 0;
+        CVarGetInteger(Rando::Settings::GetInstance()->GetOption(RSK_SHUFFLE_WEIRD_EGG).GetCVarName().c_str(),
+                       RO_WEIRD_EGG_VANILLA) == RO_WEIRD_EGG_SHUFFLED;
     ImGui::BeginDisabled(!weirdEggShuffled);
     StartingItemToggle(RSK_STARTING_WEIRD_EGG, ITEM_WEIRD_EGG, !weirdEggShuffled);
     ImGui::EndDisabled();
@@ -290,7 +301,36 @@ void DrawStartingItemsMenu(WidgetInfo& info) {
         ImGui::SetTooltip("Enable Shuffle Weird Egg to start with the Weird Egg.");
     }
     ImGui::SameLine();
+    bool zeldasLetterShuffled =
+        CVarGetInteger(Rando::Settings::GetInstance()->GetOption(RSK_SHUFFLE_ZELDAS_LETTER).GetCVarName().c_str(), 0) !=
+        0;
+    StartingItemToggle(RSK_STARTING_ZELDAS_LETTER, ITEM_LETTER_ZELDA);
+    if (ImGui::IsItemHovered()) {
+        if (zeldasLetterShuffled) {
+            ImGui::SetTooltip("Start with Zelda's Letter\n\n"
+                              "The Kakariko gate starts open.");
+        } else {
+            ImGui::SetTooltip("Start with Zelda's Letter\n\n"
+                              "The Kakariko gate starts open.\n"
+                              "While the letter isn't shuffled this also skips child Zelda:\n"
+                              "you get the item Impa would give and skip everything up to meeting Zelda.");
+        }
+    }
+    StartingItemToggle(RSK_STARTING_KEATON_MASK, ITEM_MASK_KEATON);
+    ImGui::SameLine();
+    StartingItemToggle(RSK_STARTING_SKULL_MASK, ITEM_MASK_SKULL);
+    ImGui::SameLine();
+    StartingItemToggle(RSK_STARTING_SPOOKY_MASK, ITEM_MASK_SPOOKY);
+    ImGui::SameLine();
     StartingItemToggle(RSK_STARTING_BUNNY_HOOD, ITEM_MASK_BUNNY);
+    ImGui::SameLine();
+    StartingItemToggle(RSK_STARTING_GORON_MASK, ITEM_MASK_GORON);
+    ImGui::SameLine();
+    StartingItemToggle(RSK_STARTING_ZORA_MASK, ITEM_MASK_ZORA);
+    ImGui::SameLine();
+    StartingItemToggle(RSK_STARTING_GERUDO_MASK, ITEM_MASK_GERUDO);
+    ImGui::SameLine();
+    StartingItemToggle(RSK_STARTING_MASK_OF_TRUTH, ITEM_MASK_TRUTH);
 
     ImGui::SeparatorText("Songs");
     StartingSongToggle(RSK_STARTING_ZELDAS_LULLABY, QUEST_SONG_LULLABY);
@@ -316,6 +356,8 @@ void DrawStartingItemsMenu(WidgetInfo& info) {
     StartingSongToggle(RSK_STARTING_NOCTURNE_OF_SHADOW, QUEST_SONG_NOCTURNE);
     ImGui::SameLine();
     StartingSongToggle(RSK_STARTING_PRELUDE_OF_LIGHT, QUEST_SONG_PRELUDE);
+    ImGui::SameLine();
+    StartingSongToggle(RSK_STARTING_SCARECROWS_SONG, "RG_SCARECROWS_SONG", "RG_SCARECROWS_SONG_Faded");
 
     ImGui::SeparatorText("Other");
     StartingItemCombobox(RSK_LINKS_POCKET);

@@ -215,6 +215,12 @@ static const ALIGN_ASSET(2) char gBombchuBagBodyDL[] = dgBombchuBagBodyDL;
 #define dgBombchuBagMaskDL "__OTR__objects/object_bombchubag/gBombchuBagMaskDL"
 static const ALIGN_ASSET(2) char gBombchuBagMaskDL[] = dgBombchuBagMaskDL;
 
+#define dgGiNutBagDL "__OTR__objects/object_nutbag/gGiNutBagDL"
+static const ALIGN_ASSET(2) char gGiNutBagDL[] = dgGiNutBagDL;
+
+#define dgGiStickBagDL "__OTR__objects/object_stickbag/gGiStickBagDL"
+static const ALIGN_ASSET(2) char gGiStickBagDL[] = dgGiStickBagDL;
+
 #define dgLargeMajorCrateDL "__OTR__objects/object_kibako2/gLargeMajorCrateDL"
 static const ALIGN_ASSET(2) char gLargeMajorCrateDL[] = dgLargeMajorCrateDL;
 
@@ -357,59 +363,8 @@ static const ALIGN_ASSET(2) char gKeyringIconGanonsCastleDL[] = dgKeyringIconGan
 #define dgKeyringIconTreasureChestGameDL "__OTR__objects/object_keyring/gKeyringIconTreasureChestGameDL"
 static const ALIGN_ASSET(2) char gKeyringIconTreasureChestGameDL[] = dgKeyringIconTreasureChestGameDL;
 
-#define dgKeyringKeysForestTempleDL "__OTR__objects/object_keyring/gKeyringKeysForestTempleDL"
-static const ALIGN_ASSET(2) char gKeyringKeysForestTempleDL[] = dgKeyringKeysForestTempleDL;
-
-#define dgKeyringKeysFireTempleDL "__OTR__objects/object_keyring/gKeyringKeysFireTempleDL"
-static const ALIGN_ASSET(2) char gKeyringKeysFireTempleDL[] = dgKeyringKeysFireTempleDL;
-
-#define dgKeyringKeysWaterTempleDL "__OTR__objects/object_keyring/gKeyringKeysWaterTempleDL"
-static const ALIGN_ASSET(2) char gKeyringKeysWaterTempleDL[] = dgKeyringKeysWaterTempleDL;
-
-#define dgKeyringKeysGerudoFortressDL "__OTR__objects/object_keyring/gKeyringKeysGerudoFortressDL"
-static const ALIGN_ASSET(2) char gKeyringKeysGerudoFortressDL[] = dgKeyringKeysGerudoFortressDL;
-
-#define dgKeyringKeysGerudoTrainingGroundDL "__OTR__objects/object_keyring/gKeyringKeysGerudoTrainingGroundDL"
-static const ALIGN_ASSET(2) char gKeyringKeysGerudoTrainingGroundDL[] = dgKeyringKeysGerudoTrainingGroundDL;
-
-#define dgKeyringKeysSpiritTempleDL "__OTR__objects/object_keyring/gKeyringKeysSpiritTempleDL"
-static const ALIGN_ASSET(2) char gKeyringKeysSpiritTempleDL[] = dgKeyringKeysSpiritTempleDL;
-
-#define dgKeyringKeysBottomoftheWellDL "__OTR__objects/object_keyring/gKeyringKeysBottomoftheWellDL"
-static const ALIGN_ASSET(2) char gKeyringKeysBottomoftheWellDL[] = dgKeyringKeysBottomoftheWellDL;
-
-#define dgKeyringKeysShadowTempleDL "__OTR__objects/object_keyring/gKeyringKeysShadowTempleDL"
-static const ALIGN_ASSET(2) char gKeyringKeysShadowTempleDL[] = dgKeyringKeysShadowTempleDL;
-
-#define dgKeyringKeysGanonsCastleDL "__OTR__objects/object_keyring/gKeyringKeysGanonsCastleDL"
-static const ALIGN_ASSET(2) char gKeyringKeysGanonsCastleDL[] = dgKeyringKeysGanonsCastleDL;
-
-#define dgKeyringKeysTreasureChestGameDL "__OTR__objects/object_keyring/gKeyringKeysTreasureChestGameDL"
-static const ALIGN_ASSET(2) char gKeyringKeysTreasureChestGameDL[] = dgKeyringKeysTreasureChestGameDL;
-
-#define dgKeyringKeysForestTempleMQDL "__OTR__objects/object_keyring/gKeyringKeysForestTempleMQDL"
-static const ALIGN_ASSET(2) char gKeyringKeysForestTempleMQDL[] = dgKeyringKeysForestTempleMQDL;
-
-#define dgKeyringKeysFireTempleMQDL "__OTR__objects/object_keyring/gKeyringKeysFireTempleMQDL"
-static const ALIGN_ASSET(2) char gKeyringKeysFireTempleMQDL[] = dgKeyringKeysFireTempleMQDL;
-
-#define dgKeyringKeysWaterTempleMQDL "__OTR__objects/object_keyring/gKeyringKeysWaterTempleMQDL"
-static const ALIGN_ASSET(2) char gKeyringKeysWaterTempleMQDL[] = dgKeyringKeysWaterTempleMQDL;
-
-#define dgKeyringKeysGerudoTrainingGroundMQDL "__OTR__objects/object_keyring/gKeyringKeysGerudoTrainingGroundMQDL"
-static const ALIGN_ASSET(2) char gKeyringKeysGerudoTrainingGroundMQDL[] = dgKeyringKeysGerudoTrainingGroundMQDL;
-
-#define dgKeyringKeysSpiritTempleMQDL "__OTR__objects/object_keyring/gKeyringKeysSpiritTempleMQDL"
-static const ALIGN_ASSET(2) char gKeyringKeysSpiritTempleMQDL[] = dgKeyringKeysSpiritTempleMQDL;
-
-#define dgKeyringKeysBottomoftheWellMQDL "__OTR__objects/object_keyring/gKeyringKeysBottomoftheWellMQDL"
-static const ALIGN_ASSET(2) char gKeyringKeysBottomoftheWellMQDL[] = dgKeyringKeysBottomoftheWellMQDL;
-
-#define dgKeyringKeysShadowTempleMQDL "__OTR__objects/object_keyring/gKeyringKeysShadowTempleMQDL"
-static const ALIGN_ASSET(2) char gKeyringKeysShadowTempleMQDL[] = dgKeyringKeysShadowTempleMQDL;
-
-#define dgKeyringKeysGanonsCastleMQDL "__OTR__objects/object_keyring/gKeyringKeysGanonsCastleMQDL"
-static const ALIGN_ASSET(2) char gKeyringKeysGanonsCastleMQDL[] = dgKeyringKeysGanonsCastleMQDL;
+#define dgKeyringKeyDL "__OTR__objects/object_keyring/gKeyringKeyDL"
+static const ALIGN_ASSET(2) char gKeyringKeyDL[] = dgKeyringKeyDL;
 
 #define dgHouseKeyDL "__OTR__objects/object_housekey/gHouseKeyDL"
 static const ALIGN_ASSET(2) char gHouseKeyDL[] = dgHouseKeyDL;
@@ -452,9 +407,6 @@ static const ALIGN_ASSET(2) char gSunIconTex[] = dgSunIcon;
 #define dgNaviIcon "__OTR__textures/parameter_static/gNavi"
 static const ALIGN_ASSET(2) char gNaviIconTex[] = dgNaviIcon;
 
-#define dgFileSelMQButtonTex "__OTR__textures/title_static/gFileSelMQButtonTex"
-static const ALIGN_ASSET(2) char gFileSelMQButtonTex[] = dgFileSelMQButtonTex;
-
 #define dgFileSelPleaseChooseAQuestENGTex "__OTR__textures/title_static/gFileSelPleaseChooseAQuestENGTex"
 static const ALIGN_ASSET(2) char gFileSelPleaseChooseAQuestENGTex[] = dgFileSelPleaseChooseAQuestENGTex;
 
@@ -478,9 +430,6 @@ static const ALIGN_ASSET(2) char gFileSelBossRushSettingsGERText[] = dgFileSelBo
 
 #define dgFileSelBossRushSettingsJPNTex "__OTR__textures/title_static/gFileSelBossRushSettingsJPNTex"
 static const ALIGN_ASSET(2) char gFileSelBossRushSettingsJPNText[] = dgFileSelBossRushSettingsJPNTex;
-
-#define dgFileSelRANDButtonTex "__OTR__textures/title_static/gFileSelRANDButtonTex"
-static const ALIGN_ASSET(2) char gFileSelRANDButtonTex[] = dgFileSelRANDButtonTex;
 
 #define dgFileSelLangEnglishENGTex "__OTR__textures/title_static/gFileSelLangEnglishENGTex"
 static const ALIGN_ASSET(2) char gFileSelLangEnglishENGTex[] = dgFileSelLangEnglishENGTex;
