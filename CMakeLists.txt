@@ -214,6 +214,12 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
     endif()
 endif()
 
+# devkitA64's newlib hides fwrite_unlocked once libultraship applies _POSIX_C_SOURCE=200809L to
+# spdlog; spdlog's own symbol check runs before that define exists, so force the fallback here.
+if(CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
+    set(SPDLOG_FWRITE_UNLOCKED OFF CACHE BOOL "" FORCE)
+endif()
+
 # Workaround: torch declares spdlog without OVERRIDE_FIND_PACKAGE and the first declaration
 # wins, which leaves libultraship's find_package(spdlog REQUIRED) with no config to find.
 # Declaring it here first keeps that working. See HarbourMasters/Torch#233.
