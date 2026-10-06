@@ -286,6 +286,12 @@ quiet_dependency_tree(${CMAKE_CURRENT_SOURCE_DIR}/torch)
 
 target_compile_definitions(torch INTERFACE YAML_CPP_STATIC_DEFINE)
 
+if(CMAKE_SYSTEM_NAME STREQUAL "NintendoSwitch")
+    # devkitA64's newlib only declares fseeko/ftello with a POSIX 2001+ feature macro; torch's
+    # bundled miniz uses them.
+    target_compile_definitions(torch PRIVATE _POSIX_C_SOURCE=200809L)
+endif()
+
 # Build-time ROM extraction. soh links torch as a static library, which compiles out torch's
 # own CLI, so this supplies an entry point around the same code the game runs.
 add_executable(soh-torch EXCLUDE_FROM_ALL

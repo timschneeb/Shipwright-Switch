@@ -660,6 +660,18 @@ void EnemyRando_SetColliderPosPeehat(void* ptr) {
     EnPeehat* enPeehat = (EnPeehat*)ptr;
     u8 i;
 
+#ifdef __SWITCH__
+    // devkitPro's newlib defines quad -> quad_t in sys/types.h; the collider header is parsed
+    // before global.h undefines it, so on Switch the member is named quad_t.
+    for (i = 0; i < 4; i++) {
+        enPeehat->colliderQuad.dim.quad_t[i].x = enPeehat->actor.world.pos.x + (f32)i;
+        enPeehat->colliderQuad.dim.quad_t[i].y = enPeehat->actor.world.pos.y + (f32)i;
+        enPeehat->colliderQuad.dim.quad_t[i].z = enPeehat->actor.world.pos.z + (f32)i;
+    }
+    Collider_SetQuadVertices(&enPeehat->colliderQuad, &enPeehat->colliderQuad.dim.quad_t[0],
+                             &enPeehat->colliderQuad.dim.quad_t[1], &enPeehat->colliderQuad.dim.quad_t[2],
+                             &enPeehat->colliderQuad.dim.quad_t[3]);
+#else
     for (i = 0; i < 4; i++) {
         enPeehat->colliderQuad.dim.quad[i].x = enPeehat->actor.world.pos.x + (f32)i;
         enPeehat->colliderQuad.dim.quad[i].y = enPeehat->actor.world.pos.y + (f32)i;
@@ -668,6 +680,7 @@ void EnemyRando_SetColliderPosPeehat(void* ptr) {
     Collider_SetQuadVertices(&enPeehat->colliderQuad, &enPeehat->colliderQuad.dim.quad[0],
                              &enPeehat->colliderQuad.dim.quad[1], &enPeehat->colliderQuad.dim.quad[2],
                              &enPeehat->colliderQuad.dim.quad[3]);
+#endif
 }
 
 static void OnGerudoFighterDefeat(void* refActor) {

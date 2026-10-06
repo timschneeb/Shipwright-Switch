@@ -1367,7 +1367,7 @@ void SaveManager::SaveSection(int fileNum, int sectionID, bool threaded) {
             nlohmann::json& sectionBlock = saveBlock["sections"][saveFuncInfo.name];
             sectionBlock["version"] = val.version;
             currentJsonContext = &sectionBlock["data"];
-            val.func(saveContext, sectionID, true);
+            val.func(*saveContext, sectionID, true);
         }
     } else {
         SaveFuncInfo svi = sectionSaveHandlers.find(sectionID)->second;
@@ -1383,7 +1383,7 @@ void SaveManager::SaveSection(int fileNum, int sectionID, bool threaded) {
         nlohmann::json& sectionBlock = saveBlock["sections"][sectionName];
         sectionBlock["version"] = sectionVersion;
         currentJsonContext = &sectionBlock["data"];
-        svi.func(saveContext, sectionID, false);
+        svi.func(*saveContext, sectionID, false);
     }
 
     // Serialize to string on main thread, then dispatch only file I/O to pthread.
