@@ -6,6 +6,7 @@
 #include <ship/Context.h>
 #include <ship/resource/ResourceManager.h>
 #include <stb_image.h>
+#include <spdlog/spdlog.h>
 
 #include "ResourceManagerHelpers.h"
 #include "OTRGlobals.h"
@@ -357,6 +358,18 @@ extern "C" char* ResourceMgr_LoadTexOrDListByName(const char* filePath) {
 
 extern "C" char* ResourceMgr_LoadIfDListByName(const char* filePath) {
     auto res = ResourceMgr_GetResourceByNameHandlingMQ(filePath);
+
+    if (res == nullptr) {
+        // Not a loadable resource (e.g. a segment buffer holding a stale or partial "__OTR__" path).
+        // gSPSegment falls back to the raw pointer when we return nullptr. Called per frame, so cap logging.
+        static int sWarnCount = 0;
+        if (sWarnCount < 8) {
+            sWarnCount++;
+            SPDLOG_WARN("ResourceMgr_LoadIfDListByName: resource not found: {}",
+                        std::string_view(filePath, strnlen(filePath, 128)));
+        }
+        return nullptr;
+    }
 
     if (res->GetInitData()->Type == static_cast<uint32_t>(Fast::ResourceType::DisplayList)) {
         return (char*)&((std::static_pointer_cast<Fast::DisplayList>(res))->Instructions[0]);
