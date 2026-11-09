@@ -3975,7 +3975,10 @@ void KaleidoScope_Update(PlayState* play) {
 #endif
 
             // pauseCtx->nameSegment = (void*)(((uintptr_t)pauseCtx->iconItemLangSegment + size + 0xF) & ~0xF);
-            pauseCtx->nameSegment = malloc(0x400 + 0xA00); // OTRTODO: GET RID OF THIS
+            // SOH: calloc, not malloc. nameSegment is bound to segment 0x0A every frame by KaleidoScope_Draw before
+            // an item name is necessarily copied into it, and gSPSegment treats any buffer starting with "__OTR__"
+            // as a resource path. Uninitialized heap memory could contain a stale/partial path and crash the lookup.
+            pauseCtx->nameSegment = calloc(1, 0x400 + 0xA00); // OTRTODO: GET RID OF THIS
 
             osSyncPrintf("サイズ＝%x\n", size2 + size1 + size0 + size);
             osSyncPrintf("item_name I_N_PT=%x\n", 0x800);
